@@ -32,7 +32,7 @@ public class UserService {
 	private ISettingsRepository settingsRepo;
 	
 	public User makeAccount(CreateUserDTO newUser) {	
-		User usi = new User(null, newUser.getEmail(), newUser.getPassword(), newUser.getUsername(), null);
+		User usi = new User(null, newUser.getEmail(), newUser.getPassword(), newUser.getUsername(), null,(byte)1);
 		userRepo.save(usi);	
 		Settings userSettings = new Settings(usi.getId(), usi);
 		settingsRepo.save(userSettings);
@@ -82,7 +82,7 @@ public class UserService {
 	public UserDTO getUserProfile(User us) {
 		
 		UserDTO profile = new UserDTO();
-//		profile.setCurrency(us.getSettings().getCurrency().getType());
+		profile.setCurrency(us.getSettings().getCurrency().getType());
 //		profile.setCountry(us.getSettings().getCountry().getName());
 //		profile.setBirthdate(us.getSettings().getBirthdate());
 		profile.setEmail(us.getEmail());
