@@ -4,8 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.financeManager.demo.dto.CreateUserDTO;
-import com.financeManager.demo.dto.ISettingsRepository;
-import com.financeManager.demo.dto.IUsersRepository;
+import com.financeManager.demo.repositories.ISettingsRepository;
+import com.financeManager.demo.repositories.IUsersRepository;
 import com.financeManager.demo.exceptions.NotExistingUserException;
 import com.financeManager.demo.model.Settings;
 import com.financeManager.demo.model.User;

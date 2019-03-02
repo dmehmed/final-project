@@ -24,7 +24,7 @@ public class Currency {
 
 	@Id
 	private Long id;
-	private String name;
+	private String type;
 
 	@OneToMany(cascade = CascadeType.ALL)
 	@JoinColumn(name = "currency_id")

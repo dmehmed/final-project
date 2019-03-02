@@ -1,4 +1,4 @@
-package com.financeManager.demo.dto;
+package com.financeManager.demo.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
