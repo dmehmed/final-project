@@ -7,7 +7,10 @@ import com.financeManager.demo.model.Country;
 
 public interface ICountryDAO {
 
-	public List<Country> getAllCountries() throws SQLException;
-	public Country getCountryById(Long id);
+	int ID_COLUMN = 1;
+	int NAME_COLUMN = 2;
+
+	public List<Country> getAll() throws SQLException;
+	public Country getById(Long id);
 	
 }

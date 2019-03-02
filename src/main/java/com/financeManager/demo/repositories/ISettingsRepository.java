@@ -7,5 +7,5 @@ import com.financeManager.demo.model.Settings;
 
 @Repository
 public interface ISettingsRepository extends JpaRepository<Settings, Long> {
-
+	
 }
