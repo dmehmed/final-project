@@ -34,6 +34,7 @@ public class Settings {
 	@OneToOne
     @MapsId
     private User user;
+	
 	private Date birthdate;
 
 	@ManyToOne

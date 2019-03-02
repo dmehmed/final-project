@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.financeManager.demo.dto.CreateUserDTO;
-import com.financeManager.demo.repositories.IUsersRepository;
 import com.financeManager.demo.dto.LoginDTO;
 import com.financeManager.demo.dto.UserDTO;
 import com.financeManager.demo.exceptions.NotExistingUserException;
