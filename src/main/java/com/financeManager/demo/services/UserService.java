@@ -5,7 +5,10 @@ import org.springframework.stereotype.Service;
 
 import com.financeManager.demo.dto.CreateUserDTO;
 import com.financeManager.demo.dto.LoginDTO;
+import com.financeManager.demo.dto.UpdateProfileDTO;
 import com.financeManager.demo.dto.UserDTO;
+import com.financeManager.demo.exceptions.DateFormatException;
+import com.financeManager.demo.exceptions.NoSuchSettingsOptionException;
 import com.financeManager.demo.exceptions.NotExistingUserException;
 import com.financeManager.demo.exceptions.WrongPasswordException;
 import com.financeManager.demo.model.Country;
@@ -31,6 +34,7 @@ public class UserService {
 	@Autowired
 	private ISettingsRepository settingsRepo;
 	
+	@Autowired
 	SettingsService settingsService; 
 	
 	public User makeAccount(CreateUserDTO newUser) {	
@@ -62,10 +66,7 @@ public class UserService {
 		} 
 		
 		Settings settings = this.settingsRepo.findById(us.getId()).get();
-		settings.setCountry(new Country(null,"Bulgaria"));
 		us.setSettings(settings);
-		System.out.println(us.getSettings().getCountry().getName());
-		System.out.println(us.getId());
 		
 		return us;
 		
@@ -84,16 +85,29 @@ public class UserService {
 	public UserDTO getUserProfile(User us) {
 		
 		UserDTO profile = new UserDTO();
-//		profile.setCurrency(us.getSettings().getCurrency().getType());
-//		profile.setCountry(us.getSettings().getCountry().getName());
-//		profile.setBirthdate(us.getSettings().getBirthdate());
 		profile.setEmail(us.getEmail());
-		profile.setUsername(us.getUsername());
-//		profile.setGender(us.getSettings().getGender().getName())
-		
-		profile.setSettings(settingsService.getSettings(us.getId()));
+		profile.setUsername(us.getUsername());	
+		profile.setSettings(settingsService.getSettings(us.getSettings().getId()));
 		
 		return profile;
+	}
+
+	public void updateProfile(User usi, UpdateProfileDTO updates) throws DateFormatException, NoSuchSettingsOptionException {
+		
+		if(updates.getUsername() != null) {
+			usi.setUsername(updates.getUsername());
+		}
+		
+		if(updates.getPassword() != null) {
+			usi.setPassword(updates.getPassword());
+		}
+		
+		if(updates.getSettings() != null) {
+			Settings newSettings = settingsService.update(usi.getSettings(), updates.getSettings());
+			usi.setSettings(newSettings);
+		}
+		
+		userRepo.save(usi);
 	}
 	
 	

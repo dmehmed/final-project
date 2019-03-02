@@ -10,8 +10,6 @@ import javax.persistence.MapsId;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -46,10 +44,7 @@ public class Settings {
 		this.id = id;
 		this.user = user;
 		this.currency = new Currency();
-		
 		this.currency.setId((long)1);
-
-		
 	}
 
 }

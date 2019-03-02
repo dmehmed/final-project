@@ -1,7 +1,6 @@
 package com.financeManager.demo.model;
 
 import javax.persistence.CascadeType;
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -36,7 +35,6 @@ public class User {
 	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
 	private Settings settings;
 	
-//	@Column(name = "isDeleted")
 	private byte isDeleted;
 
 

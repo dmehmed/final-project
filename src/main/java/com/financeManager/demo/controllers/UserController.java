@@ -12,13 +12,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.financeManager.demo.dto.CreateUserDTO;
 import com.financeManager.demo.dto.LoginDTO;
+import com.financeManager.demo.dto.UpdateProfileDTO;
 import com.financeManager.demo.dto.UserDTO;
+import com.financeManager.demo.exceptions.DateFormatException;
+import com.financeManager.demo.exceptions.NoSuchSettingsOptionException;
 import com.financeManager.demo.exceptions.NotExistingUserException;
 import com.financeManager.demo.exceptions.WrongPasswordException;
 import com.financeManager.demo.model.User;
@@ -81,10 +85,8 @@ public class UserController {
 			e.printStackTrace();
 			return null;
 		}
-		System.out.println(usi.getId());
-		System.out.println("Hello" + usi.getSettings());
-		return this.userService.getUserProfile(usi);
 		
+		return this.userService.getUserProfile(usi);
 	}
 
 	@PostMapping("/login")
@@ -111,6 +113,35 @@ public class UserController {
 		session.invalidate();
 	}
 	
-	
+	@PatchMapping(path = "/profile/update", consumes = "application/json")
+	public void updateProfile(@RequestBody UpdateProfileDTO updates, HttpServletRequest request, HttpServletResponse response) {
+		HttpSession session = request.getSession();
+		
+		if (session.getAttribute("userId") == null) {
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			return;
+		}
+		
+		long id = (Long) session.getAttribute("userId");
+		User usi = null;
+		
+		try {
+			 usi = userService.getExistingUserById(id);
+		} catch (NotExistingUserException e) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			e.printStackTrace();
+			return;
+		}
+		
+		try {
+			this.userService.updateProfile(usi, updates);
+		} catch (DateFormatException | NoSuchSettingsOptionException e) {
+			e.printStackTrace();
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			return;
+		}
+		response.setStatus(HttpStatus.OK.value());
+		
+	}
 
 }
