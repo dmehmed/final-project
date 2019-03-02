@@ -1,5 +1,6 @@
 package com.financeManager.demo.model;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -8,6 +9,8 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+
+import org.springframework.beans.factory.annotation.Autowired;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,8 +21,8 @@ import lombok.Setter;
 @Table(name = "currencies")
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class Currency {
 
 	@Id
@@ -28,6 +31,11 @@ public class Currency {
 
 	@OneToMany(cascade = CascadeType.ALL)
 	@JoinColumn(name = "currency_id")
+	@Autowired
 	private Set<Settings> settings;
+
+	void putInSettings(Settings settings) {
+		this.settings.add(settings);
+	}
 
 }

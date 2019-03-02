@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 
 import com.financeManager.demo.dto.CreateUserDTO;
 import com.financeManager.demo.dto.LoginDTO;
-import com.financeManager.demo.dto.SettingsDTO;
 import com.financeManager.demo.dto.UserDTO;
 import com.financeManager.demo.exceptions.NotExistingUserException;
 import com.financeManager.demo.exceptions.WrongPasswordException;
@@ -35,7 +34,7 @@ public class UserService {
 	SettingsService settingsService; 
 	
 	public User makeAccount(CreateUserDTO newUser) {	
-		User usi = new User(null, newUser.getEmail(), newUser.getPassword(), newUser.getUsername(), null);
+		User usi = new User(null, newUser.getEmail(), newUser.getPassword(), newUser.getUsername(), null,(byte)1);
 		userRepo.save(usi);	
 		Settings userSettings = new Settings(usi.getId(), usi);
 		settingsRepo.save(userSettings);

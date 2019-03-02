@@ -19,7 +19,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 @Entity
-@Table(name="settings")
+@Table(name = "settings")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -30,28 +30,26 @@ public class Settings {
 	@Id
 	@Column(name = "user_id")
 	private Long id;
-	
+
 	@OneToOne
-    @MapsId
-    private User user;
-	
+	@MapsId
+	private User user;
 	private Date birthdate;
-
 	@ManyToOne
-	@Autowired
 	private Country country;
-	
 	@ManyToOne
-	@Autowired
 	private Currency currency;
-
 	@ManyToOne
-	@Autowired
 	private Gender gender;
-	
+
 	public Settings(Long id, User user) {
 		this.id = id;
 		this.user = user;
+		this.currency = new Currency();
+		
+		this.currency.setId((long)1);
+
+		
 	}
-	
+
 }
