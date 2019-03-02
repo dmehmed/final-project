@@ -11,23 +11,28 @@ import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
 @Table(name = "countries")
 @Getter
 @Setter
-@RequiredArgsConstructor
+@NoArgsConstructor
 @AllArgsConstructor
 public class Country {
 
 	@Id
-	private final Long id;
-	private final String name;
+	private Long id;
+	private String name;
 
 	@OneToMany(cascade = CascadeType.ALL)
 	@JoinColumn(name = "country_id")
 	private Set<Settings> settings;
+	
+	public Country(Long id, String name){
+		this.id = id;
+		this.name = name;
+	}
 
 }
