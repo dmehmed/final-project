@@ -9,10 +9,10 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserDTO {
-	
-	private String email;
-	private String username;
-	private SettingsDTO settings;
+public class WalletDTO {
 
+	private String name;
+	private double balance;
+	private double limit;
+	
 }
