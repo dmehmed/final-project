@@ -80,6 +80,7 @@ public class WalletController {
 		long userId = (Long) session.getAttribute(USER_ID);
 		this.walletService.addWalletToUser(newWallet, userId);
 		response.setStatus(HttpStatus.CREATED.value());
+
 	}
 	
 	@GetMapping("/{id}")
@@ -92,10 +93,10 @@ public class WalletController {
 			return null;
 		}
 
+
 		long userId = (Long) session.getAttribute(USER_ID);
 		
 		return this.walletService.getWalletById(id, userId);
 	}
-
 
 }
