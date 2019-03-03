@@ -8,6 +8,8 @@ import javax.persistence.Id;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Where;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,6 +21,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Where(clause="is_deleted = 0")
 public class User {
 	
 	@Id
@@ -36,6 +39,12 @@ public class User {
 	private Settings settings;
 	
 	private byte isDeleted;
+	
+	public User(String email, String password, String username) {
+		this.email = email;
+		this.password = password;
+		this.username = username;
+	}
 
 
 		

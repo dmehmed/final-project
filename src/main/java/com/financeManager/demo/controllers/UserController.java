@@ -1,8 +1,5 @@
 package com.financeManager.demo.controllers;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -11,6 +8,7 @@ import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.Errors;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -93,18 +91,22 @@ public class UserController {
 	public void login(@RequestBody LoginDTO user, HttpServletRequest request, HttpServletResponse response) {	
 		User us = null;
 		try {
-			us = this.userService.login(user);
+			try {
+				us = this.userService.login(user);
+			} catch (NotExistingUserException e) {
+				response.setStatus(HttpStatus.NOT_FOUND.value() );
+				return;
+			}
 		} catch (WrongPasswordException e) {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 			return;
 		}
-		
+
 		response.setStatus(HttpStatus.ACCEPTED.value());
 		HttpSession session = request.getSession();
 		session.setAttribute("userId", us.getId());
 		System.out.println(us.getSettings());
-		
 	}
 
 	@GetMapping("/logout")
@@ -114,7 +116,7 @@ public class UserController {
 	}
 	
 	@PatchMapping(path = "/profile/update", consumes = "application/json")
-	public void updateProfile(@RequestBody UpdateProfileDTO updates, HttpServletRequest request, HttpServletResponse response) {
+	public void updateProfile(@RequestBody @Valid UpdateProfileDTO updates, HttpServletRequest request, HttpServletResponse response) {
 		HttpSession session = request.getSession();
 		
 		if (session.getAttribute("userId") == null) {
@@ -141,6 +143,31 @@ public class UserController {
 			return;
 		}
 		response.setStatus(HttpStatus.OK.value());
+		
+	}
+	
+	
+	@GetMapping("/deactivate")
+	public String deactivate(HttpServletRequest request, HttpServletResponse response) {
+		HttpSession session = request.getSession();
+		
+		if (session.getAttribute("userId") == null) {
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			return "Could not delete!";
+		}
+		
+		long id = (Long) session.getAttribute("userId");
+		try {
+			this.userService.softDeleteUser(id);
+		} catch (NotExistingUserException e) {	
+			e.printStackTrace();
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return HttpStatus.NOT_FOUND.getReasonPhrase();
+		}
+		
+		response.setStatus(HttpStatus.NO_CONTENT.value());
+		
+		return HttpStatus.NO_CONTENT.getReasonPhrase();
 		
 	}
 

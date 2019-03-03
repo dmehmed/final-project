@@ -6,23 +6,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.financeManager.demo.dto.CreateUserDTO;
-import com.financeManager.demo.dto.SettingsDTO;
 import com.financeManager.demo.dto.UserDTO;
+import com.financeManager.demo.exceptions.NotExistingUserException;
+import com.financeManager.demo.model.User;
 import com.financeManager.demo.services.UserService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class AddUserTest {
-	
+public class GetUserProfileTest {
 
 	@Autowired
 	private UserService service;
-
-	CreateUserDTO userDto = new CreateUserDTO("ivanmirchev234@abv.bg", "parolaMarol1#","nekuvUsername");
+	Long id = new Long((long) 30);
 	@Test
-	public void addUser() {
-		this.service.makeAccount(userDto);
+	public void testUserProfile() throws NotExistingUserException {
+		User us = this.service.getExistingUserById(id);
+	this.service.getUserProfile(us);
 	}
-
 }

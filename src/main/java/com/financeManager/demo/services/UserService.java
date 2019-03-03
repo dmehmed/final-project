@@ -1,6 +1,9 @@
 package com.financeManager.demo.services;
 
+import java.util.NoSuchElementException;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.financeManager.demo.dto.CreateUserDTO;
@@ -38,7 +41,7 @@ public class UserService {
 	SettingsService settingsService; 
 	
 	public User makeAccount(CreateUserDTO newUser) {	
-		User usi = new User(null, newUser.getEmail(), newUser.getPassword(), newUser.getUsername(), null,(byte)1);
+		User usi = new User(newUser.getEmail(), newUser.getPassword(), newUser.getUsername());
 		userRepo.save(usi);	
 		Settings userSettings = new Settings(usi.getId(), usi);
 		settingsRepo.save(userSettings);
@@ -47,19 +50,22 @@ public class UserService {
 	}
 	
 	public User getExistingUserById(Long id) throws NotExistingUserException {
-		User usi = this.userRepo.findById(id).get();
-		if(usi == null) {
+		try {
+			User usi = this.userRepo.findById(id).get();
+			 return usi;
+		} catch (NoSuchElementException e){
+			throw new NotExistingUserException();
+		}
+	}
+	
+	public User login(LoginDTO logger) throws WrongPasswordException, NotExistingUserException {
+		User us = null;
+		try {
+			us = this.userRepo.findByEmail(logger.getEmail()).get();
+		}catch(NoSuchElementException e) {
 			throw new NotExistingUserException();
 		}
 		
-		System.out.println("Method get " + usi.getSettings());
-		
-		return usi;
-	}
-	
-	public User login(LoginDTO logger) throws WrongPasswordException {
-		
-		User us = this.userRepo.findByEmail(logger.getEmail());
 		
 		if(!us.getPassword().equals(logger.getPassword())){
 			throw new WrongPasswordException();
@@ -69,15 +75,17 @@ public class UserService {
 		us.setSettings(settings);
 		
 		return us;
-		
+
 	}
 	
 	public User getExistingUserByEmail(String email) throws NotExistingUserException {
-		User usi = this.userRepo.findByEmail(email);
-		if(usi == null) {
+		try {
+			User usi = this.userRepo.findByEmail(email).get();
+			 return usi;
+		} catch (NoSuchElementException e){
 			throw new NotExistingUserException();
 		}
-		return usi;
+	
 	}
 	
 	
@@ -88,7 +96,7 @@ public class UserService {
 		profile.setEmail(us.getEmail());
 		profile.setUsername(us.getUsername());	
 		profile.setSettings(settingsService.getSettings(us.getSettings().getId()));
-		
+
 		return profile;
 	}
 
@@ -106,10 +114,16 @@ public class UserService {
 			Settings newSettings = settingsService.update(usi.getSettings(), updates.getSettings());
 			usi.setSettings(newSettings);
 		}
-		
+
 		userRepo.save(usi);
 	}
 	
-	
+	public void softDeleteUser(Long id) throws NotExistingUserException {
+		User user = this.getExistingUserById(id);	
+		user.setIsDeleted((byte)1);
+		this.userRepo.save(user);
+		
+	}
+		
 	
 }
