@@ -20,8 +20,8 @@ import lombok.Setter;
 @Table(name = "currencies")
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class Currency {
 
 	@Id

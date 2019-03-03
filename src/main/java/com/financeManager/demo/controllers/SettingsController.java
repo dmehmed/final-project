@@ -40,7 +40,7 @@ public class SettingsController {
 			return this.countryDAO.getAll().stream().map(country -> new CountryDTO(country.getId(), country.getName())).collect(Collectors.toList());
 		} catch (SQLException e) {
 			e.printStackTrace();
-			response.setStatus(HttpStatus.I_AM_A_TEAPOT.value());
+			response.setStatus(HttpStatus.NOT_FOUND.value());
 			return new LinkedList<CountryDTO>();
 		}
 	}
@@ -52,7 +52,7 @@ public class SettingsController {
 			return this.currencyDAO.getAll().stream().map(currency -> new CurrencyDTO(currency.getId(), currency.getType())).collect(Collectors.toList());
 		} catch (SQLException e) {
 			e.printStackTrace();
-			response.setStatus(HttpStatus.I_AM_A_TEAPOT.value());
+			response.setStatus(HttpStatus.NOT_FOUND.value());
 			return new LinkedList<CurrencyDTO>();
 		}
 	}
@@ -64,7 +64,7 @@ public class SettingsController {
 			return this.genderDAO.getAll().stream().map(gender -> new GenderDTO(gender.getId(), gender.getName())).collect(Collectors.toList());
 		} catch (SQLException e) {
 			e.printStackTrace();
-			response.setStatus(HttpStatus.I_AM_A_TEAPOT.value());
+			response.setStatus(HttpStatus.NOT_FOUND.value());
 			return new LinkedList<GenderDTO>();
 		}
 	}
