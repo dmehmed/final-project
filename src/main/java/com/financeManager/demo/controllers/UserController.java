@@ -19,8 +19,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+<<<<<<< HEAD
 import com.financeManager.demo.dao.CategoryDAO;
 import com.financeManager.demo.dto.CategoryDTO;
+=======
+import com.financeManager.demo.dao.IWalletDAO;
+>>>>>>> e2901b6189f7a12dc91b71bb5a133920f4ef42c6
 import com.financeManager.demo.dto.CreateUserDTO;
 import com.financeManager.demo.dto.CurrencyDTO;
 import com.financeManager.demo.dto.LoginDTO;
@@ -37,10 +41,17 @@ import com.financeManager.demo.services.UserService;
 public class UserController {
 
 	private static final String USER_ID = "userId";
+	
 	@Autowired
 	private UserService userService;
+<<<<<<< HEAD
 	@Autowired
 	private CategoryDAO categoryDao;
+=======
+	
+	@Autowired
+	private IWalletDAO walletDAO;
+>>>>>>> e2901b6189f7a12dc91b71bb5a133920f4ef42c6
 
 //	@GetMapping("/users")
 //	public List<CreateUserDTO> showMe() {
@@ -138,14 +149,19 @@ public class UserController {
 
 		response.setStatus(HttpStatus.ACCEPTED.value());
 		HttpSession session = request.getSession();
-
 		session.setAttribute(USER_ID, us.getId());
+		
+		this.walletDAO.loadUserWallets(us.getId());
 
 	}
 
 	@GetMapping("/logout")
 	public void logout(HttpServletRequest request) {
+		
 		HttpSession session = request.getSession();
+		
+		this.walletDAO.clearUserWallets((Long) session.getAttribute(USER_ID));
+		
 		session.invalidate();
 	}
 

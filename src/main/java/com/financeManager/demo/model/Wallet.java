@@ -8,11 +8,9 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
-
-import org.hibernate.annotations.Where;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,38 +18,28 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "users")
+@Table(name="wallets")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Where(clause = "is_deleted = 0")
-public class User {
+public class Wallet {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-
 	private Long id;
 
-	private String email;
+	private String name;
 
-	private String password;
-
-	private String username;
-
-	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-	private Settings settings;
-
+	private double balance;
+	
+	private double limit;
+	
+	@ManyToOne
+	private User user;
+	
 	@OneToMany(cascade = CascadeType.ALL)
-	@JoinColumn(name = "user_id")
-	private Set<Wallet> wallets;
-
-	private byte isDeleted;
-
-	public User(String email, String password, String username) {
-		this.email = email;
-		this.password = password;
-		this.username = username;
-	}
-
+	@JoinColumn(name = "wallet_id")
+	private Set<Transaction> transactions;
+	
 }
