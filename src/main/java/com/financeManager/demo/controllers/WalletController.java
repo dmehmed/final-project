@@ -12,16 +12,19 @@ import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.Errors;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.CrudWalletDTO;
 import com.financeManager.demo.dto.WalletDTO;
+import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.services.WalletService;
 
 @RestController
@@ -80,9 +83,10 @@ public class WalletController {
 		long userId = (Long) session.getAttribute(USER_ID);
 		this.walletService.addWalletToUser(newWallet, userId);
 		response.setStatus(HttpStatus.CREATED.value());
+
 	}
 	
-	@GetMapping("/{id}")
+	@GetMapping("/{id}")  
 	public WalletDTO giveWalletById(@PathVariable Long id,HttpServletRequest request,
 			HttpServletResponse response) {
 		HttpSession session = request.getSession();
@@ -92,10 +96,29 @@ public class WalletController {
 			return null;
 		}
 
-		long userId = (Long) session.getAttribute(USER_ID);
-		
-		return this.walletService.getWalletById(id, userId);
+		try {
+			return this.walletService.getWalletById(id);
+		} catch (NotExistingWalletException e) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return null;
+		}
 	}
 
+	@DeleteMapping(path = "/delete/{id}")
+	@ResponseStatus(code = HttpStatus.NO_CONTENT)
+	public void deleteWalletById(@PathVariable Long id, HttpServletRequest request,HttpServletResponse response) {
+		HttpSession session = request.getSession();
 
+		if (session == null || session.getAttribute(USER_ID) == null) {
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			return;
+		}
+		
+		try {
+			this.walletService.deleteWalletById(id);
+		} catch (NotExistingWalletException e) {
+			e.printStackTrace();
+			return;
+		}
+	}
 }

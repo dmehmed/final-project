@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.CrudWalletDTO;
 import com.financeManager.demo.dto.WalletDTO;
+import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.model.User;
 import com.financeManager.demo.model.Wallet;
 import com.financeManager.demo.repositories.IUsersRepository;
@@ -40,10 +41,19 @@ public class WalletService {
 		this.walletDao.addWallet(wallet); 
 	}
 	
-	public WalletDTO getWalletById(Long walletId,Long userId) {
+	public WalletDTO getWalletById(Long walletId) throws NotExistingWalletException {
 		Wallet wallet = this.walletDao.getWalletById(walletId);
 		return new WalletDTO(wallet.getName(),wallet.getBalance(),wallet.getLimit());
 	}
+	
+	public void deleteWalletById(Long walletId) throws NotExistingWalletException {
+		
+		if(!this.walletDao.deleteWalletById(walletId)) {
+			throw new NotExistingWalletException();
+		}
+		
+	}
+	
 	
 	
 }
