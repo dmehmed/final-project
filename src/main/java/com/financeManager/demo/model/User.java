@@ -1,13 +1,14 @@
 package com.financeManager.demo.model;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -41,9 +42,9 @@ public class User {
 
 	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
 	private Settings settings;
-
-	@OneToMany(cascade = CascadeType.ALL)
-	@JoinColumn(name = "user_id")
+	
+	
+	@OneToMany(mappedBy = "user",cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	private Set<Wallet> wallets;
 
 	private byte isDeleted;
@@ -52,6 +53,7 @@ public class User {
 		this.email = email;
 		this.password = password;
 		this.username = username;
+		this.wallets = new HashSet<Wallet>();
 	}
 
 }

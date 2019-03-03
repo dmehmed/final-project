@@ -42,7 +42,7 @@ public class Settings {
 		this.id = id;
 		this.user = user;
 		this.currency = new Currency();
-		this.currency.setId((long)1);
+		this.currency.setId((long)1); 
 	}
 
 }

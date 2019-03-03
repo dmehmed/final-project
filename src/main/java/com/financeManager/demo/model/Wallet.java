@@ -1,15 +1,13 @@
 package com.financeManager.demo.model;
 
-import java.util.Set;
-
-import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
@@ -22,7 +20,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
+@AllArgsConstructor 
 public class Wallet {
 
 	@Id
@@ -32,14 +30,23 @@ public class Wallet {
 	private String name;
 
 	private double balance;
-	
+	@Column(name = "max_limit")
 	private double limit;
 	
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "user_id")
 	private User user;
 	
-	@OneToMany(cascade = CascadeType.ALL)
-	@JoinColumn(name = "wallet_id")
-	private Set<Transaction> transactions;
+//	@OneToMany(mappedBy = "transactions")
+////	@JoinColumn(name = "wallet_id")
+//	private Set<Transaction> transactions;
+	
+	public Wallet(String name, double balance, double limit,User owner) {
+		this.name = name;
+		this.balance = balance;
+		this.limit = limit;
+		this.user = owner;
+		System.out.println(owner.getId());
+	}
 	
 }
