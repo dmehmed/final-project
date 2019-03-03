@@ -96,6 +96,7 @@ public class WalletController {
 			return null;
 		}
 
+
 		try {
 			return this.walletService.getWalletById(id);
 		} catch (NotExistingWalletException e) {
@@ -104,10 +105,12 @@ public class WalletController {
 		}
 	}
 
+
 	@DeleteMapping(path = "/delete/{id}")
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
 	public void deleteWalletById(@PathVariable Long id, HttpServletRequest request,HttpServletResponse response) {
 		HttpSession session = request.getSession();
+
 
 		if (session == null || session.getAttribute(USER_ID) == null) {
 			response.setStatus(HttpStatus.UNAUTHORIZED.value());
