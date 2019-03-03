@@ -19,7 +19,7 @@ public class WalletDAO implements IWalletDAO {
 	
 	
 	@Override
-	public Wallet getById(Long id) {
+	public Wallet getWalletById(Long id) {
 		return this.wallets.stream().filter(wallet -> wallet.getId().equals(id)).findAny().get();
 	}
 
@@ -38,8 +38,8 @@ public class WalletDAO implements IWalletDAO {
 
 
 	@Override
-	public void addWallet() {
-		
+	public void addWallet(Wallet wallet) {
+		this.wallets.add(wallet);
 	}
 
 

@@ -142,6 +142,7 @@ public class UserController {
 			}
 		} catch (WrongPasswordException e) {
 			e.printStackTrace();
+			
 			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 			return;
 		}
