@@ -121,8 +121,13 @@ public class UserController {
 			try {
 				us = this.userService.login(user);
 			} catch (NotExistingUserException e) {
+
 				e.printStackTrace();
 				response.setStatus(HttpStatus.NOT_FOUND.value() );
+
+
+
+
 				return;
 			}
 		} catch (WrongPasswordException e) {

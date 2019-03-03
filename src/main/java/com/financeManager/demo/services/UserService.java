@@ -121,6 +121,7 @@ public class UserService {
 			Settings newSettings = settingsService.update(id, updates.getSettings());
 			 this.userRepo.findById(id).get().setSettings(newSettings);
 		}
+
 		this.userRepo.save(this.userRepo.findById(id).get());
 
 	}
@@ -136,11 +137,6 @@ public class UserService {
 	public boolean hasUserWithEmail(String email) {
 		return this.userRepo.findByEmail(email).isPresent();
 	}
-	
-	
-	
 
-	
-		
 	
 }
