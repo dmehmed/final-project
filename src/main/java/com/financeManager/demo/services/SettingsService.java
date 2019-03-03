@@ -35,29 +35,27 @@ public class SettingsService {
 	private ISettingsRepository settingsRepo;
 	@Autowired
 	private ICountryDAO countryDAO;
-	
+
 	@Autowired
 	private ICurrencyDAO currencyDAO;
-	
+
 	@Autowired
 	private IGenderDAO genderDAO;
-	
+
 	public SettingsDTO getSettings(Long id) {
+
 		SettingsDTO view = new SettingsDTO();
-		
-		Settings settings = settingsRepo.findById(id).get();	
-		
-		System.out.println("SETTINGS" + settings);
-		
+
+		Settings settings = settingsRepo.findById(id).get();
 		setFields(view, settings);
-		
+
 		return view;
 	}
 
 	private boolean isOptionalFieldEmpty(Object object) {
 		return object == null ? true : false;
 	}
-	
+
 	private void setFields(SettingsDTO view, Settings settings) {
 
 		view.setBirthdate(isOptionalFieldEmpty(settings.getBirthdate()) ? "" : settings.getBirthdate().toString());
@@ -67,13 +65,13 @@ public class SettingsService {
 		
 	}
 
-	public Settings update(Settings settings, SettingsUpdateDTO update) throws DateFormatException, NoSuchSettingsOptionException {
+	public Settings update(Long id, SettingsUpdateDTO update) throws DateFormatException, NoSuchSettingsOptionException {
 		
 		if(update.getBirthdate() != null) {
 			try {
 				java.util.Date newBirthdate = new SimpleDateFormat(DATE_FORMAT).parse(update.getBirthdate());
 				java.sql.Date sqlBirthday = new java.sql.Date(newBirthdate.getTime());
-				settings.setBirthdate(sqlBirthday);
+				this.settingsRepo.findById(id).get().setBirthdate(sqlBirthday);
 			} catch (ParseException e) {
 				e.printStackTrace();
 				throw new DateFormatException("Wrong date format", e);
@@ -83,23 +81,23 @@ public class SettingsService {
 		try {
 		
 		if(update.getCountryId() != null) {
-			settings.setCountry(countryDAO.getById(update.getCountryId()));
+			this.settingsRepo.findById(id).get().setCountry(countryDAO.getById(update.getCountryId()));
 		}
 		
 		if(update.getCurrencyId() != null) {
-			settings.setCurrency(currencyDAO.getById(update.getCurrencyId()));
+			this.settingsRepo.findById(id).get().setCurrency(currencyDAO.getById(update.getCurrencyId()));
 		}
 		
 		if(update.getGenderId() != null) {
-			settings.setGender(genderDAO.getById(update.getGenderId()));
+			this.settingsRepo.findById(id).get().setGender(genderDAO.getById(update.getGenderId()));
 		}
 		
 		} catch (NoSuchElementException e) {
 			throw new NoSuchSettingsOptionException("There is no such option", e);
 		}
 		
-		settingsRepo.save(settings);
-		return settings;
+		settingsRepo.save(this.settingsRepo.findById(id).get());
+		return this.settingsRepo.findById(id).get();
 		
 	}
 }

@@ -2,8 +2,9 @@ package com.financeManager.demo.services;
 
 import java.util.NoSuchElementException;
 
+import org.apache.commons.codec.digest.DigestUtils;
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.financeManager.demo.dto.CreateUserDTO;
@@ -14,7 +15,6 @@ import com.financeManager.demo.exceptions.DateFormatException;
 import com.financeManager.demo.exceptions.NoSuchSettingsOptionException;
 import com.financeManager.demo.exceptions.NotExistingUserException;
 import com.financeManager.demo.exceptions.WrongPasswordException;
-import com.financeManager.demo.model.Country;
 import com.financeManager.demo.model.Settings;
 import com.financeManager.demo.model.User;
 import com.financeManager.demo.repositories.ISettingsRepository;
@@ -41,7 +41,7 @@ public class UserService {
 	SettingsService settingsService; 
 	
 	public User makeAccount(CreateUserDTO newUser) {	
-		User usi = new User(newUser.getEmail(), newUser.getPassword(), newUser.getUsername());
+		User usi = new User(newUser.getEmail(), DigestUtils.sha256Hex(newUser.getPassword()), newUser.getUsername());
 		userRepo.save(usi);	
 		Settings userSettings = new Settings(usi.getId(), usi);
 		settingsRepo.save(userSettings);
@@ -66,8 +66,8 @@ public class UserService {
 			throw new NotExistingUserException();
 		}
 		
-		
-		if(!us.getPassword().equals(logger.getPassword())){
+		String decrypted = DigestUtils.sha256Hex(logger.getPassword());
+		if(!us.getPassword().equals(decrypted)){
 			throw new WrongPasswordException();
 		} 
 		
@@ -75,6 +75,9 @@ public class UserService {
 		us.setSettings(settings);
 		
 		return us;
+
+	
+		
 
 	}
 	
@@ -90,32 +93,36 @@ public class UserService {
 	
 	
 	
-	public UserDTO getUserProfile(User us) {
+	public UserDTO getUserProfile(Long id) {
 		
 		UserDTO profile = new UserDTO();
-		profile.setEmail(us.getEmail());
-		profile.setUsername(us.getUsername());	
-		profile.setSettings(settingsService.getSettings(us.getSettings().getId()));
+		
+		User user = this.userRepo.findById(id).get();
+		
+		profile.setEmail(user.getEmail());
+		profile.setUsername(user.getUsername());	
+		profile.setSettings(settingsService.getSettings(user.getSettings().getId()));
+		
 
 		return profile;
 	}
 
-	public void updateProfile(User usi, UpdateProfileDTO updates) throws DateFormatException, NoSuchSettingsOptionException {
+	public void updateProfile(Long id, UpdateProfileDTO updates) throws DateFormatException, NoSuchSettingsOptionException {
 		
 		if(updates.getUsername() != null) {
-			usi.setUsername(updates.getUsername());
+			 this.userRepo.findById(id).get().setUsername(updates.getUsername());
 		}
 		
 		if(updates.getPassword() != null) {
-			usi.setPassword(updates.getPassword());
+			 this.userRepo.findById(id).get().setPassword(DigestUtils.sha256Hex(updates.getPassword()));
 		}
 		
 		if(updates.getSettings() != null) {
-			Settings newSettings = settingsService.update(usi.getSettings(), updates.getSettings());
-			usi.setSettings(newSettings);
+			Settings newSettings = settingsService.update(id, updates.getSettings());
+			 this.userRepo.findById(id).get().setSettings(newSettings);
 		}
+		this.userRepo.save(this.userRepo.findById(id).get());
 
-		userRepo.save(usi);
 	}
 	
 	public void softDeleteUser(Long id) throws NotExistingUserException {
@@ -124,6 +131,16 @@ public class UserService {
 		this.userRepo.save(user);
 		
 	}
+
+	
+	public boolean hasUserWithEmail(String email) {
+		return this.userRepo.findByEmail(email).isPresent();
+	}
+	
+	
+	
+
+	
 		
 	
 }

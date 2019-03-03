@@ -16,7 +16,6 @@ import lombok.Setter;
 public class UpdateProfileDTO {
 	@Size(min = 5)
 	private String username;
-	@NotNull
 	@Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$")
 	private String password;
 	private SettingsUpdateDTO settings;

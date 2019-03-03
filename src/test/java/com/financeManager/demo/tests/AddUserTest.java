@@ -19,7 +19,7 @@ public class AddUserTest {
 	@Autowired
 	private UserService service;
 
-	CreateUserDTO userDto = new CreateUserDTO("ivanmirchev234@abv.bg", "parolaMarol1#","nekuvUsername");
+	CreateUserDTO userDto = new CreateUserDTO("ivanmirchev2342@abv.bg", "parolaMarol22221#","nekuvUsername");
 	@Test
 	public void addUser() {
 		this.service.makeAccount(userDto);
