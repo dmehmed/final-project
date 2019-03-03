@@ -3,7 +3,6 @@ package com.financeManager.demo.services;
 import java.util.NoSuchElementException;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.financeManager.demo.dto.CreateUserDTO;
@@ -14,7 +13,6 @@ import com.financeManager.demo.exceptions.DateFormatException;
 import com.financeManager.demo.exceptions.NoSuchSettingsOptionException;
 import com.financeManager.demo.exceptions.NotExistingUserException;
 import com.financeManager.demo.exceptions.WrongPasswordException;
-import com.financeManager.demo.model.Country;
 import com.financeManager.demo.model.Settings;
 import com.financeManager.demo.model.User;
 import com.financeManager.demo.repositories.ISettingsRepository;
@@ -76,6 +74,9 @@ public class UserService {
 		
 		return us;
 
+	
+		
+
 	}
 	
 	public User getExistingUserByEmail(String email) throws NotExistingUserException {
@@ -90,32 +91,39 @@ public class UserService {
 	
 	
 	
-	public UserDTO getUserProfile(User us) {
+	public UserDTO getUserProfile(Long id) {
 		
 		UserDTO profile = new UserDTO();
-		profile.setEmail(us.getEmail());
-		profile.setUsername(us.getUsername());	
-		profile.setSettings(settingsService.getSettings(us.getSettings().getId()));
+		
+		User user = this.userRepo.findById(id).get();
+		
+		profile.setEmail(user.getEmail());
+		profile.setUsername(user.getUsername());	
+		profile.setSettings(settingsService.getSettings(user.getSettings().getId()));
+		
 
 		return profile;
 	}
 
-	public void updateProfile(User usi, UpdateProfileDTO updates) throws DateFormatException, NoSuchSettingsOptionException {
+	public void updateProfile(Long id, UpdateProfileDTO updates) throws DateFormatException, NoSuchSettingsOptionException {
 		
 		if(updates.getUsername() != null) {
-			usi.setUsername(updates.getUsername());
+			 this.userRepo.findById(id).get().setUsername(updates.getUsername());
 		}
 		
 		if(updates.getPassword() != null) {
-			usi.setPassword(updates.getPassword());
+			 this.userRepo.findById(id).get().setPassword(updates.getPassword());
 		}
 		
 		if(updates.getSettings() != null) {
-			Settings newSettings = settingsService.update(usi.getSettings(), updates.getSettings());
-			usi.setSettings(newSettings);
+			Settings newSettings = settingsService.update(id, updates.getSettings());
+			 this.userRepo.findById(id).get().setSettings(newSettings);
 		}
 
-		userRepo.save(usi);
+
+
+		this.userRepo.save(this.userRepo.findById(id).get());
+
 	}
 	
 	public void softDeleteUser(Long id) throws NotExistingUserException {
@@ -124,6 +132,12 @@ public class UserService {
 		this.userRepo.save(user);
 		
 	}
+
+	
+	public boolean hasUserWithEmail(String email) {
+		return this.userRepo.findByEmail(email).isPresent();
+	}
+
 		
 	
 }

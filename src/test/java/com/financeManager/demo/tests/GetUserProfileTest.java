@@ -21,6 +21,6 @@ public class GetUserProfileTest {
 	@Test
 	public void testUserProfile() throws NotExistingUserException {
 		User us = this.service.getExistingUserById(id);
-	this.service.getUserProfile(us);
+	this.service.getUserProfile(us.getId());
 	}
 }
