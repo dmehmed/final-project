@@ -74,9 +74,10 @@ public class WalletController {
 		long userId = (Long) session.getAttribute(USER_ID);
 		this.walletService.addWalletToUser(newWallet, userId);
 		response.setStatus(HttpStatus.CREATED.value());
-		
+
 
 	}
 	
+
 
 }

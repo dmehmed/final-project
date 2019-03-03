@@ -33,8 +33,11 @@ public class WalletService {
 	public void addWalletToUser(CrudWalletDTO newWallet, Long userId) {
 		User owner = this.usersRepo.findById(userId).get();
 		
+
 		Wallet wallet = new Wallet(newWallet.getName(),newWallet.getBalance(),newWallet.getLimit(),owner);
 		walletRepo.save(wallet);
+
+
 	}
 	
 	

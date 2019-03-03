@@ -49,4 +49,12 @@ public class Wallet {
 		System.out.println(owner.getId());
 	}
 	
+//	public Wallet(String name, double balance, double limit,User owner) {
+//		this.name = name;
+//		this.balance = balance;
+//		this.limit = limit;
+//		this.user = owner;
+//		System.out.println(owner.getId());
+//	}
+	
 }
