@@ -1,24 +1,43 @@
-//package com.financeManager.demo.services;
-//
-//import org.springframework.stereotype.Service;
-//
-//import com.financeManager.demo.dao.ICountryDAO;
-//import com.financeManager.demo.dao.ICurrencyDAO;
-//import com.financeManager.demo.dao.IGenderDAO;
-//import com.financeManager.demo.repositories.ISettingsRepository;
-//
-//import lombok.AllArgsConstructor;
-//import lombok.Getter;
-//import lombok.NoArgsConstructor;
-//import lombok.Setter;
-//
-//@Service
-//@Getter
-//@Setter
-//@NoArgsConstructor
-//@AllArgsConstructor
-//public class WalletService {
-//	
-//	
-//	
-//}
+package com.financeManager.demo.services;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.financeManager.demo.dto.CrudWalletDTO;
+import com.financeManager.demo.model.Transaction;
+import com.financeManager.demo.model.User;
+import com.financeManager.demo.model.Wallet;
+import com.financeManager.demo.repositories.IUsersRepository;
+import com.financeManager.demo.repositories.IWalletRepository;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Service
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class WalletService {
+	
+	@Autowired
+	private IWalletRepository walletRepo;
+	@Autowired
+	private IUsersRepository usersRepo;
+	
+	public void addWalletToUser(CrudWalletDTO newWallet, Long userId) {
+		User owner = this.usersRepo.findById(userId).get();
+		
+		Set<Transaction> tr = new HashSet<Transaction>();
+		Wallet wallet = new Wallet();
+		
+//		walletRepo.save(wallet);
+	}
+	
+	
+}

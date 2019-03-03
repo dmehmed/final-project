@@ -1,16 +1,17 @@
 package com.example;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.apache.commons.codec.digest.DigestUtils;
-import org.mindrot.jbcrypt.BCrypt;
+import com.financeManager.demo.model.Wallet;
+import com.financeManager.demo.repositories.IWalletRepository;
 
 public class Demo {
-
+	@Autowired
+	private IWalletRepository repo;
 	public static void main(String[] args) throws Exception {
 		
-			String result = DigestUtils.sha256Hex("123456");
+			new Demo().repo.save(new Wallet());
+			
 			
 			
 		

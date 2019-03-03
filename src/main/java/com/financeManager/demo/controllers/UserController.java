@@ -41,12 +41,15 @@ public class UserController {
 	@Autowired
 	private UserService userService;
 
+
 	@Autowired
 	private CategoryDAO categoryDao;
 
 	
 	@Autowired
 	private IWalletDAO walletDAO;
+
+
 
 
 //	@GetMapping("/users")

@@ -42,4 +42,12 @@ public class Wallet {
 	@JoinColumn(name = "wallet_id")
 	private Set<Transaction> transactions;
 	
+//	public Wallet(String name, double balance, double limit,User owner) {
+//		this.name = name;
+//		this.balance = balance;
+//		this.limit = limit;
+//		this.user = owner;
+//		System.out.println(owner.getId());
+//	}
+	
 }
