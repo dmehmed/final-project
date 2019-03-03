@@ -8,7 +8,6 @@ import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.Errors;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,9 +28,9 @@ import com.financeManager.demo.services.UserService;
 @RestController
 public class UserController {
 
-	@Autowired 
+	private static final String USER_ID = "userId";
+	@Autowired
 	private UserService userService;
-
 
 //	@GetMapping("/users")
 //	public List<CreateUserDTO> showMe() {
@@ -41,60 +40,64 @@ public class UserController {
 //				.collect(Collectors.toList());
 //	}
 
-
 	@PostMapping("/register")
 	public String makeAccount(@RequestBody @Valid CreateUserDTO newUser, Errors errors, HttpServletResponse response) {
-		
+
 		if (errors.hasErrors()) {
 			response.setStatus(HttpStatus.BAD_REQUEST.value());
 			System.out.println(errors.getAllErrors());
 			return HttpStatus.BAD_REQUEST.getReasonPhrase();
-		} 
-		User user = null;
-		try {
-			user = this.userService.getExistingUserByEmail(newUser.getEmail());
-		} catch (NotExistingUserException e) {
-			User usi = this.userService.makeAccount(newUser);
-			return HttpStatus.CREATED.getReasonPhrase() + " " +  usi.getId();	
 		}
-		
-		response.setStatus(HttpStatus.BAD_REQUEST.value());
-		return HttpStatus.BAD_REQUEST.getReasonPhrase();
-		
+
+		if (this.userService.hasUserWithEmail(newUser.getEmail())) {
+			response.setStatus(HttpStatus.CONFLICT.value());
+			return HttpStatus.CONFLICT.getReasonPhrase();
 		}
-	
-	
+
+		User usi = this.userService.makeAccount(newUser);
+		return HttpStatus.CREATED.getReasonPhrase() + " " + usi.getId();
+
+	}
+
 	@GetMapping("/profile")
 	public UserDTO getUserProfile(HttpServletRequest request, HttpServletResponse response) {
 		HttpSession session = request.getSession();
-		
-		if (session.getAttribute("userId") == null) {
+
+		if (session.getAttribute(USER_ID) == null) {
 			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 			return null;
 		}
-		
-		long id = (Long) session.getAttribute("userId");
+
+		long id = (Long) session.getAttribute(USER_ID);
 		User usi = null;
-		
+
 		try {
-			 usi = userService.getExistingUserById(id);
+			usi = userService.getExistingUserById(id);
 		} catch (NotExistingUserException e) {
 			response.setStatus(HttpStatus.NOT_FOUND.value());
 			e.printStackTrace();
 			return null;
 		}
-		
-		return this.userService.getUserProfile(usi);
+
+		return this.userService.getUserProfile(usi.getId());
 	}
 
 	@PostMapping("/login")
-	public void login(@RequestBody LoginDTO user, HttpServletRequest request, HttpServletResponse response) {	
+	public void login(@RequestBody @Valid LoginDTO user, Errors errors, HttpServletRequest request,
+			HttpServletResponse response) {
+
+		if (errors.hasErrors()) {
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			System.out.println(errors.getAllErrors());
+			return;
+		}
+
 		User us = null;
 		try {
 			try {
 				us = this.userService.login(user);
 			} catch (NotExistingUserException e) {
-				response.setStatus(HttpStatus.NOT_FOUND.value() );
+				response.setStatus(HttpStatus.NOT_FOUND.value());
 				return;
 			}
 		} catch (WrongPasswordException e) {
@@ -105,8 +108,7 @@ public class UserController {
 
 		response.setStatus(HttpStatus.ACCEPTED.value());
 		HttpSession session = request.getSession();
-		session.setAttribute("userId", us.getId());
-		System.out.println(us.getSettings());
+		session.setAttribute(USER_ID, us.getId());
 	}
 
 	@GetMapping("/logout")
@@ -114,61 +116,66 @@ public class UserController {
 		HttpSession session = request.getSession();
 		session.invalidate();
 	}
-	
+
 	@PatchMapping(path = "/profile/update", consumes = "application/json")
-	public void updateProfile(@RequestBody @Valid UpdateProfileDTO updates, HttpServletRequest request, HttpServletResponse response) {
+	public String updateProfile(@RequestBody @Valid UpdateProfileDTO updates, HttpServletRequest request,
+			HttpServletResponse response) {
+
 		HttpSession session = request.getSession();
-		
-		if (session.getAttribute("userId") == null) {
+
+		if (session.getAttribute(USER_ID) == null) {
 			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return;
+			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
 		}
-		
-		long id = (Long) session.getAttribute("userId");
+
+		long id = (Long) session.getAttribute(USER_ID);
 		User usi = null;
-		
+
 		try {
-			 usi = userService.getExistingUserById(id);
+			usi = userService.getExistingUserById(id);
 		} catch (NotExistingUserException e) {
 			response.setStatus(HttpStatus.NOT_FOUND.value());
 			e.printStackTrace();
-			return;
+			return HttpStatus.NOT_FOUND.getReasonPhrase();
 		}
-		
+
 		try {
-			this.userService.updateProfile(usi, updates);
+
+			this.userService.updateProfile(usi.getId(), updates);
+
 		} catch (DateFormatException | NoSuchSettingsOptionException e) {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			return;
+			return HttpStatus.BAD_REQUEST.getReasonPhrase();
 		}
+
 		response.setStatus(HttpStatus.OK.value());
-		
+		return HttpStatus.OK.getReasonPhrase();
+
 	}
-	
-	
+
 	@GetMapping("/deactivate")
 	public String deactivate(HttpServletRequest request, HttpServletResponse response) {
 		HttpSession session = request.getSession();
-		
-		if (session.getAttribute("userId") == null) {
+
+		if (session.getAttribute(USER_ID) == null) {
 			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 			return "Could not delete!";
 		}
-		
-		long id = (Long) session.getAttribute("userId");
+
+		long id = (Long) session.getAttribute(USER_ID);
 		try {
 			this.userService.softDeleteUser(id);
-		} catch (NotExistingUserException e) {	
+		} catch (NotExistingUserException e) {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.NOT_FOUND.value());
 			return HttpStatus.NOT_FOUND.getReasonPhrase();
 		}
-		
+
 		response.setStatus(HttpStatus.NO_CONTENT.value());
-		
+
 		return HttpStatus.NO_CONTENT.getReasonPhrase();
-		
+
 	}
 
 }
