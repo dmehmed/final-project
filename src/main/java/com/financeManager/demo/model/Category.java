@@ -23,7 +23,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class Category {
 
-	
 	@Id
 	private Long id;
 	@NotNull

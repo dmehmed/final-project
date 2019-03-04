@@ -134,4 +134,13 @@ public class BudgetService {
 
 	}
 
+	public void deleteBudgetById(Long budgetId) throws NotExistingBudgetException {
+		
+		if (!this.budgetDao.deleteBudgetById(budgetId)) {
+			throw new NotExistingBudgetException();
+		}
+		
+	}
+	
+
 }
