@@ -7,15 +7,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.financeManager.demo.dto.CreateUserDTO;
-import com.financeManager.demo.dto.SettingsDTO;
-import com.financeManager.demo.dto.UserDTO;
 import com.financeManager.demo.services.UserService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class AddUserTest {
 	
-
 	@Autowired
 	private UserService service;
 

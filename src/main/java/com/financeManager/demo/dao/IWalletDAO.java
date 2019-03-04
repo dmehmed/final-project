@@ -13,4 +13,5 @@ public interface IWalletDAO {
 	void loadUserWallets(Long userId);
 	void clearUserWallets(Long userId);
 	boolean deleteWalletById(Long walletId);
+	void saveUpdatedWallet(Long walletId) throws NotExistingWalletException;
 }

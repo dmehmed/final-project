@@ -16,11 +16,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name="wallets")
+@Table(name = "wallets")
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor 
+@AllArgsConstructor
 public class Wallet {
 
 	@Id
@@ -29,32 +29,32 @@ public class Wallet {
 
 	private String name;
 
-	private double balance;
+	private Double balance;
 	@Column(name = "max_limit")
-	private double limit;
-	
+	private Double limit;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id")
 	private User user;
-	
+
 //	@OneToMany(mappedBy = "transactions")
 ////	@JoinColumn(name = "wallet_id")
 //	private Set<Transaction> transactions;
-	
-	public Wallet(String name, double balance, double limit,User owner) {
+
+	public Wallet(String name, Double balance, Double limit, User owner) {
 		this.name = name;
-		this.balance = balance;
-		this.limit = limit;
+		if (balance != null) {
+			this.balance = balance;
+		} else {
+			this.balance = 0.0;
+		}
+
+		if (limit != null) {
+			this.limit = limit;
+		} else {
+			this.limit = 0.0;
+		}
 		this.user = owner;
-		System.out.println(owner.getId());
 	}
-	
-//	public Wallet(String name, double balance, double limit,User owner) {
-//		this.name = name;
-//		this.balance = balance;
-//		this.limit = limit;
-//		this.user = owner;
-//		System.out.println(owner.getId());
-//	}
-	
+
 }

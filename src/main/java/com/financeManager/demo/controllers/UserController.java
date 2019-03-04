@@ -60,7 +60,7 @@ public class UserController {
 //				.collect(Collectors.toList());
 //	}
 
-	
+	//we need to move that in other controller 
 	@GetMapping("/categories")
 	public List<CurrencyDTO> listAllCategories(HttpServletResponse response){
 		try {
@@ -73,7 +73,7 @@ public class UserController {
 		
 	}
 	
-	
+	//we need to look at that - soft delete problems
 	@PostMapping("/register")
 	public String makeAccount(@RequestBody @Valid CreateUserDTO newUser, Errors errors, HttpServletResponse response) {
 		if (errors.hasErrors()) {
@@ -102,7 +102,7 @@ public class UserController {
 			return null;
 		}
 
-		long id = (Long) session.getAttribute(USER_ID);
+		Long id = (Long) session.getAttribute(USER_ID);
 		User usi = null;
 
 		try {
@@ -131,13 +131,9 @@ public class UserController {
 			try {
 				us = this.userService.login(user);
 			} catch (NotExistingUserException e) {
-
+				
 				e.printStackTrace();
 				response.setStatus(HttpStatus.NOT_FOUND.value() );
-
-
-
-
 				return;
 			}
 		} catch (WrongPasswordException e) {
@@ -150,7 +146,6 @@ public class UserController {
 		response.setStatus(HttpStatus.ACCEPTED.value());
 		HttpSession session = request.getSession();
 		session.setAttribute(USER_ID, us.getId());
-		
 		this.walletDAO.loadUserWallets(us.getId());
 
 	}
@@ -166,18 +161,23 @@ public class UserController {
 	}
 
 	@PatchMapping(path = "/profile/update", consumes = "application/json")
-
-	public String updateProfile(@RequestBody @Valid UpdateProfileDTO updates, HttpServletRequest request,
-			HttpServletResponse response) {
+	public String updateProfile(@RequestBody @Valid UpdateProfileDTO updates, Errors errors,
+			HttpServletRequest request, HttpServletResponse response) {
 
 		HttpSession session = request.getSession();
+		
+		if (errors.hasErrors()) {
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			System.out.println(errors.getAllErrors());
+			return HttpStatus.BAD_REQUEST.getReasonPhrase();
+		}
 
 		if (session.getAttribute(USER_ID) == null) {
 			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
 		}
 
-		long id = (Long) session.getAttribute(USER_ID);
+		Long id = (Long) session.getAttribute(USER_ID);
 		User usi = null;
 
 		try {
@@ -212,9 +212,10 @@ public class UserController {
 			return "Could not delete!";
 		}
 
-		long id = (Long) session.getAttribute(USER_ID);
+		Long id = (Long) session.getAttribute(USER_ID);
 		try {
 			this.userService.softDeleteUser(id);
+			this.walletDAO.clearUserWallets(id);
 		} catch (NotExistingUserException e) {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.NOT_FOUND.value());
@@ -222,7 +223,6 @@ public class UserController {
 		}
 
 		response.setStatus(HttpStatus.NO_CONTENT.value());
-
 		return HttpStatus.NO_CONTENT.getReasonPhrase();
 
 	}

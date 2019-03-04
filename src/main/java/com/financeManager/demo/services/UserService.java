@@ -3,7 +3,6 @@ package com.financeManager.demo.services;
 import java.util.NoSuchElementException;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -84,14 +83,12 @@ public class UserService {
 	public User getExistingUserByEmail(String email) throws NotExistingUserException {
 		try {
 			User usi = this.userRepo.findByEmail(email).get();
-			 return usi;
+			return usi;
 		} catch (NoSuchElementException e){
 			throw new NotExistingUserException();
 		}
 	
 	}
-	
-	
 	
 	public UserDTO getUserProfile(Long id) {
 		
