@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.financeManager.demo.dto.CrudWalletDTO;
 import com.financeManager.demo.dto.WalletDTO;
-import com.financeManager.demo.exceptions.InvalidWalletException;
+import com.financeManager.demo.exceptions.InvalidWalletEntryException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.services.WalletService;
 
@@ -77,7 +77,7 @@ public class WalletController {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.NOT_FOUND.value());
 			return HttpStatus.NOT_FOUND.getReasonPhrase();
-		} catch (InvalidWalletException e) {
+		} catch (InvalidWalletEntryException e) {
 			response.setStatus(HttpStatus.BAD_REQUEST.value());
 			e.printStackTrace();
 			return e.getMessage();
@@ -110,7 +110,7 @@ public class WalletController {
 			this.walletService.addWalletToUser(newWallet, userId);
 			response.setStatus(HttpStatus.CREATED.value());
 			return HttpStatus.CREATED.getReasonPhrase();
-		} catch (InvalidWalletException e) {
+		} catch (InvalidWalletEntryException e) {
 			e.printStackTrace();
 			
 			response.setStatus(HttpStatus.BAD_REQUEST.value());

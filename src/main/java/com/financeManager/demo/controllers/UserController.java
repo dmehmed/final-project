@@ -1,6 +1,7 @@
 package com.financeManager.demo.controllers;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,12 +25,15 @@ import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.CreateUserDTO;
 import com.financeManager.demo.dto.CurrencyDTO;
 import com.financeManager.demo.dto.LoginDTO;
+import com.financeManager.demo.dto.RetrieveUserDTO;
 import com.financeManager.demo.dto.UpdateProfileDTO;
 import com.financeManager.demo.dto.UserDTO;
 import com.financeManager.demo.exceptions.DateFormatException;
 import com.financeManager.demo.exceptions.NoSuchSettingsOptionException;
 import com.financeManager.demo.exceptions.NotExistingUserException;
+import com.financeManager.demo.exceptions.UserWithThisEmailAlreadyExistsException;
 import com.financeManager.demo.exceptions.WrongPasswordException;
+import com.financeManager.demo.model.DeletedUser;
 import com.financeManager.demo.model.User;
 import com.financeManager.demo.services.UserService;
 
@@ -75,7 +79,7 @@ public class UserController {
 	
 	//we need to look at that - soft delete problems
 	@PostMapping("/register")
-	public String makeAccount(@RequestBody @Valid CreateUserDTO newUser, Errors errors, HttpServletResponse response) {
+	public String makeAccount(@RequestBody @Valid CreateUserDTO newUser, Errors errors, HttpServletResponse response) throws SQLException {
 		if (errors.hasErrors()) {
 			response.setStatus(HttpStatus.BAD_REQUEST.value());
 			System.out.println(errors.getAllErrors());
@@ -87,7 +91,16 @@ public class UserController {
 			return HttpStatus.CONFLICT.getReasonPhrase();
 		}
 
-		User usi = this.userService.makeAccount(newUser);
+		User usi;
+		try {
+			usi = this.userService.makeAccount(newUser);
+		} catch (UserWithThisEmailAlreadyExistsException e) {
+			e.printStackTrace();
+			response.setStatus(HttpStatus.CONFLICT.value());
+			return HttpStatus.CONFLICT.getReasonPhrase();
+		}
+		
+		
 		response.setStatus(HttpStatus.CREATED.value());
 		return HttpStatus.CREATED.getReasonPhrase() + " " + usi.getId();
 
@@ -221,10 +234,36 @@ public class UserController {
 			response.setStatus(HttpStatus.NOT_FOUND.value());
 			return HttpStatus.NOT_FOUND.getReasonPhrase();
 		}
+		
 
 		response.setStatus(HttpStatus.NO_CONTENT.value());
 		return HttpStatus.NO_CONTENT.getReasonPhrase();
 
 	}
+	
+	
+	@PostMapping("/retrieve")
+	public String retrieveUser(@RequestBody @Valid LoginDTO lazarus,HttpServletRequest request, HttpServletResponse response) throws NotExistingUserException, WrongPasswordException, SQLException {
+		this.userService.retrieveUser(lazarus);
+//		try {
+//			DeletedUser lazar = ;
+//			
+//		} catch (NotExistingUserException e) {
+//			e.printStackTrace();
+//			response.setStatus(HttpStatus.NOT_FOUND.value());
+//			return HttpStatus.NOT_FOUND.getReasonPhrase();		
+//		} catch (WrongPasswordException e) {
+//			e.printStackTrace();
+//			response.setStatus(HttpStatus.BAD_REQUEST.value());
+//			return HttpStatus.BAD_REQUEST.getReasonPhrase();
+//		} 
+		
+		response.setStatus(HttpStatus.ACCEPTED.value());
+		return HttpStatus.ACCEPTED.getReasonPhrase() + " you have risen from the deleted!";
+	}
 
+//	@GetMapping("/deleted")
+//	public int getDeletedUsers(){
+//		return this.userService.listOfDeleted();
+//	}
 }

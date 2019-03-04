@@ -26,8 +26,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Where(clause = "is_deleted = 0")
-public class User{
+@Where(clause = "is_deleted = 1")
+public class DeletedUser{
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -49,10 +49,6 @@ public class User{
 
 	private byte isDeleted;
 
-	public User(String email, String password, String username) {
-		this.email = email;
-		this.password = password;
-		this.username = username;
-	}
+
 
 }
