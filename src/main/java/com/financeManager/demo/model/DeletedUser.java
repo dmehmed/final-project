@@ -1,5 +1,6 @@
 package com.financeManager.demo.model;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -25,8 +26,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Where(clause = "is_deleted = 0")
-public class User{
+@Where(clause = "is_deleted = 1")
+public class DeletedUser{
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,18 +44,11 @@ public class User{
 	private Settings settings;
 	
 	
-	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "user",cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	private Set<Wallet> wallets;
-	
-	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-	private Set<Budget> budgets;
 
 	private byte isDeleted;
 
-	public User(String email, String password, String username) {
-		this.email = email;
-		this.password = password;
-		this.username = username;
-	}
+
 
 }

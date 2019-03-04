@@ -18,10 +18,10 @@ public class AddUserTest {
 
 	CreateUserDTO userDto = new CreateUserDTO("ivanmirchev2342@abv.bg", "parolaMarol22221#","nekuvUsername");
 	
-	@Test
-	public void addUser() {
-		
-		this.service.makeAccount(userDto);
-	}
+//	@Test
+//	public void addUser() {
+//		
+//		this.service.makeAccount(userDto);
+//	}
 
 }

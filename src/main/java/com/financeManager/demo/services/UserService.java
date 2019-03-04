@@ -1,23 +1,32 @@
 package com.financeManager.demo.services;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.NoSuchElementException;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import com.financeManager.demo.dto.CreateUserDTO;
 import com.financeManager.demo.dto.LoginDTO;
+import com.financeManager.demo.dto.RetrieveUserDTO;
 import com.financeManager.demo.dto.UpdateProfileDTO;
 import com.financeManager.demo.dto.UserDTO;
 import com.financeManager.demo.exceptions.DateFormatException;
 import com.financeManager.demo.exceptions.NoSuchSettingsOptionException;
 import com.financeManager.demo.exceptions.NotExistingUserException;
+import com.financeManager.demo.exceptions.UserWithThisEmailAlreadyExistsException;
 import com.financeManager.demo.exceptions.WrongPasswordException;
+import com.financeManager.demo.model.DeletedUser;
 import com.financeManager.demo.model.Settings;
 import com.financeManager.demo.model.User;
+import com.financeManager.demo.repositories.IDeletedUsersRepository;
 import com.financeManager.demo.repositories.ISettingsRepository;
 import com.financeManager.demo.repositories.IUsersRepository;
+import com.zaxxer.hikari.util.SuspendResumeLock;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -37,9 +46,21 @@ public class UserService {
 	private ISettingsRepository settingsRepo;
 	
 	@Autowired
-	SettingsService settingsService; 
+	private SettingsService settingsService; 
+	@Autowired 
+	private JdbcTemplate jdbcTemplate = new JdbcTemplate();
 	
-	public User makeAccount(CreateUserDTO newUser) {	
+	@Autowired
+	private IDeletedUsersRepository deletedUsers;
+	
+	public User makeAccount(CreateUserDTO newUser) throws SQLException, UserWithThisEmailAlreadyExistsException {	
+		Connection con = jdbcTemplate.getDataSource().getConnection();
+		ResultSet rs = con.createStatement().executeQuery("SELECT * FROM users where email = '" + newUser.getEmail() + "'");	
+		
+		if(rs.next()) { 
+			throw new UserWithThisEmailAlreadyExistsException();
+		}
+
 		User usi = new User(newUser.getEmail(), DigestUtils.sha256Hex(newUser.getPassword()), newUser.getUsername());
 		userRepo.save(usi);	
 		Settings userSettings = new Settings(usi.getId(), usi);
@@ -52,6 +73,15 @@ public class UserService {
 		try {
 			User usi = this.userRepo.findById(id).get();
 			 return usi;
+		} catch (NoSuchElementException e){
+			throw new NotExistingUserException();
+		}
+	}
+	
+	public DeletedUser getDeletedUserByEmail(String email) throws NotExistingUserException {
+		try {
+			DeletedUser usi = this.deletedUsers.findByEmail(email).get();
+			return usi;
 		} catch (NoSuchElementException e){
 			throw new NotExistingUserException();
 		}
@@ -134,6 +164,38 @@ public class UserService {
 	public boolean hasUserWithEmail(String email) {
 		return this.userRepo.findByEmail(email).isPresent();
 	}
+	
+	
+//	public DeletedUser retrieveUser(RetrieveUserDTO lazarus) throws NotExistingUserException, WrongPasswordException {
+//		
+//		DeletedUser user = this.getDeletedUserByEmail(lazarus.getEmail());
+//		
+//		if(user.getPassword().equals(DigestUtils.sha256Hex(lazarus.getPassword()))) {
+//			user.setIsDeleted((byte)0);
+//			this.deletedUsers.save(user);
+//			return user;
+//		} else { 
+//			throw new WrongPasswordException();
+//		}
+//		
+//	}
+	
+	
+	public void retrieveUser(LoginDTO lazarus) throws NotExistingUserException, WrongPasswordException, SQLException {
+		
+		
+		Connection con = jdbcTemplate.getDataSource().getConnection();
+		System.out.println("BLABLA");
+		ResultSet rs = con.createStatement().executeQuery("SELECT * FROM users where email = '" + lazarus.getEmail() + "' and is_deleted = 1");
+
+		if(rs.next()) {
+
+			con.createStatement().executeUpdate("update users set is_deleted = 0 where email = '" + lazarus.getEmail() + "'");
+
+		}
+
+}
+	
 
 	
 }
