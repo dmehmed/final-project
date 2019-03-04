@@ -1,10 +1,7 @@
 package com.financeManager.demo.controllers;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -23,7 +20,6 @@ import com.financeManager.demo.dao.IBudgetDAO;
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.CreateUserDTO;
 import com.financeManager.demo.dto.LoginDTO;
-import com.financeManager.demo.dto.RetrieveUserDTO;
 import com.financeManager.demo.dto.UpdateProfileDTO;
 import com.financeManager.demo.dto.UserDTO;
 import com.financeManager.demo.exceptions.DateFormatException;
@@ -31,7 +27,6 @@ import com.financeManager.demo.exceptions.NoSuchSettingsOptionException;
 import com.financeManager.demo.exceptions.NotExistingUserException;
 import com.financeManager.demo.exceptions.UserWithThisEmailAlreadyExistsException;
 import com.financeManager.demo.exceptions.WrongPasswordException;
-import com.financeManager.demo.model.DeletedUser;
 import com.financeManager.demo.model.User;
 import com.financeManager.demo.services.UserService;
 

@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import com.financeManager.demo.dto.CreateUserDTO;
 import com.financeManager.demo.dto.LoginDTO;
-import com.financeManager.demo.dto.RetrieveUserDTO;
 import com.financeManager.demo.dto.UpdateProfileDTO;
 import com.financeManager.demo.dto.UserDTO;
 import com.financeManager.demo.exceptions.DateFormatException;
@@ -26,7 +25,6 @@ import com.financeManager.demo.model.User;
 import com.financeManager.demo.repositories.IDeletedUsersRepository;
 import com.financeManager.demo.repositories.ISettingsRepository;
 import com.financeManager.demo.repositories.IUsersRepository;
-import com.zaxxer.hikari.util.SuspendResumeLock;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

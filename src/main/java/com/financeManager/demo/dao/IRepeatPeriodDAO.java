@@ -9,6 +9,6 @@ public interface IRepeatPeriodDAO {
 	
 	public List<RepeatPeriod> getAll();
 	public RepeatPeriod getById(Long id);
-	public Date calculateEndDateByPeriod(RepeatPeriod repeatPeriod);
+	public Date calculateEndDateByPeriod(Long id);
 	
 }

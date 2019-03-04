@@ -81,8 +81,8 @@ public class WalletController {
 			return e.getMessage();
 		}
 		
-		response.setStatus(HttpStatus.OK.value());
-		return HttpStatus.OK.getReasonPhrase();
+		response.setStatus(HttpStatus.ACCEPTED.value());
+		return "Update " + HttpStatus.ACCEPTED.getReasonPhrase();
 
 	}
 	
@@ -110,7 +110,6 @@ public class WalletController {
 			return HttpStatus.CREATED.getReasonPhrase();
 		} catch (InvalidWalletEntryException e) {
 			e.printStackTrace();
-			
 			response.setStatus(HttpStatus.BAD_REQUEST.value());
 			return e.getMessage();
 		}
