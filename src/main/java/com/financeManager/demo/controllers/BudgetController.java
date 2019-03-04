@@ -11,19 +11,19 @@ import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.Errors;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.financeManager.demo.dto.BudgetDTO;
 import com.financeManager.demo.dto.CrudBudgetDTO;
-import com.financeManager.demo.dto.WalletDTO;
 import com.financeManager.demo.exceptions.InvalidBudgetEntryException;
 import com.financeManager.demo.exceptions.NotExistingBudgetException;
-import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.services.BudgetService;
 
 @RestController
@@ -57,6 +57,24 @@ public class BudgetController {
 		response.setStatus(HttpStatus.OK.value());
 		return userBudgets;
 
+	}
+	
+	@DeleteMapping(path = "/delete/{id}")
+	@ResponseStatus(code = HttpStatus.NO_CONTENT)
+	public void deleteBudgetById(@PathVariable Long id, HttpServletRequest request,HttpServletResponse response) {
+		HttpSession session = request.getSession();
+
+		if (session == null || session.getAttribute(USER_ID) == null) {
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			return;
+		}
+		
+		try {
+			this.budgetService.deleteBudgetById(id);
+		} catch (NotExistingBudgetException e) {
+			e.printStackTrace();
+			return;
+		}
 	}
 
 	@PostMapping("/create")

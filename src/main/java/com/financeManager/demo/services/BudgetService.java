@@ -15,15 +15,12 @@ import com.financeManager.demo.dao.ICategoryDao;
 import com.financeManager.demo.dao.IRepeatPeriodDAO;
 import com.financeManager.demo.dto.BudgetDTO;
 import com.financeManager.demo.dto.CrudBudgetDTO;
-import com.financeManager.demo.dto.WalletDTO;
 import com.financeManager.demo.exceptions.InvalidBudgetEntryException;
 import com.financeManager.demo.exceptions.NotExistingBudgetException;
-import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.model.Budget;
 import com.financeManager.demo.model.Category;
 import com.financeManager.demo.model.RepeatPeriod;
 import com.financeManager.demo.model.User;
-import com.financeManager.demo.model.Wallet;
 import com.financeManager.demo.repositories.IUsersRepository;
 
 import lombok.AllArgsConstructor;
@@ -98,6 +95,14 @@ public class BudgetService {
 	public BudgetDTO getBudgetById(Long budgetId) throws NotExistingBudgetException {
 		Budget budget = this.budgetDao.getBudgetById(budgetId);
 		return new BudgetDTO(budget.getAmount(), budget.getStartDate(), budget.getEndDate(), budget.getCategory().getName(), budget.getRepeatPeriod().getPeriod());
+	}
+
+	public void deleteBudgetById(Long budgetId) throws NotExistingBudgetException {
+		
+		if (!this.budgetDao.deleteBudgetById(budgetId)) {
+			throw new NotExistingBudgetException();
+		}
+		
 	}
 	
 	
