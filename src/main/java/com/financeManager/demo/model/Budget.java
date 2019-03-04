@@ -39,7 +39,7 @@ public class Budget {
 	@Column(name = "end_date")
 	private Date endDate;
 
-	@ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "user_id")
 	private User user;
 	

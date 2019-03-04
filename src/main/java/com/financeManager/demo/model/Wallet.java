@@ -35,7 +35,7 @@ public class Wallet {
 	@Column(name = "max_limit")
 	private Double limit;
 
-	@ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "user_id")
 	private User user;
 

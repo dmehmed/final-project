@@ -1,6 +1,7 @@
 package com.financeManager.demo.controllers;
 
 import java.sql.SQLException;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -60,7 +61,7 @@ public class UserController {
 //
 //	}
 
-	// we need to look at that - soft delete problems
+
 	@PostMapping("/register")
 	public String makeAccount(@RequestBody @Valid CreateUserDTO newUser, Errors errors, HttpServletResponse response) throws SQLException {
 		if (errors.hasErrors()) {

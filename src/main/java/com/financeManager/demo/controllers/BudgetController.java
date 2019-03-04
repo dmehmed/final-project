@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,7 +43,6 @@ public class BudgetController {
 		if (session == null || session.getAttribute(USER_ID) == null) {
 			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 			return new LinkedList<BudgetDTO>();
-
 		}
 
 		Long userId = (Long) session.getAttribute(USER_ID);
@@ -111,7 +111,10 @@ public class BudgetController {
 	
 	@GetMapping("/{id}")  
 	public BudgetDTO giveBudgetById(@PathVariable Long id, HttpServletRequest request,
-			HttpServletResponse response) {
+			HttpServletResponse response,Errors erros) {
+		
+		
+		
 		HttpSession session = request.getSession();
 
 		if (session == null || session.getAttribute(USER_ID) == null) {
@@ -125,6 +128,41 @@ public class BudgetController {
 			response.setStatus(HttpStatus.NOT_FOUND.value());
 			return null;
 		}
+	}
+	
+	@PatchMapping("/update/{id}")
+	public String update(@RequestBody @Valid CrudBudgetDTO updateBudget ,@PathVariable Long id, 
+			HttpServletRequest request, HttpServletResponse response,Errors errors) {
+		
+		if (errors.hasErrors()) {
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			System.out.println(errors.getAllErrors());
+			return HttpStatus.BAD_REQUEST.getReasonPhrase();
+		}
+		
+		HttpSession session = request.getSession();
+
+		if (session == null || session.getAttribute(USER_ID) == null) {
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
+		}
+		
+		try {
+			this.budgetService.updateBudget(updateBudget, id);
+		} catch (NotExistingBudgetException e) {
+			e.printStackTrace();
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return HttpStatus.NOT_FOUND.getReasonPhrase();
+		} catch (InvalidBudgetEntryException e) {
+			e.printStackTrace();
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			return HttpStatus.BAD_REQUEST.getReasonPhrase();
+		}
+		
+		response.setStatus(HttpStatus.ACCEPTED.value());
+		return "Update " + HttpStatus.ACCEPTED.getReasonPhrase();
+		
+		
 	}
 
 }
