@@ -236,23 +236,29 @@ public class UserController {
 	
 	
 	@PostMapping("/retrieve")
-	public String retrieveUser(@RequestBody @Valid LoginDTO lazarus,HttpServletRequest request, HttpServletResponse response) throws NotExistingUserException, WrongPasswordException, SQLException {
-		this.userService.retrieveUser(lazarus);
-//		try {
-//			DeletedUser lazar = ;
-//			
-//		} catch (NotExistingUserException e) {
-//			e.printStackTrace();
-//			response.setStatus(HttpStatus.NOT_FOUND.value());
-//			return HttpStatus.NOT_FOUND.getReasonPhrase();		
-//		} catch (WrongPasswordException e) {
-//			e.printStackTrace();
-//			response.setStatus(HttpStatus.BAD_REQUEST.value());
-//			return HttpStatus.BAD_REQUEST.getReasonPhrase();
-//		} 
+	public String retrieveUser(@RequestBody @Valid LoginDTO lazarus,HttpServletRequest request, HttpServletResponse response){
+		
+		try {
+			 this.userService.retrieveUser(lazarus);
+		} catch (NotExistingUserException e) {
+			e.printStackTrace();
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return "User " + HttpStatus.NOT_FOUND.getReasonPhrase();	
+		} catch (WrongPasswordException e) {		
+			e.printStackTrace();
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			return HttpStatus.BAD_REQUEST.getReasonPhrase() + " - wrong password!";
+		} catch (SQLException e) {
+			e.printStackTrace();
+			
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return "Database " +  HttpStatus.NOT_FOUND.getReasonPhrase() ;	
+		}
 		
 		response.setStatus(HttpStatus.ACCEPTED.value());
 		return HttpStatus.ACCEPTED.getReasonPhrase() + " you have risen from the deleted!";
+		
+		
 	}
 
 //	@GetMapping("/deleted")
