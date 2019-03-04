@@ -181,20 +181,26 @@ public class UserService {
 //	}
 	
 	
-	public void retrieveUser(LoginDTO lazarus) throws NotExistingUserException, WrongPasswordException, SQLException {
-		
+	public User retrieveUser(LoginDTO lazarus) throws WrongPasswordException, SQLException, NotExistingUserException{
 		
 		Connection con = jdbcTemplate.getDataSource().getConnection();
-		System.out.println("BLABLA");
 		ResultSet rs = con.createStatement().executeQuery("SELECT * FROM users where email = '" + lazarus.getEmail() + "' and is_deleted = 1");
 
 		if(rs.next()) {
-
-			con.createStatement().executeUpdate("update users set is_deleted = 0 where email = '" + lazarus.getEmail() + "'");
-
+			ResultSet st = con.createStatement().executeQuery("SELECT password FROM users where email = '" + lazarus.getEmail()+ "'");
+			st.next();
+			String pass = st.getString(1);
+			if(pass.equals(DigestUtils.sha256Hex(lazarus.getPassword()))) {
+					con.createStatement().executeUpdate("update users set is_deleted = 0 where email = '" + lazarus.getEmail() + "'");
+			} else { 
+				throw new WrongPasswordException();
+			}
+		} else { 
+			throw new NotExistingUserException();
 		}
 
-}
+		return this.userRepo.findByEmail(lazarus.getEmail()).get();
+	}
 	
 
 	
