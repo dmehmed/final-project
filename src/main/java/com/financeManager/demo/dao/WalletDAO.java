@@ -57,7 +57,7 @@ public class WalletDAO implements IWalletDAO {
 			Wallet w = this.wallets.stream().
 					filter(wallet -> wallet.getId().equals(walletId)).findFirst().get();
 			this.wallets.remove(w);
-			this.walletRepo.delete(w);
+			this.walletRepo.deleteById(walletId);
 			return true;
 		} catch (NoSuchElementException e) {
 			return false;
