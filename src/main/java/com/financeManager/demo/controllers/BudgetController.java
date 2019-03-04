@@ -59,6 +59,27 @@ public class BudgetController {
 
 	}
 	
+	
+	@GetMapping(path = "/{id}")  
+	public BudgetDTO giveBudgetById(@PathVariable Long id, HttpServletRequest request,
+			HttpServletResponse response) {
+
+		HttpSession session = request.getSession();
+
+		if (session == null || session.getAttribute(USER_ID) == null) {
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			return null;
+		}
+	
+		
+		try {
+			return this.budgetService.getBudgetById(id);
+		} catch (NotExistingBudgetException e) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return null;
+		}
+	}
+	
 	@DeleteMapping(path = "/delete/{id}")
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
 	public void deleteBudgetById(@PathVariable Long id, HttpServletRequest request,HttpServletResponse response) {
@@ -109,26 +130,7 @@ public class BudgetController {
 
 	}
 	
-	@GetMapping("/{id}")  
-	public BudgetDTO giveBudgetById(@PathVariable Long id, HttpServletRequest request,
-			HttpServletResponse response,Errors erros) {
-		
-		
-		
-		HttpSession session = request.getSession();
 
-		if (session == null || session.getAttribute(USER_ID) == null) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return null;
-		}
-		
-		try {
-			return this.budgetService.getBudgetById(id);
-		} catch (NotExistingBudgetException e) {
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-			return null;
-		}
-	}
 	
 	@PatchMapping("/update/{id}")
 	public String update(@RequestBody @Valid CrudBudgetDTO updateBudget ,@PathVariable Long id, 

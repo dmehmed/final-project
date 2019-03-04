@@ -57,12 +57,8 @@ public class BudgetDAO implements IBudgetDAO {
 		try {
 			Budget b = this.budgets.stream().
 					filter(budget -> budget.getId().equals(budgetId)).findFirst().get();
-			System.out.println(b);
 			this.budgets.remove(b);
-			System.out.println(b);
-			this.budgetRepo.delete(b);
-			System.out.println(b);
-
+			this.budgetRepo.deleteById(budgetId);
 			return true;
 		} catch (NoSuchElementException e) {
 			return false;

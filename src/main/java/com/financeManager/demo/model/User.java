@@ -15,6 +15,7 @@ import javax.persistence.Table;
 import org.hibernate.annotations.Where;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
