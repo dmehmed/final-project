@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.financeManager.demo.dto.CrudWalletDTO;
 import com.financeManager.demo.dto.WalletDTO;
-import com.financeManager.demo.exceptions.InvalidWalletException;
+import com.financeManager.demo.exceptions.InvalidWalletEntryException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.services.WalletService;
 
@@ -47,9 +47,7 @@ public class WalletController {
 		}
 
 		Long userId = (Long) session.getAttribute(USER_ID);
-
 		List<CrudWalletDTO> userWallets = this.walletService.getAllUserWallets(userId);
-		
 		
 		if (userWallets == null) {
 			response.setStatus(HttpStatus.NOT_FOUND.value());
@@ -77,7 +75,7 @@ public class WalletController {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.NOT_FOUND.value());
 			return HttpStatus.NOT_FOUND.getReasonPhrase();
-		} catch (InvalidWalletException e) {
+		} catch (InvalidWalletEntryException e) {
 			response.setStatus(HttpStatus.BAD_REQUEST.value());
 			e.printStackTrace();
 			return e.getMessage();
@@ -105,12 +103,12 @@ public class WalletController {
 			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
 		}
 
-		long userId = (Long) session.getAttribute(USER_ID);
+		Long userId = (Long) session.getAttribute(USER_ID);
 		try {
 			this.walletService.addWalletToUser(newWallet, userId);
 			response.setStatus(HttpStatus.CREATED.value());
 			return HttpStatus.CREATED.getReasonPhrase();
-		} catch (InvalidWalletException e) {
+		} catch (InvalidWalletEntryException e) {
 			e.printStackTrace();
 			
 			response.setStatus(HttpStatus.BAD_REQUEST.value());
@@ -128,8 +126,7 @@ public class WalletController {
 			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 			return null;
 		}
-
-
+		
 		try {
 			return this.walletService.getWalletById(id);
 		} catch (NotExistingWalletException e) {
@@ -143,7 +140,6 @@ public class WalletController {
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
 	public void deleteWalletById(@PathVariable Long id, HttpServletRequest request,HttpServletResponse response) {
 		HttpSession session = request.getSession();
-
 
 		if (session == null || session.getAttribute(USER_ID) == null) {
 			response.setStatus(HttpStatus.UNAUTHORIZED.value());

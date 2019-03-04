@@ -1,10 +1,5 @@
 package com.financeManager.demo.controllers;
 
-import java.sql.SQLException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -19,10 +14,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.financeManager.demo.dao.CategoryDAO;
+import com.financeManager.demo.dao.IBudgetDAO;
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.CreateUserDTO;
-import com.financeManager.demo.dto.CurrencyDTO;
 import com.financeManager.demo.dto.LoginDTO;
 import com.financeManager.demo.dto.UpdateProfileDTO;
 import com.financeManager.demo.dto.UserDTO;
@@ -37,20 +31,15 @@ import com.financeManager.demo.services.UserService;
 public class UserController {
 
 	private static final String USER_ID = "userId";
-	
+
 	@Autowired
 	private UserService userService;
 
-
-	@Autowired
-	private CategoryDAO categoryDao;
-
-	
 	@Autowired
 	private IWalletDAO walletDAO;
-
-
-
+	
+	@Autowired
+	private IBudgetDAO budgetDAO;
 
 //	@GetMapping("/users")
 //	public List<CreateUserDTO> showMe() {
@@ -60,20 +49,16 @@ public class UserController {
 //				.collect(Collectors.toList());
 //	}
 
-	//we need to move that in other controller 
-	@GetMapping("/categories")
-	public List<CurrencyDTO> listAllCategories(HttpServletResponse response){
-		try {
-			return this.categoryDao.getAll().stream().map(category -> new CurrencyDTO(category.getId(), category.getName())).collect(Collectors.toList());
-		} catch (SQLException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.I_AM_A_TEAPOT.value());
-			return new LinkedList<CurrencyDTO>();
-		}
-		
-	}
-	
-	//we need to look at that - soft delete problems
+	// we need to move that in other controller
+//	@GetMapping("/categories")
+//	public List<CurrencyDTO> listAllCategories(HttpServletResponse response) {
+//
+//		return this.categoryDao.getAll().stream().map(category -> new CurrencyDTO(category.getId(), category.getName()))
+//				.collect(Collectors.toList());
+//
+//	}
+
+	// we need to look at that - soft delete problems
 	@PostMapping("/register")
 	public String makeAccount(@RequestBody @Valid CreateUserDTO newUser, Errors errors, HttpServletResponse response) {
 		if (errors.hasErrors()) {
@@ -131,14 +116,14 @@ public class UserController {
 			try {
 				us = this.userService.login(user);
 			} catch (NotExistingUserException e) {
-				
+
 				e.printStackTrace();
-				response.setStatus(HttpStatus.NOT_FOUND.value() );
+				response.setStatus(HttpStatus.NOT_FOUND.value());
 				return;
 			}
 		} catch (WrongPasswordException e) {
 			e.printStackTrace();
-			
+
 			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 			return;
 		}
@@ -147,25 +132,27 @@ public class UserController {
 		HttpSession session = request.getSession();
 		session.setAttribute(USER_ID, us.getId());
 		this.walletDAO.loadUserWallets(us.getId());
+		this.budgetDAO.loadUserBudgets(us.getId());
 
 	}
 
 	@GetMapping("/logout")
 	public void logout(HttpServletRequest request) {
-		
+
 		HttpSession session = request.getSession();
-		
+
 		this.walletDAO.clearUserWallets((Long) session.getAttribute(USER_ID));
-		
+		this.budgetDAO.clearUserBudgets((Long) session.getAttribute(USER_ID));
+
 		session.invalidate();
 	}
 
 	@PatchMapping(path = "/profile/update", consumes = "application/json")
-	public String updateProfile(@RequestBody @Valid UpdateProfileDTO updates, Errors errors,
-			HttpServletRequest request, HttpServletResponse response) {
+	public String updateProfile(@RequestBody @Valid UpdateProfileDTO updates, Errors errors, HttpServletRequest request,
+			HttpServletResponse response) {
 
 		HttpSession session = request.getSession();
-		
+
 		if (errors.hasErrors()) {
 			response.setStatus(HttpStatus.BAD_REQUEST.value());
 			System.out.println(errors.getAllErrors());
@@ -216,6 +203,9 @@ public class UserController {
 		try {
 			this.userService.softDeleteUser(id);
 			this.walletDAO.clearUserWallets(id);
+			this.budgetDAO.clearUserBudgets(id);
+			
+			session.invalidate();
 		} catch (NotExistingUserException e) {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.NOT_FOUND.value());
@@ -224,7 +214,6 @@ public class UserController {
 
 		response.setStatus(HttpStatus.NO_CONTENT.value());
 		return HttpStatus.NO_CONTENT.getReasonPhrase();
-
 	}
 
 }

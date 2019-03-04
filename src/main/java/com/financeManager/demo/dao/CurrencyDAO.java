@@ -1,6 +1,5 @@
 package com.financeManager.demo.dao;
 
-import java.sql.SQLException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +16,7 @@ public class CurrencyDAO implements ICurrencyDAO {
 	private List<Currency> currencies;
 
 	@Override
-	public List<Currency> getAll() throws SQLException {
+	public List<Currency> getAll() {
 		return this.currencies;
 	}
 
@@ -25,9 +24,9 @@ public class CurrencyDAO implements ICurrencyDAO {
 	public Currency getById(Long id) {
 		return this.currencies.stream().filter(country -> country.getId().equals(id)).findFirst().get();
 	}
-	
+
 	@Autowired
-	public void setCurrencies() {
+	private void setCurrencies() {
 		this.currencies = currencyRepo.findAll();
 	}
 

@@ -1,6 +1,5 @@
 package com.financeManager.demo.model;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -44,8 +43,11 @@ public class User {
 	private Settings settings;
 	
 	
-	@OneToMany(mappedBy = "user",cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	private Set<Wallet> wallets;
+	
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	private Set<Budget> budgets;
 
 	private byte isDeleted;
 
@@ -53,7 +55,6 @@ public class User {
 		this.email = email;
 		this.password = password;
 		this.username = username;
-		this.wallets = new HashSet<Wallet>();
 	}
 
 }

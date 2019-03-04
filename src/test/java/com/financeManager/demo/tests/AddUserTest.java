@@ -17,8 +17,10 @@ public class AddUserTest {
 	private UserService service;
 
 	CreateUserDTO userDto = new CreateUserDTO("ivanmirchev2342@abv.bg", "parolaMarol22221#","nekuvUsername");
+	
 	@Test
 	public void addUser() {
+		
 		this.service.makeAccount(userDto);
 	}
 

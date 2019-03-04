@@ -1,6 +1,5 @@
 package com.financeManager.demo.dao;
 
-import java.sql.SQLException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,16 +17,14 @@ import lombok.Setter;
 @NoArgsConstructor
 @Component
 public class CategoryDAO implements ICategoryDao {
-	
+
 	@Autowired
 	private ICategoryRepository repo;
-	
+
 	private List<Category> categories;
-	
-	
-	
+
 	@Override
-	public List<Category> getAll() throws SQLException {
+	public List<Category> getAll() {
 		return this.categories;
 	}
 
@@ -35,9 +32,9 @@ public class CategoryDAO implements ICategoryDao {
 	public Category getById(Long id) {
 		return this.categories.stream().filter(country -> country.getId().equals(id)).findFirst().get();
 	}
-	
+
 	@Autowired
-	public void setCategories() {
+	private void setCategories() {
 		this.categories = this.repo.findAll();
 	}
 

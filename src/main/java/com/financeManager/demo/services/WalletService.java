@@ -4,15 +4,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.validation.Valid;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.CrudWalletDTO;
 import com.financeManager.demo.dto.WalletDTO;
-import com.financeManager.demo.exceptions.InvalidWalletException;
+import com.financeManager.demo.exceptions.InvalidWalletEntryException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.model.User;
 import com.financeManager.demo.model.Wallet;
@@ -35,16 +33,16 @@ public class WalletService {
 	@Autowired
 	private IUsersRepository usersRepo;
 
-	public void addWalletToUser(CrudWalletDTO newWallet, Long userId) throws InvalidWalletException {
+	public void addWalletToUser(CrudWalletDTO newWallet, Long userId) throws InvalidWalletEntryException {
 		User owner = this.usersRepo.findById(userId).get();
 
 		if (newWallet.getName() == null) {
-			throw new InvalidWalletException("Invalid wallet name!");
+			throw new InvalidWalletEntryException("Invalid wallet name!");
 		}
 
 		if (newWallet.getLimit() != null && newWallet.getBalance() != null
 				&& newWallet.getLimit().longValue() < newWallet.getBalance().longValue()) {
-			throw new InvalidWalletException("Invalid wallet settings");
+			throw new InvalidWalletEntryException("Invalid wallet settings");
 		}
 
 		Wallet wallet = new Wallet(newWallet.getName(), newWallet.getBalance(), newWallet.getLimit(), owner);
@@ -64,8 +62,8 @@ public class WalletService {
 
 	}
 
-	public void updateWallet(Long walletId, @Valid CrudWalletDTO updates)
-			throws NotExistingWalletException, InvalidWalletException {
+	public void updateWallet(Long walletId, CrudWalletDTO updates)
+			throws NotExistingWalletException, InvalidWalletEntryException {
 
 		try {
 			this.walletDao.getWalletById(walletId);
@@ -79,7 +77,7 @@ public class WalletService {
 
 		if (updates.getLimit() != null && updates.getBalance() != null
 				&& updates.getLimit().longValue() < updates.getBalance().longValue()) {
-			throw new InvalidWalletException("Invalid wallet settings");
+			throw new InvalidWalletEntryException("Invalid wallet settings");
 		}
 
 		if (updates.getBalance() != null) {

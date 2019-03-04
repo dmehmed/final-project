@@ -1,6 +1,5 @@
 package com.financeManager.demo.dao;
 
-import java.sql.SQLException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +16,7 @@ public class CountryDAO implements ICountryDAO {
 	private List<Country> countries;
 
 	@Override
-	public List<Country> getAll() throws SQLException {
+	public List<Country> getAll() {
 		return this.countries;
 	}
 
@@ -25,10 +24,10 @@ public class CountryDAO implements ICountryDAO {
 	public Country getById(Long id) {
 		return this.countries.stream().filter(country -> country.getId().equals(id)).findFirst().get();
 	}
-	
+
 	@Autowired
-	public void setCountries() {
-		this.countries = countryRepo.findAll();
+	private void setCountries() {
+		this.countries = this.countryRepo.findAll();
 	}
 
 }

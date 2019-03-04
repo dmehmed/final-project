@@ -1,6 +1,5 @@
 package com.financeManager.demo.dao;
 
-import java.sql.SQLException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,17 +16,18 @@ public class GenderDAO implements IGenderDAO {
 	private List<Gender> genders;
 
 	@Override
-	public List<Gender> getAll() throws SQLException {
+	public List<Gender> getAll() {
 		return this.genders;
 	}
 
 	@Override
 	public Gender getById(Long id) {
+
 		return this.genders.stream().filter(country -> country.getId().equals(id)).findFirst().get();
 	}
-	
+
 	@Autowired
-	public void setGenders() {
+	private void setGenders() {
 		this.genders = genderRepo.findAll();
 	}
 
