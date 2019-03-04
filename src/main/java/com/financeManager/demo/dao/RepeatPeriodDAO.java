@@ -1,6 +1,7 @@
 package com.financeManager.demo.dao;
 
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,10 @@ import com.financeManager.demo.repositories.IRepeatPeriodRepository;
 @Component
 public class RepeatPeriodDAO implements IRepeatPeriodDAO {
 
+	private static final String YEARLY = "yearly";
+	private static final String WEEKLY = "weekly";
+	private static final String DAILY = "daily";
+	private static final String MONTHLY = "monthly";
 	@Autowired
 	private IRepeatPeriodRepository periodRepo;
 	private List<RepeatPeriod> periods;
@@ -32,15 +37,19 @@ public class RepeatPeriodDAO implements IRepeatPeriodDAO {
 	}
 
 	@Override
-	public Date calculateStartDateByPeriod(RepeatPeriod repeatPeriod) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public Date calculateEndDateByPeriod(RepeatPeriod repeatPeriod) {
-		// TODO Auto-generated method stub
-		return null;
+		switch (repeatPeriod.getPeriod()) {
+		case MONTHLY:
+			return Date.valueOf(LocalDate.now().plusMonths(1));
+		case DAILY:
+			return Date.valueOf(LocalDate.now().plusDays(1));
+		case WEEKLY:
+			return Date.valueOf(LocalDate.now().plusWeeks(1));
+		case YEARLY:
+			return Date.valueOf(LocalDate.now().plusYears(1));
+		default:
+			return Date.valueOf(LocalDate.now().plusMonths(1));
+		}
 	}
 
 }

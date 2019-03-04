@@ -15,7 +15,7 @@ public class CrudBudgetDTO {
 	
 	@Min(value = 0)
 	private Double amount;
-	private Long category;
-	private Long repeatPeriod;
+	private Long categoryId;
+	private Long repeatPeriodId;
 	
 }
