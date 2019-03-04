@@ -60,7 +60,7 @@ public class BudgetDAO implements IBudgetDAO {
 			System.out.println(b);
 			this.budgets.remove(b);
 			System.out.println(b);
-			this.budgetRepo.delete(b);
+			this.budgetRepo.deleteById(budgetId);
 			System.out.println(b);
 
 			return true;
