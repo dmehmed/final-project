@@ -11,7 +11,9 @@ import com.financeManager.demo.model.Transaction;
 @Repository
 public interface ITransactionRepository  extends JpaRepository<Transaction, Long> {
 //	List<Transaction>findTransactionsBetween(int min,int max);
+
 	List<Transaction> findAllByAmountIsGreaterThan(Double amount);
 	List<Transaction> findAllByAmountIsLessThan(Double amount);
+
 
 }
