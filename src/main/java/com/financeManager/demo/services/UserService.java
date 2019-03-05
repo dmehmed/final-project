@@ -201,5 +201,20 @@ public class UserService {
 	}
 	
 
+	public void saveUserInRepo(User user) {
+		this.userRepo.save(user);
+	}
+	
+//	public boolean checkUserCredentialsForPassword(ForgottenPasswordDTO user) throws NotExistingUserException, WrongUsernameException{
+//		
+//			
+//			User owner = this.getExistingUserByEmail(user.getEmail());
+//			
+//			if(!owner.getUsername().equals(user.getUsername())) {
+//				throw new WrongUsernameException();
+//			}
+//
+//	
+//	}
 	
 }

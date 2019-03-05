@@ -27,6 +27,9 @@ import lombok.Setter;
 @AllArgsConstructor
 public class TransactionService {
 
+//	private static final Long INCOME = 1L;
+	private static final Long EXPENSE = 2L;
+
 	@Autowired
 	private ITransactionRepository transactionRepo;
 
@@ -37,7 +40,7 @@ public class TransactionService {
 	private IWalletDAO walletDAO;
 
 	public void createTransaction(CreateTransactionDTO newTransaction, Long userId)
-			throws InvalidTransactionEntryException {
+			throws InvalidTransactionEntryException, NotExistingWalletException {
 
 		Wallet userWallet;
 		Category transactionCategory;
@@ -46,7 +49,7 @@ public class TransactionService {
 			userWallet = walletDAO.getWalletById(newTransaction.getWalletId());
 		} catch (NotExistingWalletException e) {
 			e.printStackTrace();
-			throw new InvalidTransactionEntryException("There is no such wallet", e);
+			throw new NotExistingWalletException("Invalid wallet", e);
 		}
 
 		try {
@@ -55,9 +58,16 @@ public class TransactionService {
 			e.printStackTrace();
 			throw new InvalidTransactionEntryException("Invalid category type");
 		}
+		
+		Double amount = newTransaction.getAmount();
+		
+		if(transactionCategory.getTransactionType().getId().equals(EXPENSE)) {
+			 amount = -amount;
+		}
 
-		Transaction transaction = new Transaction(newTransaction.getAmount(), newTransaction.getDescription(),
+		Transaction transaction = new Transaction(amount, newTransaction.getDescription(),
 				userWallet, transactionCategory);
+		
 		this.transactionRepo.save(transaction);
 	}
 

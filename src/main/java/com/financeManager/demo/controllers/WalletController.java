@@ -56,9 +56,9 @@ public class WalletController {
 		return userWallets;
 	}
 
-	@PatchMapping(path = "/update/{id}") // защо нямаме errors.
-	public String updateWallet(@RequestBody @Valid CrudWalletDTO updates, @PathVariable Long id,
-			HttpServletRequest request, HttpServletResponse response, Errors errors) {
+	@PatchMapping(path = "/update/{id}") 
+	public String updateWallet(@RequestBody @Valid CrudWalletDTO updates,Errors errors, @PathVariable Long id,
+			HttpServletRequest request, HttpServletResponse response) {
 		
 		if (Helper.isThereRequestError(errors, response)) {
 			return HttpStatus.BAD_REQUEST.getReasonPhrase();
@@ -74,8 +74,8 @@ public class WalletController {
 			this.walletService.updateWallet(id, updates);
 		} catch (NotExistingWalletException e) {
 			e.printStackTrace();
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-			return HttpStatus.NOT_FOUND.getReasonPhrase();
+			response.setStatus(HttpStatus.FORBIDDEN.value());
+			return HttpStatus.FORBIDDEN.getReasonPhrase();
 		} catch (InvalidWalletEntryException e) {
 			response.setStatus(HttpStatus.BAD_REQUEST.value());
 			e.printStackTrace();
@@ -88,17 +88,17 @@ public class WalletController {
 	}
 
 	@PostMapping("/create")
-	public String createNewWallet(@RequestBody @Valid CrudWalletDTO newWallet, HttpServletRequest request,
-			HttpServletResponse response, Errors errors) {
+	public String createNewWallet(@RequestBody @Valid CrudWalletDTO newWallet, Errors errors,HttpServletRequest request,
+			HttpServletResponse response) {
+
+		if (Helper.isThereRequestError(errors, response)) {
+			return HttpStatus.BAD_REQUEST.getReasonPhrase();
+		}
 
 		HttpSession session = request.getSession();
 
 		if (!Helper.isThereLoggedUser(response, session)) {
 			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
-		}
-
-		if (Helper.isThereRequestError(errors, response)) {
-			return HttpStatus.BAD_REQUEST.getReasonPhrase();
 		}
 
 		Long userId = (Long) session.getAttribute(USER_ID);
@@ -125,7 +125,7 @@ public class WalletController {
 		try {
 			return this.walletService.getWalletById(id);
 		} catch (NotExistingWalletException e) {
-			response.setStatus(HttpStatus.NOT_FOUND.value());
+			response.setStatus(HttpStatus.FORBIDDEN.value());
 			return null;
 		}
 	}
@@ -146,4 +146,6 @@ public class WalletController {
 			return;
 		}
 	}
+	
+	
 }

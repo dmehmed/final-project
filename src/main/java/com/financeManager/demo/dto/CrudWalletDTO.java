@@ -1,6 +1,7 @@
 package com.financeManager.demo.dto;
 
 import javax.validation.constraints.Min;
+import javax.validation.constraints.Size;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,6 +14,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class CrudWalletDTO {
 
+	@Size(min = 5)
 	private String name;
 	@Min(value = 0)
 	private Double balance;
