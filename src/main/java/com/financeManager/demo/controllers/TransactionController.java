@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.financeManager.demo.dto.CreateTransactionDTO;
+import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.services.TransactionService;
@@ -51,6 +52,10 @@ public class TransactionController {
 			response.setStatus(HttpStatus.FORBIDDEN.value());
 			return HttpStatus.FORBIDDEN.getReasonPhrase();
 		} catch (InvalidTransactionEntryException e) {
+			e.printStackTrace();
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			return e.getMessage();
+		} catch (InsufficientBalanceException e) {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.BAD_REQUEST.value());
 			return e.getMessage();

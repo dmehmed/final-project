@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.financeManager.demo.dao.ICategoryDao;
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.CreateTransactionDTO;
+import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.model.Category;
@@ -40,7 +41,7 @@ public class TransactionService {
 	private IWalletDAO walletDAO;
 
 	public void createTransaction(CreateTransactionDTO newTransaction, Long userId)
-			throws InvalidTransactionEntryException, NotExistingWalletException {
+			throws InvalidTransactionEntryException, NotExistingWalletException, InsufficientBalanceException {
 
 		Wallet userWallet;
 		Category transactionCategory;
@@ -63,6 +64,10 @@ public class TransactionService {
 				
 		if(transactionCategory.getTransactionType().getId().equals(EXPENSE)) {
 			 amount = -amount;
+		}
+		
+		if(userWallet.getBalance() + amount < 0) {
+			throw new InsufficientBalanceException("Insufficient account balance.");
 		}
 
 		Transaction transaction = new Transaction(amount, newTransaction.getDescription(),
