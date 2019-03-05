@@ -22,10 +22,9 @@ public class WalletDAO implements IWalletDAO {
 	@Override
 	public Wallet getWalletById(Long id) throws NotExistingWalletException {
 		System.out.println(wallets);
-		try{
-		return this.wallets.stream().filter(wallet -> wallet.getId().equals(id)).findAny().get();
-		
-		} catch (NoSuchElementException e) { 
+		try {
+			return this.wallets.stream().filter(wallet -> wallet.getId().equals(id)).findFirst().get();
+		} catch (NoSuchElementException e) {
 			throw new NotExistingWalletException();
 		}
 	}
@@ -37,7 +36,6 @@ public class WalletDAO implements IWalletDAO {
 
 	@Override
 	public List<Wallet> getAllUserWallets(Long userId) {
-		System.out.println(wallets.size());
 		return this.wallets.stream().filter(wallet -> wallet.getUser().getId().equals(userId))
 				.collect(Collectors.toList());
 	}
@@ -57,8 +55,7 @@ public class WalletDAO implements IWalletDAO {
 	@Override
 	public boolean deleteWalletById(Long walletId) {
 		try {
-			Wallet w = this.wallets.stream().
-					filter(wallet -> wallet.getId().equals(walletId)).findFirst().get();
+			Wallet w = this.wallets.stream().filter(wallet -> wallet.getId().equals(walletId)).findFirst().get();
 			this.wallets.remove(w);
 			this.walletRepo.deleteById(walletId);
 			return true;
@@ -69,7 +66,7 @@ public class WalletDAO implements IWalletDAO {
 
 	@Override
 	public void saveUpdatedWallet(Long walletId) throws NotExistingWalletException {
-			this.walletRepo.save(this.getWalletById(walletId));
+		this.walletRepo.save(this.getWalletById(walletId));
 	}
 
 }

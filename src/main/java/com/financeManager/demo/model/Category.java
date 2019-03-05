@@ -28,7 +28,7 @@ public class Category {
 	private Long id;
 	private String name;
 	
-	@ManyToOne(fetch = FetchType.EAGER)
+	@ManyToOne
 	@JoinColumn(name="transaction_type_id")
 	private TransactionType transactionType;
 	

@@ -4,7 +4,6 @@ import java.sql.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
@@ -33,11 +32,11 @@ public class Settings {
 	@MapsId
 	private User user;
 	private Date birthdate;
-	@ManyToOne(fetch = FetchType.EAGER)
+	@ManyToOne
 	private Country country;
-	@ManyToOne(fetch = FetchType.EAGER)
+	@ManyToOne
 	private Currency currency;
-	@ManyToOne(fetch = FetchType.EAGER)
+	@ManyToOne
 	private Gender gender;
 
 	public Settings(Long id, User user) {
