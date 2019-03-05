@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.financeManager.demo.dto.CountryDTO;
 import com.financeManager.demo.dto.CrudWalletDTO;
 import com.financeManager.demo.dto.WalletDTO;
 import com.financeManager.demo.exceptions.InvalidWalletEntryException;
@@ -32,7 +33,7 @@ import com.financeManager.demo.services.WalletService;
 public class WalletController {
 
 	private static final String USER_ID = "userId";
-	
+
 	@Autowired
 	private WalletService walletService;
 
@@ -40,35 +41,32 @@ public class WalletController {
 	public List<CrudWalletDTO> getWallets(HttpServletRequest request, HttpServletResponse response) {
 		HttpSession session = request.getSession();
 
-		if (session == null || session.getAttribute(USER_ID) == null) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+		if (!Helper.isThereLoggedUser(response, session)) {
 			return new LinkedList<CrudWalletDTO>();
-			
 		}
 
 		Long userId = (Long) session.getAttribute(USER_ID);
 		List<CrudWalletDTO> userWallets = this.walletService.getAllUserWallets(userId);
-		
+
 		if (userWallets == null) {
 			response.setStatus(HttpStatus.NOT_FOUND.value());
 			return new LinkedList<CrudWalletDTO>();
 		}
-		
+
 		response.setStatus(HttpStatus.OK.value());
 		return userWallets;
 	}
 
-	@PatchMapping(path = "/update/{id}")
-	public String updateWallet(@RequestBody @Valid CrudWalletDTO updates, @PathVariable Long id, 
+	@PatchMapping(path = "/update/{id}") // защо нямаме errors.
+	public String updateWallet(@RequestBody @Valid CrudWalletDTO updates, @PathVariable Long id,
 			HttpServletRequest request, HttpServletResponse response) {
 
 		HttpSession session = request.getSession();
-		
-		if (session == null || session.getAttribute(USER_ID) == null) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+
+		if (!Helper.isThereLoggedUser(response, session)) {
 			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
 		}
-		
+
 		try {
 			this.walletService.updateWallet(id, updates);
 		} catch (NotExistingWalletException e) {
@@ -80,27 +78,24 @@ public class WalletController {
 			e.printStackTrace();
 			return e.getMessage();
 		}
-		
+
 		response.setStatus(HttpStatus.ACCEPTED.value());
 		return "Update " + HttpStatus.ACCEPTED.getReasonPhrase();
 
 	}
-	
+
 	@PostMapping("/create")
 	public String createNewWallet(@RequestBody @Valid CrudWalletDTO newWallet, HttpServletRequest request,
 			HttpServletResponse response, Errors errors) {
-		
-		if (errors.hasErrors()) {
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			System.out.println(errors.getAllErrors());
-			return HttpStatus.BAD_REQUEST.getReasonPhrase();
-		}
 
 		HttpSession session = request.getSession();
 
-		if (session == null || session.getAttribute(USER_ID) == null) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+		if (!Helper.isThereLoggedUser(response, session)) {
 			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
+		}
+
+		if (Helper.isThereRequestError(errors, response)) {
+			return HttpStatus.BAD_REQUEST.getReasonPhrase();
 		}
 
 		Long userId = (Long) session.getAttribute(USER_ID);
@@ -115,17 +110,15 @@ public class WalletController {
 		}
 
 	}
-	
-	@GetMapping("/{id}")  
-	public WalletDTO giveWalletById(@PathVariable Long id, HttpServletRequest request,
-			HttpServletResponse response) {
+
+	@GetMapping("/{id}")
+	public WalletDTO giveWalletById(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response) {
 		HttpSession session = request.getSession();
 
-		if (session == null || session.getAttribute(USER_ID) == null) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+		if (!Helper.isThereLoggedUser(response, session)) {
 			return null;
 		}
-		
+
 		try {
 			return this.walletService.getWalletById(id);
 		} catch (NotExistingWalletException e) {
@@ -134,17 +127,15 @@ public class WalletController {
 		}
 	}
 
-
 	@DeleteMapping(path = "/delete/{id}")
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
-	public void deleteWalletById(@PathVariable Long id, HttpServletRequest request,HttpServletResponse response) {
+	public void deleteWalletById(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response) {
 		HttpSession session = request.getSession();
 
-		if (session == null || session.getAttribute(USER_ID) == null) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+		if (!Helper.isThereLoggedUser(response, session)) {
 			return;
 		}
-		
+
 		try {
 			this.walletService.deleteWalletById(id);
 		} catch (NotExistingWalletException e) {

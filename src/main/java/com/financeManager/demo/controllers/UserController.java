@@ -33,14 +33,12 @@ import com.financeManager.demo.services.UserService;
 @RestController
 public class UserController {
 
-	private static final String USER_ID = "userId";
-
 	@Autowired
 	private UserService userService;
 
 	@Autowired
 	private IWalletDAO walletDAO;
-	
+
 	@Autowired
 	private IBudgetDAO budgetDAO;
 
@@ -61,12 +59,11 @@ public class UserController {
 //
 //	}
 
-
 	@PostMapping("/register")
-	public String makeAccount(@RequestBody @Valid CreateUserDTO newUser, Errors errors, HttpServletResponse response) throws SQLException {
-		if (errors.hasErrors()) {
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			System.out.println(errors.getAllErrors());
+	public String makeAccount(@RequestBody @Valid CreateUserDTO newUser, Errors errors, HttpServletResponse response)
+			throws SQLException {
+
+		if (Helper.isThereRequestError(errors, response)) {
 			return HttpStatus.BAD_REQUEST.getReasonPhrase();
 		}
 
@@ -83,8 +80,7 @@ public class UserController {
 			response.setStatus(HttpStatus.CONFLICT.value());
 			return HttpStatus.CONFLICT.getReasonPhrase();
 		}
-		
-		
+
 		response.setStatus(HttpStatus.CREATED.value());
 		return HttpStatus.CREATED.getReasonPhrase() + " " + usi.getId();
 
@@ -94,12 +90,12 @@ public class UserController {
 	public UserDTO getUserProfile(HttpServletRequest request, HttpServletResponse response) {
 		HttpSession session = request.getSession();
 
-		if (session.getAttribute(USER_ID) == null) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+		if (!Helper.isThereLoggedUser(response, session)) {
 			return null;
 		}
+		;
 
-		Long id = (Long) session.getAttribute(USER_ID);
+		Long id = (Long) session.getAttribute(Helper.USER_ID);
 		User usi = null;
 
 		try {
@@ -114,13 +110,11 @@ public class UserController {
 	}
 
 	@PostMapping("/login")
-	public void login(@RequestBody @Valid LoginDTO user, Errors errors, HttpServletRequest request,
+	public String login(@RequestBody @Valid LoginDTO user, Errors errors, HttpServletRequest request,
 			HttpServletResponse response) {
 
-		if (errors.hasErrors()) {
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			System.out.println(errors.getAllErrors());
-			return;
+		if (Helper.isThereRequestError(errors, response)) {
+			return HttpStatus.BAD_REQUEST.getReasonPhrase();
 		}
 
 		User us = null;
@@ -131,20 +125,21 @@ public class UserController {
 
 				e.printStackTrace();
 				response.setStatus(HttpStatus.NOT_FOUND.value());
-				return;
+				return (HttpStatus.NOT_FOUND.getReasonPhrase());
 			}
 		} catch (WrongPasswordException e) {
 			e.printStackTrace();
 
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return;
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			return HttpStatus.BAD_REQUEST.getReasonPhrase();
 		}
 
 		response.setStatus(HttpStatus.ACCEPTED.value());
 		HttpSession session = request.getSession();
-		session.setAttribute(USER_ID, us.getId());
+		session.setAttribute(Helper.USER_ID, us.getId());
 		this.walletDAO.loadUserWallets(us.getId());
 		this.budgetDAO.loadUserBudgets(us.getId());
+		return "Login " + HttpStatus.ACCEPTED.getReasonPhrase();
 
 	}
 
@@ -153,8 +148,8 @@ public class UserController {
 
 		HttpSession session = request.getSession();
 
-		this.walletDAO.clearUserWallets((Long) session.getAttribute(USER_ID));
-		this.budgetDAO.clearUserBudgets((Long) session.getAttribute(USER_ID));
+		this.walletDAO.clearUserWallets((Long) session.getAttribute(Helper.USER_ID));
+		this.budgetDAO.clearUserBudgets((Long) session.getAttribute(Helper.USER_ID));
 
 		session.invalidate();
 	}
@@ -165,18 +160,15 @@ public class UserController {
 
 		HttpSession session = request.getSession();
 
-		if (errors.hasErrors()) {
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			System.out.println(errors.getAllErrors());
+		if (Helper.isThereRequestError(errors, response)) {
 			return HttpStatus.BAD_REQUEST.getReasonPhrase();
 		}
 
-		if (session.getAttribute(USER_ID) == null) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+		if (!Helper.isThereLoggedUser(response, session)) {
 			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
 		}
 
-		Long id = (Long) session.getAttribute(USER_ID);
+		Long id = (Long) session.getAttribute(Helper.USER_ID);
 		User usi = null;
 
 		try {
@@ -206,54 +198,52 @@ public class UserController {
 	public String deactivate(HttpServletRequest request, HttpServletResponse response) {
 		HttpSession session = request.getSession();
 
-		if (session.getAttribute(USER_ID) == null) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return "Could not delete!";
+		if (!Helper.isThereLoggedUser(response, session)) {
+			return HttpStatus.UNAUTHORIZED.getReasonPhrase() + " Could not delete!";
 		}
+		;
 
-		Long id = (Long) session.getAttribute(USER_ID);
+		Long id = (Long) session.getAttribute(Helper.USER_ID);
 		try {
 			this.userService.softDeleteUser(id);
 			this.walletDAO.clearUserWallets(id);
 			this.budgetDAO.clearUserBudgets(id);
-			
+
 			session.invalidate();
 		} catch (NotExistingUserException e) {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.NOT_FOUND.value());
 			return HttpStatus.NOT_FOUND.getReasonPhrase();
 		}
-		
 
 		response.setStatus(HttpStatus.NO_CONTENT.value());
 		return HttpStatus.NO_CONTENT.getReasonPhrase();
 	}
-	
-	
+
 	@PostMapping("/retrieve")
-	public String retrieveUser(@RequestBody @Valid LoginDTO lazarus,HttpServletRequest request, HttpServletResponse response){
-		
+	public String retrieveUser(@RequestBody @Valid LoginDTO lazarus, HttpServletRequest request,
+			HttpServletResponse response) {
+
 		try {
-			 this.userService.retrieveUser(lazarus);
+			this.userService.retrieveUser(lazarus);
 		} catch (NotExistingUserException e) {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.NOT_FOUND.value());
-			return "User " + HttpStatus.NOT_FOUND.getReasonPhrase();	
-		} catch (WrongPasswordException e) {		
+			return "User " + HttpStatus.NOT_FOUND.getReasonPhrase();
+		} catch (WrongPasswordException e) {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.BAD_REQUEST.value());
 			return HttpStatus.BAD_REQUEST.getReasonPhrase() + " - wrong password!";
 		} catch (SQLException e) {
 			e.printStackTrace();
-			
+
 			response.setStatus(HttpStatus.NOT_FOUND.value());
-			return "Database " +  HttpStatus.NOT_FOUND.getReasonPhrase() ;	
+			return "Database " + HttpStatus.NOT_FOUND.getReasonPhrase();
 		}
-		
+
 		response.setStatus(HttpStatus.ACCEPTED.value());
 		return HttpStatus.ACCEPTED.getReasonPhrase() + " you have risen from the deleted!";
-		
-		
+
 	}
 
 //	@GetMapping("/deleted")
