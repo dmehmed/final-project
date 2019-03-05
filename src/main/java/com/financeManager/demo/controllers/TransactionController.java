@@ -1,5 +1,7 @@
 package com.financeManager.demo.controllers;
 
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -9,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.financeManager.demo.dto.CreateTransactionDTO;
+import com.financeManager.demo.dto.TransactionDTO;
 import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
 import com.financeManager.demo.exceptions.NotExistingTransactionException;
@@ -81,7 +85,18 @@ public class TransactionController {
 		
 		response.setStatus(HttpStatus.CREATED.value());
 		return HttpStatus.CREATED.getReasonPhrase();
-		
+	}
+	
+	
+	@GetMapping("/incomes")
+	public List<TransactionDTO> findAllIncomes(){
+		return this.transactionService.getAllIncomeTransactions();
+	}
+	
+	
+	@GetMapping("/expenses")
+	public List<TransactionDTO> findAllExpenses(){
+		return this.transactionService.getAllExpenseTransactions();
 	}
 	
 }

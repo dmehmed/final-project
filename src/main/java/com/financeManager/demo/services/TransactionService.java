@@ -1,5 +1,7 @@
 package com.financeManager.demo.services;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -9,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.financeManager.demo.dao.ICategoryDao;
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.CreateTransactionDTO;
+import com.financeManager.demo.dto.TransactionDTO;
 import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
 import com.financeManager.demo.exceptions.NotExistingTransactionException;
@@ -54,7 +57,7 @@ public class TransactionService {
 		Transaction transaction = result.get();
 		System.out.println(transaction.getId());
 		Wallet wallet = this.walletDAO.getWalletById(transaction.getWallet().getId());
-		System.out.println("WALLET " + wallet);
+
 		wallet.setBalance(wallet.getBalance() - transaction.getAmount());
 		this.walletDAO.saveUpdatedWallet(wallet.getId());
 		
@@ -62,7 +65,7 @@ public class TransactionService {
 		
 		this.transactionRepo.deleteById((long) 9);
 		
-		System.out.println("ZDR");
+	
 	}
 
 	public void createTransaction(CreateTransactionDTO newTransaction, Long userId)
@@ -103,5 +106,43 @@ public class TransactionService {
 		
 		this.transactionRepo.save(transaction);
 	}
+	
+	
+
+	public List<TransactionDTO> getAllIncomeTransactions(){
+		List<Transaction> incomes = this.transactionRepo.findAllByAmountIsGreaterThan(new Double(0));
+		List<TransactionDTO> incomesDTO = new LinkedList<TransactionDTO>();
+		for(Transaction tr : incomes) {
+			TransactionDTO newTransactionDTO = new TransactionDTO();
+			newTransactionDTO.setAmount(tr.getAmount());
+			newTransactionDTO.setCategoryType(tr.getCategory().getName());
+			newTransactionDTO.setWalletName(tr.getWallet().getName());
+			newTransactionDTO.setTransactionType(tr.getCategory().getTransactionType().getName());
+			
+			incomesDTO.add(newTransactionDTO);
+		}
+
+		
+		return incomesDTO;	
+	}
+	
+	public List<TransactionDTO> getAllExpenseTransactions(){
+		List<Transaction> expenses = this.transactionRepo.findAllByAmountIsLessThan(new Double(0));
+		List<TransactionDTO> expensesDTO = new LinkedList<TransactionDTO>();
+		for(Transaction tr : expenses) {
+			TransactionDTO newTransactionDTO = new TransactionDTO();
+			newTransactionDTO.setAmount(tr.getAmount() * -1);
+			newTransactionDTO.setCategoryType(tr.getCategory().getName());
+			newTransactionDTO.setWalletName(tr.getWallet().getName());
+			newTransactionDTO.setTransactionType(tr.getCategory().getTransactionType().getName());
+			
+			expensesDTO.add(newTransactionDTO);
+		}
+	
+		return expensesDTO;	
+	}
+	
+	
+	
 
 }
