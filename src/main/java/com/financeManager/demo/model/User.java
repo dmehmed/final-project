@@ -15,7 +15,6 @@ import javax.persistence.Table;
 import org.hibernate.annotations.Where;
 
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -42,8 +41,7 @@ public class User{
 
 	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
 	private Settings settings;
-	
-	
+
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	private Set<Wallet> wallets;
 	 

@@ -58,6 +58,15 @@ public class UserController {
 //				.collect(Collectors.toList());
 //
 //	}
+	
+	//we need to move that in other controller
+//	@Autowired
+//	private ITransactionTypeDAO typeDAO;
+//	
+//	@GetMapping("/transactionTypes")
+//	public List<TransactionTypeDTO> listAllTransactionTypes(HttpServletResponse response){
+//		return this.typeDAO.getAll().stream().map(type -> new TransactionTypeDTO(type.getId(), type.getName())).collect(Collectors.toList());
+//	}
 
 	@PostMapping("/register")
 	public String makeAccount(@RequestBody @Valid CreateUserDTO newUser, Errors errors, HttpServletResponse response)

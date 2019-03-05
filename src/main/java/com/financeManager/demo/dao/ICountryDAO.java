@@ -1,4 +1,4 @@
-	package com.financeManager.demo.dao;
+package com.financeManager.demo.dao;
 
 import java.util.List;
 

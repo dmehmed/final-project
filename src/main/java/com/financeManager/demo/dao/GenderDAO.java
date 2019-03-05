@@ -22,7 +22,6 @@ public class GenderDAO implements IGenderDAO {
 
 	@Override
 	public Gender getById(Long id) {
-
 		return this.genders.stream().filter(country -> country.getId().equals(id)).findFirst().get();
 	}
 

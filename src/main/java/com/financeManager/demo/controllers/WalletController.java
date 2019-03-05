@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.financeManager.demo.dto.CountryDTO;
 import com.financeManager.demo.dto.CrudWalletDTO;
 import com.financeManager.demo.dto.WalletDTO;
 import com.financeManager.demo.exceptions.InvalidWalletEntryException;
@@ -59,7 +58,11 @@ public class WalletController {
 
 	@PatchMapping(path = "/update/{id}") // защо нямаме errors.
 	public String updateWallet(@RequestBody @Valid CrudWalletDTO updates, @PathVariable Long id,
-			HttpServletRequest request, HttpServletResponse response) {
+			HttpServletRequest request, HttpServletResponse response, Errors errors) {
+		
+		if (Helper.isThereRequestError(errors, response)) {
+			return HttpStatus.BAD_REQUEST.getReasonPhrase();
+		}
 
 		HttpSession session = request.getSession();
 

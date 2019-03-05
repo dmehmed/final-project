@@ -21,8 +21,10 @@ public class WalletDAO implements IWalletDAO {
 
 	@Override
 	public Wallet getWalletById(Long id) throws NotExistingWalletException {
+		System.out.println(wallets);
 		try{
 		return this.wallets.stream().filter(wallet -> wallet.getId().equals(id)).findAny().get();
+		
 		} catch (NoSuchElementException e) { 
 			throw new NotExistingWalletException();
 		}
@@ -35,6 +37,7 @@ public class WalletDAO implements IWalletDAO {
 
 	@Override
 	public List<Wallet> getAllUserWallets(Long userId) {
+		System.out.println(wallets.size());
 		return this.wallets.stream().filter(wallet -> wallet.getUser().getId().equals(userId))
 				.collect(Collectors.toList());
 	}

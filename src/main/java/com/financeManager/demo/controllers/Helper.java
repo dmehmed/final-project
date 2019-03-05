@@ -6,13 +6,10 @@ import javax.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.Errors;
 
-import lombok.Getter;
-
 
 public abstract class Helper {
 	
-	
-	 static final String USER_ID = "userId";
+	static final String USER_ID = "userId";
 	
 	public static boolean isThereRequestError(Errors errors, HttpServletResponse response) {
 		if (errors.hasErrors()) {
