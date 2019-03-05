@@ -16,6 +16,7 @@ import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
 import com.financeManager.demo.exceptions.NotExistingTransactionException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
+import com.financeManager.demo.exceptions.UnauthorizedException;
 import com.financeManager.demo.model.Category;
 import com.financeManager.demo.model.Transaction;
 import com.financeManager.demo.model.Wallet;
@@ -46,26 +47,27 @@ public class TransactionService {
 	private IWalletDAO walletDAO;
 	
 	
-	public void deleteTransactionById(Long id) throws NotExistingTransactionException, NotExistingWalletException {
+	public void deleteTransactionById(Long transactionId, Long userId) throws NotExistingTransactionException, NotExistingWalletException, UnauthorizedException {
 		
-		Optional<Transaction> result = transactionRepo.findById(id);
+		Optional<Transaction> result = transactionRepo.findById(transactionId);
 		
 		if(!result.isPresent()) {
 			throw new NotExistingTransactionException();
 		}
 		
 		Transaction transaction = result.get();
-		System.out.println(transaction.getId());
+		
 		Wallet wallet = this.walletDAO.getWalletById(transaction.getWallet().getId());
+		
+//		if(!wallet.getUser().getId().equals(userId)){
+//			throw new UnauthorizedException();
+//		}
 
 		wallet.setBalance(wallet.getBalance() - transaction.getAmount());
 		this.walletDAO.saveUpdatedWallet(wallet.getId());
 		
-		System.out.println(transaction.getId());
+		this.transactionRepo.deleteById(transactionId);
 		
-		this.transactionRepo.deleteById((long) 9);
-		
-	
 	}
 
 	public void createTransaction(CreateTransactionDTO newTransaction, Long userId)

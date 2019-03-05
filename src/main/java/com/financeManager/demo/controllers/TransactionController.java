@@ -25,6 +25,7 @@ import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
 import com.financeManager.demo.exceptions.NotExistingTransactionException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
+import com.financeManager.demo.exceptions.UnauthorizedException;
 import com.financeManager.demo.services.TransactionService;
 
 @RestController
@@ -38,15 +39,23 @@ public class TransactionController {
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
 	public void deleteWalletById(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response) {
 		HttpSession session = request.getSession();
+		
 
 		if (!Helper.isThereLoggedUser(response, session)) {
 			return;
 		}
 		
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		
 		try {
-			this.transactionService.deleteTransactionById(id);
+			this.transactionService.deleteTransactionById(id, userId);
 		} catch (NotExistingTransactionException | NotExistingWalletException e) {
 			e.printStackTrace();
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return;
+		} catch (UnauthorizedException e) {
+			e.printStackTrace();
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 			return;
 		}
 	}
