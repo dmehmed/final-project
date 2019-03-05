@@ -42,11 +42,11 @@ public class Budget {
 	@JoinColumn(name = "user_id")
 	private User user;
 	
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "category_id")
 	private Category category;
 	
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "repeat_period_id")
 	private RepeatPeriod repeatPeriod;
 	

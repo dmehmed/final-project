@@ -43,7 +43,7 @@ public class Wallet {
 	private User user;
 
 	
-	@OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+	@OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	private Set<Transaction> transactions;
 
 	public Wallet(String name, Double balance, Double limit, User owner) {
