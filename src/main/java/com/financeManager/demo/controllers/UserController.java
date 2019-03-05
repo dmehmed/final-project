@@ -97,7 +97,8 @@ public class UserController {
 
 		if (!Helper.isThereLoggedUser(response, session)) {
 			return null;
-		};
+		}
+
 
 		Long id = (Long) session.getAttribute(Helper.USER_ID);
 		User usi = null;
@@ -116,7 +117,7 @@ public class UserController {
 	@PostMapping("/login")
 	public String login(@RequestBody @Valid LoginDTO user, Errors errors, HttpServletRequest request,
 			HttpServletResponse response) {
-		
+
 		if (Helper.isThereRequestError(errors, response)) {
 			return HttpStatus.BAD_REQUEST.getReasonPhrase();
 		}
@@ -124,13 +125,10 @@ public class UserController {
 		
 		HttpSession session = request.getSession();
 		
-		
 		if(Helper.isThereLoggedUser(response, session)) {
 			response.setStatus(HttpStatus.OK.value());	
 			return "You are already logged in";
 		}
-		
-		
 
 		User us = null;
 		try {
@@ -144,12 +142,13 @@ public class UserController {
 			}
 		} catch (WrongPasswordException e) {
 			e.printStackTrace();
-
 			response.setStatus(HttpStatus.BAD_REQUEST.value());
 			return HttpStatus.BAD_REQUEST.getReasonPhrase();
 		}
 
 		response.setStatus(HttpStatus.ACCEPTED.value());
+
+
 		session.setAttribute(Helper.USER_ID, us.getId());
 		this.walletDAO.loadUserWallets(us.getId());
 		this.budgetDAO.loadUserBudgets(us.getId());
@@ -169,7 +168,7 @@ public class UserController {
 
 		this.walletDAO.clearUserWallets((Long) session.getAttribute(Helper.USER_ID));
 		this.budgetDAO.clearUserBudgets((Long) session.getAttribute(Helper.USER_ID));
-		System.out.println(session);
+
 		session.invalidate();
 		
 	}
@@ -178,12 +177,13 @@ public class UserController {
 	public String updateProfile(@RequestBody @Valid UpdateProfileDTO updates, Errors errors, HttpServletRequest request,
 			HttpServletResponse response) {
 
-		HttpSession session = request.getSession();
+		
 
 		if (Helper.isThereRequestError(errors, response)) {
 			return HttpStatus.BAD_REQUEST.getReasonPhrase();
 		}
-
+		
+		HttpSession session = request.getSession();
 		if (!Helper.isThereLoggedUser(response, session)) {
 			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
 		}
@@ -220,7 +220,9 @@ public class UserController {
 
 		if (!Helper.isThereLoggedUser(response, session)) {
 			return HttpStatus.UNAUTHORIZED.getReasonPhrase() + " Could not delete!";
+
 		};
+
 
 		Long id = (Long) session.getAttribute(Helper.USER_ID);
 		try {
@@ -239,6 +241,8 @@ public class UserController {
 		return HttpStatus.NO_CONTENT.getReasonPhrase();
 	}
 
+	
+	
 	@PostMapping("/retrieve")
 	public String retrieveUser(@RequestBody @Valid LoginDTO lazarus, HttpServletRequest request,
 			HttpServletResponse response) {
@@ -265,9 +269,16 @@ public class UserController {
 
 	}
 	
+	
+	
 	@PostMapping(path = "/forgottenpassword")
 	public String sendNewPass(@RequestBody @Valid ForgottenPasswordDTO user,Errors errors,
 			HttpServletResponse response,HttpServletRequest request) {
+		
+		if(Helper.isThereRequestError(errors, response)) {
+			return HttpStatus.BAD_REQUEST.getReasonPhrase();
+		}
+		
 		HttpSession session = request.getSession();
 		
 		if(Helper.isThereLoggedUser(response, session)) {
@@ -275,9 +286,7 @@ public class UserController {
 			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
 		}
 		
-		if(Helper.isThereRequestError(errors, response)) {
-			return HttpStatus.BAD_REQUEST.getReasonPhrase();
-		}
+		
 		
 		User owner;
 		try {

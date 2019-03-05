@@ -57,15 +57,15 @@ public class WalletController {
 		return userWallets;
 	}
 
-	@PatchMapping(path = "/update/{id}") // защо нямаме errors.
+	@PatchMapping(path = "/update/{id}") 
+
 	public String updateWallet(@RequestBody @Valid CrudWalletDTO updates,Errors errors, @PathVariable Long id,
 			HttpServletRequest request, HttpServletResponse response) {
 		
 		if (Helper.isThereRequestError(errors, response)) {
 			return HttpStatus.BAD_REQUEST.getReasonPhrase();
 		}
-		
-		
+
 		HttpSession session = request.getSession();
 
 		if (!Helper.isThereLoggedUser(response, session)) {
@@ -90,20 +90,19 @@ public class WalletController {
 	}
 
 	@PostMapping("/create")
+
 	public String createNewWallet(@RequestBody @Valid CrudWalletDTO newWallet, Errors errors,HttpServletRequest request,
 			HttpServletResponse response) {
 
 		if (Helper.isThereRequestError(errors, response)) {
 			return HttpStatus.BAD_REQUEST.getReasonPhrase();
 		}
-		
+
 		HttpSession session = request.getSession();
 
 		if (!Helper.isThereLoggedUser(response, session)) {
 			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
 		}
-
-		
 
 		Long userId = (Long) session.getAttribute(USER_ID);
 		try {

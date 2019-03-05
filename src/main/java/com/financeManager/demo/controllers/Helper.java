@@ -12,7 +12,8 @@ import lombok.Getter;
 public abstract class Helper {
 	
 	
-	public static final String USER_ID = "userId";
+
+	 static final String USER_ID = "userId";
 	
 	public static boolean isThereRequestError(Errors errors, HttpServletResponse response) {
 
@@ -22,7 +23,7 @@ public abstract class Helper {
 			return true;
 		}
 		return false;
-		
+
 	}
 	
 	

@@ -82,7 +82,9 @@ public class BudgetController {
 		HttpSession session = request.getSession();
 
 		if(!Helper.isThereLoggedUser(response, session)) {
+
 			return;
+
 		}
 		
 		try {
@@ -94,11 +96,10 @@ public class BudgetController {
 	}
 
 	@PostMapping("/create")
+
 	public String createNewBudget(@RequestBody @Valid CrudBudgetDTO newBudget, Errors errors,HttpServletRequest request,
-			HttpServletResponse response) 
-	{
-		
-		
+			HttpServletResponse response) {
+
 		if (Helper.isThereRequestError(errors, response)) {
 			return HttpStatus.BAD_REQUEST.getReasonPhrase();
 		}
@@ -127,8 +128,10 @@ public class BudgetController {
 
 	
 	@PatchMapping(path = "/update/{id}")
+
 	public String update(@RequestBody @Valid CrudBudgetDTO updateBudget ,Errors errors,@PathVariable Long id, 
 			HttpServletRequest request, HttpServletResponse response) {
+
 		
 		if (Helper.isThereRequestError(errors, response)) {
 			return HttpStatus.BAD_REQUEST.getReasonPhrase();
