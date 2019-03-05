@@ -60,13 +60,16 @@ public class TransactionService {
 		}
 		
 		Double amount = newTransaction.getAmount();
-		
+				
 		if(transactionCategory.getTransactionType().getId().equals(EXPENSE)) {
 			 amount = -amount;
 		}
 
 		Transaction transaction = new Transaction(amount, newTransaction.getDescription(),
 				userWallet, transactionCategory);
+		
+		userWallet.setBalance(userWallet.getBalance() + amount);
+		walletDAO.saveUpdatedWallet(userWallet.getId());
 		
 		this.transactionRepo.save(transaction);
 	}
