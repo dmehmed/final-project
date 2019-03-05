@@ -1,16 +1,26 @@
 package com.financeManager.demo.services;
 
+import java.net.PasswordAuthentication;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
+import java.util.Properties;
+
+import javax.mail.MessagingException;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+import javax.websocket.Session;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.logging.log4j.message.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import com.financeManager.demo.dto.CreateUserDTO;
+import com.financeManager.demo.dto.ForgottenPasswordDTO;
 import com.financeManager.demo.dto.LoginDTO;
 import com.financeManager.demo.dto.UpdateProfileDTO;
 import com.financeManager.demo.dto.UserDTO;
@@ -19,6 +29,7 @@ import com.financeManager.demo.exceptions.NoSuchSettingsOptionException;
 import com.financeManager.demo.exceptions.NotExistingUserException;
 import com.financeManager.demo.exceptions.UserWithThisEmailAlreadyExistsException;
 import com.financeManager.demo.exceptions.WrongPasswordException;
+import com.financeManager.demo.exceptions.WrongUsernameException;
 import com.financeManager.demo.model.DeletedUser;
 import com.financeManager.demo.model.Settings;
 import com.financeManager.demo.model.User;
@@ -201,5 +212,20 @@ public class UserService {
 	}
 	
 
+	public void saveUserInRepo(User user) {
+		this.userRepo.save(user);
+	}
+	
+//	public boolean checkUserCredentialsForPassword(ForgottenPasswordDTO user) throws NotExistingUserException, WrongUsernameException{
+//		
+//			
+//			User owner = this.getExistingUserByEmail(user.getEmail());
+//			
+//			if(!owner.getUsername().equals(user.getUsername())) {
+//				throw new WrongUsernameException();
+//			}
+//
+//	
+//	}
 	
 }

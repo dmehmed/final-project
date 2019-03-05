@@ -31,8 +31,6 @@ import com.financeManager.demo.services.BudgetService;
 @RequestMapping(path = "/budgets")
 public class BudgetController {
 
-	private static final String USER_ID = "userId";
-
 	@Autowired
 	private BudgetService budgetService;
 
@@ -40,12 +38,11 @@ public class BudgetController {
 	public List<BudgetDTO> getBudgets(HttpServletRequest request, HttpServletResponse response) {
 		HttpSession session = request.getSession();
 
-		if (session == null || session.getAttribute(USER_ID) == null) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return new LinkedList<BudgetDTO>();
+		if(!Helper.isThereLoggedUser(response, session)) {
+				return new LinkedList<BudgetDTO>();
 		}
-
-		Long userId = (Long) session.getAttribute(USER_ID);
+		
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
 
 		List<BudgetDTO> userBudgets = this.budgetService.getAllUserWallets(userId);
 
@@ -66,8 +63,7 @@ public class BudgetController {
 
 		HttpSession session = request.getSession();
 
-		if (session == null || session.getAttribute(USER_ID) == null) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+		if(!Helper.isThereLoggedUser(response, session)) {
 			return null;
 		}
 	
@@ -85,8 +81,7 @@ public class BudgetController {
 	public void deleteBudgetById(@PathVariable Long id, HttpServletRequest request,HttpServletResponse response) {
 		HttpSession session = request.getSession();
 
-		if (session == null || session.getAttribute(USER_ID) == null) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+		if(!Helper.isThereLoggedUser(response, session)) {
 			return;
 		}
 		
@@ -99,23 +94,22 @@ public class BudgetController {
 	}
 
 	@PostMapping("/create")
-	public String createNewBudget(@RequestBody @Valid CrudBudgetDTO newBudget, HttpServletRequest request,
-			HttpServletResponse response, Errors errors) {
-
-		if (errors.hasErrors()) {
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			System.out.println(errors.getAllErrors());
+	public String createNewBudget(@RequestBody @Valid CrudBudgetDTO newBudget, Errors errors,HttpServletRequest request,
+			HttpServletResponse response) 
+	{
+		
+		
+		if (Helper.isThereRequestError(errors, response)) {
 			return HttpStatus.BAD_REQUEST.getReasonPhrase();
 		}
-
+		
 		HttpSession session = request.getSession();
 
-		if (session == null || session.getAttribute(USER_ID) == null) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+		if (!Helper.isThereLoggedUser(response, session)) {
 			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
 		}
-
-		Long userId = (Long) session.getAttribute(USER_ID);
+		
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
 
 		try {
 			this.budgetService.addBudgetToUser(newBudget, userId);
@@ -132,20 +126,17 @@ public class BudgetController {
 	
 
 	
-	@PatchMapping("/update/{id}")
-	public String update(@RequestBody @Valid CrudBudgetDTO updateBudget ,@PathVariable Long id, 
-			HttpServletRequest request, HttpServletResponse response,Errors errors) {
+	@PatchMapping(path = "/update/{id}")
+	public String update(@RequestBody @Valid CrudBudgetDTO updateBudget ,Errors errors,@PathVariable Long id, 
+			HttpServletRequest request, HttpServletResponse response) {
 		
-		if (errors.hasErrors()) {
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			System.out.println(errors.getAllErrors());
+		if (Helper.isThereRequestError(errors, response)) {
 			return HttpStatus.BAD_REQUEST.getReasonPhrase();
 		}
 		
 		HttpSession session = request.getSession();
 
-		if (session == null || session.getAttribute(USER_ID) == null) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+		if (!Helper.isThereLoggedUser(response, session)) {
 			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
 		}
 		
@@ -163,8 +154,7 @@ public class BudgetController {
 		
 		response.setStatus(HttpStatus.ACCEPTED.value());
 		return "Update " + HttpStatus.ACCEPTED.getReasonPhrase();
-		
-		
+
 	}
 
 }
