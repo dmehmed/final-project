@@ -126,6 +126,11 @@ public abstract class Helper {
 	}
 
 	public static Timestamp parseStringToTimeStamp(String date) {
+		
+		if(date == null) {
+			return null;
+		}
+		
 		return date != null ? Timestamp.valueOf(LocalDate.parse(date, dateTimeFormatter).atStartOfDay()) : null;	
 	}
 }

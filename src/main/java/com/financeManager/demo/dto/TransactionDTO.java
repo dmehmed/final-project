@@ -19,5 +19,4 @@ public class TransactionDTO {
 	private String categoryType;
 	private String walletName;
 
-	
 }
