@@ -149,55 +149,62 @@ public class TransactionService {
 	}
 
 	public List<TransactionDTO> getAllIncomeTransactions() {
-		
+
 		List<Transaction> incomes = this.transactionRepo.findAllByAmountIsGreaterThan(new Double(0));
-		
+
 		return incomes.stream().filter(transaction -> transaction.getAmount().doubleValue() > 0)
 				.map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
 				.collect(Collectors.toList());
 	}
-	
-	public List<TransactionDTO> getAllExpenseTransactions(){
-		
-		
+
+	public List<TransactionDTO> getAllExpenseTransactions() {
+
 		List<Transaction> expenses = this.transactionRepo.findAllByAmountIsLessThan(new Double(0));
-		
+
 		return expenses.stream().filter(transaction -> transaction.getAmount().doubleValue() < 0)
 				.map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
 				.collect(Collectors.toList());
 	}
-	
-	
-	
+
 	private TransactionDTO convertFromTransactionToTransactionDTO(Transaction transaction) {
 		TransactionDTO newTransactionDTO = new TransactionDTO();
-		if(transaction.getAmount() < 0) {
-		newTransactionDTO.setAmount(transaction.getAmount() * -1);
-		} 
+		if (transaction.getAmount() < 0) {
+			newTransactionDTO.setAmount(transaction.getAmount() * -1);
+		}
 		newTransactionDTO.setAmount(transaction.getAmount());
 		newTransactionDTO.setCategoryType(transaction.getCategory().getName());
 		newTransactionDTO.setWalletName(transaction.getWallet().getName());
 		newTransactionDTO.setTransactionType(transaction.getCategory().getTransactionType().getName());
 		newTransactionDTO.setCreationDate(transaction.getCreationDate());
 
-			return newTransactionDTO;
+
+		return newTransactionDTO;
 	}
-	
-	
 
 	
-	
-	public List<TransactionDTO> getAllTransactionsOfUser(User user, String criteria, String orderBy){
-
+	public List<TransactionDTO> getAllTransactionsOfUser(User user, String criteria, String orderBy) {
 		
 		List<Transaction> transactions = this.transactionRepo.findAllTransactionsByUser(user);
-		
-		return transactions.stream()
-				.map(transaction -> this.convertFromTransactionToTransactionDTO(transaction)).sorted(Helper.giveComparatorByCriteria(criteria, orderBy))
-				.collect(Collectors.toList());
+
+		return transactions.stream().map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
+				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy)).collect(Collectors.toList());
+	}
+
+	
+	
+	public List<TransactionDTO> getAllTransactionsOfUserForGivenCategory(User user, String criteria, String orderBy,
+			Long categoryId) {
+		List<Transaction> transactions = this.transactionRepo.findAllTransactionsByUser(user);
+
+		return transactions.stream().filter(transaction -> transaction.getCategory().getId().equals(categoryId))
+				.map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
+				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy)).collect(Collectors.toList());
+			
 	}
 
 	
 	
 
+		
+	
 }

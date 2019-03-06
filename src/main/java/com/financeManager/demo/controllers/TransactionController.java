@@ -166,8 +166,12 @@ public class TransactionController {
 		return this.transactionService.getAllExpenseTransactions();
 	}
 
-	@GetMapping
-	public List<TransactionDTO> giveTransaction(HttpServletRequest request, HttpServletResponse response) {
+	@GetMapping()
+	public List<TransactionDTO> giveTransactions(@RequestParam(name="sortBy",required = false) String sortBy,
+			@RequestParam(name="orderBy",required = false)String orderBy,
+			HttpServletRequest request, HttpServletResponse response) {
+
+
 
 		HttpSession session = request.getSession();
 
@@ -184,7 +188,33 @@ public class TransactionController {
 			response.setStatus(HttpStatus.NOT_FOUND.value());
 		}
 
-		return transactionService.getAllTransactionsOfUser(user, null, null);
+
+		return transactionService.getAllTransactionsOfUser(user, sortBy, orderBy);
+	}
+	
+	@GetMapping("/category/{id}")
+	public List<TransactionDTO> giveTransactionsByCategory(
+			@PathVariable Long id,
+			@RequestParam(name="sortBy",required = false) String sortBy,
+			@RequestParam(name="orderBy",required = false)String orderBy,
+			HttpServletRequest request, HttpServletResponse response){
+		
+			HttpSession session = request.getSession();
+
+		if (!Helper.isThereLoggedUser(response, session)) {
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			return null;
+		}
+
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		User user = null;
+		try {
+			user = this.userService.getExistingUserById(userId);
+		} catch (NotExistingUserException e) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+		}
+		
+		return this.transactionService.getAllTransactionsOfUserForGivenCategory(user, sortBy, orderBy, id);
 
 	}
 
