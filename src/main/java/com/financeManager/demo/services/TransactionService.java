@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.financeManager.demo.controllers.Helper;
 import com.financeManager.demo.dao.ICategoryDao;
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.CreateTransactionDTO;
@@ -167,16 +168,17 @@ public class TransactionService {
 		newTransactionDTO.setCategoryType(transaction.getCategory().getName());
 		newTransactionDTO.setWalletName(transaction.getWallet().getName());
 		newTransactionDTO.setTransactionType(transaction.getCategory().getTransactionType().getName());
-		newTransactionDTO.setTimeMade(transaction.getCreationDate());
+		newTransactionDTO.setCreationDate(transaction.getCreationDate());
 			return newTransactionDTO;
 					
 	}
 	
 	
-	public List<TransactionDTO> getAllTransactionsOfUser(User user){
+	public List<TransactionDTO> getAllTransactionsOfUser(User user,String criteria){
+		
 		List<Transaction> transactions = this.transactionRepo.findAllTransactionsByUser(user);
 		return transactions.stream()
-				.map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
+				.map(transaction -> this.convertFromTransactionToTransactionDTO(transaction)).sorted(Helper.giveComparatorByCriteria(criteria))
 				.collect(Collectors.toList());
 	}
 	

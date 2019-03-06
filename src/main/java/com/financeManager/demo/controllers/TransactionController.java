@@ -1,5 +1,6 @@
 package com.financeManager.demo.controllers;
 
+import java.util.Comparator;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -26,11 +27,13 @@ import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
 import com.financeManager.demo.exceptions.NotExistingTransactionException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.exceptions.UnauthorizedException;
+import com.financeManager.demo.model.Transaction;
 import com.financeManager.demo.services.TransactionService;
 
 @RestController
 @RequestMapping(path = "/transactions")
 public class TransactionController {
+
 
 	@Autowired
 	private TransactionService transactionService;
@@ -129,8 +132,8 @@ public class TransactionController {
 	}
 	
 	
-	@GetMapping("/user/{id}")
-	public List<TransactionDTO> giveTransaction(@PathVariable Long id) {
+	@GetMapping("/allTransactions/{sortBy}")
+	public List<TransactionDTO> giveTransaction(@PathVariable String sortBy) {
 //		User user = this.userRepo.findById(id).get();
 	return null;
 	}
@@ -140,5 +143,7 @@ public class TransactionController {
 //		return this.transactionService.getAllTransactionsOfUser(id);
 //	}
 //	
+	
+	
 	
 }
