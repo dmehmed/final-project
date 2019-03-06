@@ -1,5 +1,6 @@
 package com.financeManager.demo.repositories;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,5 +23,12 @@ public interface ITransactionRepository  extends JpaRepository<Transaction, Long
 
 	List<Transaction> findAllByWalletId(Long id);
 
-	
+	@Query("Select t from Transaction t left join Wallet w on(t.wallet = w.id) where w.user =?1 and t.creationDate >?2 and t.creationDate<?3")
+	List<Transaction> findAllTransactionsByUserAndCreationDateIsBetween(User us, Timestamp startDate, Timestamp endDate);
+	@Query("Select t from Transaction t left join Wallet w on(t.wallet = w.id) where w.user =?1 and t.creationDate<?2")
+	List<Transaction> findAllTransactionsByUserAndCreationDateIsBefore(User us, Timestamp endDate);
+	@Query("Select t from Transaction t left join Wallet w on(t.wallet = w.id) where w.user =?1 and t.creationDate>?2")
+	List<Transaction> findAllTransactionsByUserAndCreationDateIsAfter(User us, Timestamp startDate);
+	@Query("Select t from Transaction t left join Wallet w on(t.wallet = w.id) where w.user =?1 and t.creationDate=?2")
+	List<Transaction> findAllTransactionsByUserAndCreationDateIsEquals(User user, Timestamp startDate);
 }

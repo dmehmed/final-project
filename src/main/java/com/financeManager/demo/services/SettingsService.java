@@ -30,6 +30,7 @@ import lombok.Setter;
 public class SettingsService {
 
 	private static final String DATE_FORMAT = "yyyy-MM-dd";
+	
 	@Autowired
 	private ISettingsRepository settingsRepo;
 	@Autowired

@@ -14,9 +14,10 @@ import lombok.Setter;
 public class TransactionDTO {
 
 	private String transactionType;
-	private String categoryType;
-	private String walletName;
 	private Double amount;
 	private LocalDateTime creationDate;
+	private String categoryType;
+	private String walletName;
+
 	
 }

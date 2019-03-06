@@ -1,5 +1,6 @@
 package com.financeManager.demo.services;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -14,9 +15,11 @@ import com.financeManager.demo.dao.ITransactionTypeDAO;
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.CategoryDTO;
 import com.financeManager.demo.dto.CreateTransactionDTO;
+import com.financeManager.demo.dto.TransactionByDateDTO;
 import com.financeManager.demo.dto.TransactionDTO;
 import com.financeManager.demo.dto.TransactionTypeDTO;
 import com.financeManager.demo.exceptions.InsufficientBalanceException;
+import com.financeManager.demo.exceptions.InvalidDateException;
 import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
 import com.financeManager.demo.exceptions.NotExistingTransactionException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
@@ -50,8 +53,8 @@ public class TransactionService {
 
 	@Autowired
 	private IWalletDAO walletDAO;
-	
-	@Autowired 
+
+	@Autowired
 	private ITransactionTypeDAO typeDAO;
 
 	public List<TransactionDTO> getAllTransactionsOfUserInWallet(User user, Long walletId, String sortBy,
@@ -161,8 +164,7 @@ public class TransactionService {
 
 		return incomes.stream().filter(transaction -> transaction.getAmount().doubleValue() > 0)
 				.map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
-				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy))
-				.collect(Collectors.toList());
+				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy)).collect(Collectors.toList());
 	}
 
 	public List<TransactionDTO> getAllExpenseTransactions(User us, String criteria, String orderBy) {
@@ -171,20 +173,18 @@ public class TransactionService {
 
 		return expenses.stream().filter(transaction -> transaction.getAmount().doubleValue() < 0)
 				.map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
-				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy))
-				.collect(Collectors.toList());
+				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy)).collect(Collectors.toList());
 	}
 
 	private TransactionDTO convertFromTransactionToTransactionDTO(Transaction transaction) {
 		TransactionDTO newTransactionDTO = new TransactionDTO();
-		
+
 		if (transaction.getAmount() < 0) {
 			newTransactionDTO.setAmount(transaction.getAmount() * -1);
 		} else {
-		newTransactionDTO.setAmount(transaction.getAmount());
+			newTransactionDTO.setAmount(transaction.getAmount());
 		}
-		
-		
+
 		newTransactionDTO.setCategoryType(transaction.getCategory().getName());
 		newTransactionDTO.setWalletName(transaction.getWallet().getName());
 		newTransactionDTO.setTransactionType(transaction.getCategory().getTransactionType().getName());
@@ -211,14 +211,50 @@ public class TransactionService {
 
 	}
 
-
 	public List<CategoryDTO> listAllCategories() {
 		return this.categoryDAO.getAll().stream().map(category -> new CategoryDTO(category.getId(), category.getName()))
 				.collect(Collectors.toList());
 	}
 
 	public List<TransactionTypeDTO> listAllTransactionTypes() {
-		return this.typeDAO.getAll().stream().map(type -> new TransactionTypeDTO(type.getId(), type.getName())).collect(Collectors.toList());
+		return this.typeDAO.getAll().stream().map(type -> new TransactionTypeDTO(type.getId(), type.getName()))
+				.collect(Collectors.toList());
+	}
+
+	public List<TransactionDTO> getAllTransactionsBetweenDates(User user, TransactionByDateDTO searchInfo,
+			String sortBy, String orderBy) throws InvalidDateException {
+		Timestamp startDate = Helper.parseStringToTimeStamp(searchInfo.getStartDate());
+		Timestamp endDate = Helper.parseStringToTimeStamp(searchInfo.getEndDate());
+
+		if (startDate == null && endDate == null) {
+			return this.getAllTransactionsOfUser(user, sortBy, orderBy);
+		}
+
+		List<Transaction> transactions = null;
+
+		if (startDate == null && endDate != null) {
+			transactions = this.transactionRepo.findAllTransactionsByUserAndCreationDateIsBefore(user, endDate);
+		}
+
+		if (startDate != null && startDate.after(endDate)) {
+			throw new InvalidDateException("Invalid data input!");
+		}
+
+		if (startDate != null && endDate == null) {
+			transactions = this.transactionRepo.findAllTransactionsByUserAndCreationDateIsAfter(user, startDate);
+		}
+
+		if (startDate == endDate) {
+			transactions = this.transactionRepo.findAllTransactionsByUserAndCreationDateIsEquals(user, startDate);
+		}
+
+		if (startDate != null && endDate != null) {
+			transactions = this.transactionRepo.findAllTransactionsByUserAndCreationDateIsBetween(user, startDate,
+					endDate);
+		}
+
+		return transactions.stream().map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
+				.sorted(Helper.giveComparatorByCriteria(sortBy, orderBy)).collect(Collectors.toList());
 	}
 
 }

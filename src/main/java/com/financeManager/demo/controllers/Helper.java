@@ -1,5 +1,8 @@
 package com.financeManager.demo.controllers;
 
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 
 import javax.servlet.http.HttpServletResponse;
@@ -21,6 +24,10 @@ public abstract class Helper {
 	private static final String TYPE = "type";
 	private static final String AMOUNT = "amount";
 	private static final String DATE = "date";
+	
+	private static final String DATE_FORMAT = "yyyy-MM-dd";
+	
+	private static DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
 	public static boolean isThereRequestError(Errors errors, HttpServletResponse response) {
 
@@ -116,5 +123,9 @@ public abstract class Helper {
 				}
 			};
 		}
+	}
+
+	public static Timestamp parseStringToTimeStamp(String date) {
+		return date != null ? Timestamp.valueOf(LocalDate.parse(date, dateTimeFormatter).atStartOfDay()) : null;	
 	}
 }
