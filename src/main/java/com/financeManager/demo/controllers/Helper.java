@@ -42,6 +42,7 @@ public abstract class Helper {
 	}
 
 	public static Comparator<TransactionDTO> giveComparatorByCriteria(String criteria, String orderBy) {
+
 		if(criteria == null) {
 			criteria = DATE;
 		}
@@ -49,6 +50,7 @@ public abstract class Helper {
 			orderBy = ASC;
 		}
 		
+
 		int coeff;
 
 		if (orderBy.equals(ASC)) {

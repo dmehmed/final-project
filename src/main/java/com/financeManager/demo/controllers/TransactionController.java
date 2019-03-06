@@ -125,19 +125,57 @@ public class TransactionController {
 	}
 
 	@GetMapping("/incomes")
-	public List<TransactionDTO> findAllIncomes() {
-		return this.transactionService.getAllIncomeTransactions();
+	public List<TransactionDTO> findAllIncomes(@RequestParam(name="sortBy",required = false) String sortBy,
+			@RequestParam(name="orderBy",required = false)String orderBy,
+			HttpServletRequest request, HttpServletResponse response) {
+		HttpSession session = request.getSession();
+
+		if (!Helper.isThereLoggedUser(response, session)) {
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			return null;
+		}
+
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		User user = null;
+		try {
+			user = this.userService.getExistingUserById(userId);
+		} catch (NotExistingUserException e) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+		}
+		
+		return this.transactionService.getAllIncomeTransactions(user,sortBy,orderBy);
 	}
 
 	@GetMapping("/expenses")
-	public List<TransactionDTO> findAllExpenses() {
-		return this.transactionService.getAllExpenseTransactions();
+	public List<TransactionDTO> findAllExpenses(@RequestParam(name="sortBy",required = false) String sortBy,
+			@RequestParam(name="orderBy",required = false)String orderBy,
+			HttpServletRequest request, HttpServletResponse response) {
+		
+		HttpSession session = request.getSession();
+
+		if (!Helper.isThereLoggedUser(response, session)) {
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			return null;
+		}
+
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		User user = null;
+		try {
+			user = this.userService.getExistingUserById(userId);
+		} catch (NotExistingUserException e) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+		}
+		
+		return this.transactionService.getAllExpenseTransactions(user,sortBy,orderBy);
+	
 	}
 
 	@GetMapping()
 	public List<TransactionDTO> giveTransactions(@RequestParam(name="sortBy",required = false) String sortBy,
 			@RequestParam(name="orderBy",required = false)String orderBy,
 			HttpServletRequest request, HttpServletResponse response) {
+
+
 
 		HttpSession session = request.getSession();
 
@@ -153,6 +191,7 @@ public class TransactionController {
 		} catch (NotExistingUserException e) {
 			response.setStatus(HttpStatus.NOT_FOUND.value());
 		}
+
 
 		return transactionService.getAllTransactionsOfUser(user, sortBy, orderBy);
 	}
@@ -182,4 +221,5 @@ public class TransactionController {
 		return this.transactionService.getAllTransactionsOfUserForGivenCategory(user, sortBy, orderBy, id);
 
 	}
+
 }
