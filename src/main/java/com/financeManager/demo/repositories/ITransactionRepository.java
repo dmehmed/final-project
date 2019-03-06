@@ -19,7 +19,8 @@ public interface ITransactionRepository  extends JpaRepository<Transaction, Long
 	List<Transaction> findAllTransactionsByUserWhereAmountIsLessThan(User us,Double amount);
 	@Query("Select t from Transaction t left join Wallet w on(t.wallet = w.id) where w.user =?1 and t.amount > ?2 and t.amount < ?3")
 	List<Transaction> findAllTransactionsByUserWhereAmountIsBetween(User us,Double min,Double max);
-	
+	@Query("Select t from Transaction t left join Wallet w on(t.wallet = w.id) where w.user =?1 and t.amount = ?2")
+	List<Transaction> findAllTransactionsByUserWhereAmountEquals(User us,Double value);
 	
 	@Query("Select t from Transaction t left join Wallet w on(t.wallet = w.id) where w.user =?1")
 	List<Transaction> findAllTransactionsByUser(User us);
