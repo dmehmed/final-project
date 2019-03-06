@@ -1,6 +1,5 @@
 package com.financeManager.demo.controllers;
 
-import java.util.LinkedList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,10 +26,6 @@ import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
 import com.financeManager.demo.exceptions.NotExistingTransactionException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.exceptions.UnauthorizedException;
-import com.financeManager.demo.model.Transaction;
-import com.financeManager.demo.model.User;
-import com.financeManager.demo.repositories.ITransactionRepository;
-import com.financeManager.demo.repositories.IUsersRepository;
 import com.financeManager.demo.services.TransactionService;
 
 @RestController

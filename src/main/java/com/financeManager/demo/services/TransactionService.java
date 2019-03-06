@@ -1,6 +1,5 @@
 package com.financeManager.demo.services;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -61,9 +60,11 @@ public class TransactionService {
 		
 		Wallet wallet = this.walletDAO.getWalletById(transaction.getWallet().getId());
 		
+
 		if(!wallet.getUser().getId().equals(userId)){
 			throw new UnauthorizedException();
 		}
+
 
 		wallet.setBalance(wallet.getBalance() - transaction.getAmount());
 		this.walletDAO.saveUpdatedWallet(wallet.getId());
