@@ -47,6 +47,23 @@ public class TransactionService {
 
 	@Autowired
 	private IWalletDAO walletDAO;
+	
+	public List<TransactionDTO> getAllTransactionsOfUserInWallet(User user, Long walletId, String sortBy, String orderBy) throws NotExistingWalletException {
+		
+		Optional<Wallet> result = this.walletDAO.getAllUserWallets(user.getId()).stream().filter(w -> w.getId().equals(walletId)).findFirst();
+
+		if (!result.isPresent()) {
+			throw new NotExistingWalletException();
+		}
+		
+		Wallet wallet = result.get();
+		
+		List<Transaction> walletTransactions = this.transactionRepo.findAllByWalletId(wallet.getId());
+
+		return walletTransactions.stream()
+				.map(transaction -> this.convertFromTransactionToTransactionDTO(transaction)).sorted(Helper.giveComparatorByCriteria(sortBy, orderBy))
+				.collect(Collectors.toList());
+	}
 
 	public TransactionDTO getTransactionById(Long transactionId, Long userId)
 			throws NotExistingTransactionException, NotExistingWalletException, UnauthorizedException {
@@ -190,6 +207,7 @@ public class TransactionService {
 				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy)).collect(Collectors.toList());
 			
 	}
+
 	
 
 		
