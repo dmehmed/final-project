@@ -17,6 +17,7 @@ public class TransactionDTO {
 	private String categoryType;
 	private String walletName;
 	private double amount;
+	private Timestamp timeMade;
 	
 	private Timestamp creationDate;
 	

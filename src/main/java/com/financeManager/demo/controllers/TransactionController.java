@@ -127,5 +127,18 @@ public class TransactionController {
 	public List<TransactionDTO> findAllExpenses() {
 		return this.transactionService.getAllExpenseTransactions();
 	}
-
+	
+	
+	@GetMapping("/user/{id}")
+	public List<TransactionDTO> giveTransaction(@PathVariable Long id) {
+//		User user = this.userRepo.findById(id).get();
+	return null;
+	}
+	
+//	@GetMapping("/all")
+//	public List<TransactionDTO> findAllTransactionsOfUser(@PathVariable Long id){
+//		return this.transactionService.getAllTransactionsOfUser(id);
+//	}
+//	
+	
 }
