@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -62,6 +63,38 @@ public class TransactionController {
 		}
 
 	}
+	
+	@GetMapping(path = "/wallet/{walletId}")
+	public List<TransactionDTO> getAllTransactionsInWallet(@PathVariable Long walletId, 
+			@RequestParam(name = "sortBy", required = false) String sortBy, 
+			@RequestParam(name = "orderBy", required = false) String orderBy,
+			HttpServletRequest request, HttpServletResponse response) {
+		
+		HttpSession session = request.getSession();
+
+		if (!Helper.isThereLoggedUser(response, session)) {
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			return null;
+		}
+		
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		User user = null;
+		
+		try {
+			user = this.userService.getExistingUserById(userId);
+		} catch (NotExistingUserException e) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+		}
+		
+		try {
+			return this.transactionService.getAllTransactionsOfUserInWallet(user, walletId, sortBy, orderBy);
+		} catch (NotExistingWalletException e) {
+			e.printStackTrace();
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			return null;
+		}
+	}
+	
 
 	@DeleteMapping(path = "/delete/{id}")
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
