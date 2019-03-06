@@ -139,6 +139,8 @@ public class TransactionController {
 			@RequestParam(name="orderBy",required = false)String orderBy,
 			HttpServletRequest request, HttpServletResponse response) {
 
+
+
 		HttpSession session = request.getSession();
 
 		if (!Helper.isThereLoggedUser(response, session)) {
@@ -153,6 +155,7 @@ public class TransactionController {
 		} catch (NotExistingUserException e) {
 			response.setStatus(HttpStatus.NOT_FOUND.value());
 		}
+
 
 		return transactionService.getAllTransactionsOfUser(user, sortBy, orderBy);
 	}
@@ -182,4 +185,5 @@ public class TransactionController {
 		return this.transactionService.getAllTransactionsOfUserForGivenCategory(user, sortBy, orderBy, id);
 
 	}
+
 }

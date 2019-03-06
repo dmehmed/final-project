@@ -160,10 +160,13 @@ public class TransactionService {
 		newTransactionDTO.setTransactionType(transaction.getCategory().getTransactionType().getName());
 		newTransactionDTO.setCreationDate(transaction.getCreationDate());
 
+
 		return newTransactionDTO;
 	}
 
+	
 	public List<TransactionDTO> getAllTransactionsOfUser(User user, String criteria, String orderBy) {
+		
 		List<Transaction> transactions = this.transactionRepo.findAllTransactionsByUser(user);
 
 		return transactions.stream().map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
@@ -179,5 +182,10 @@ public class TransactionService {
 		return transactions.stream().filter(transaction -> transaction.getCategory().getId().equals(categoryId))
 				.map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
 				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy)).collect(Collectors.toList());
+			
 	}
+	
+
+		
+	
 }
