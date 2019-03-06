@@ -12,8 +12,10 @@ import com.financeManager.demo.dto.TransactionDTO;
 
 public abstract class Helper {
 
+	private static final String ASC = "asc";
+
 	static final String USER_ID = "userId";
-	
+
 	private static final String WALLET = "wallet";
 	private static final String CATEGORY = "category";
 	private static final String TYPE = "type";
@@ -39,27 +41,41 @@ public abstract class Helper {
 		return true;
 	}
 
-	public static Comparator<TransactionDTO> giveComparatorByCriteria(String criteria) {
+	public static Comparator<TransactionDTO> giveComparatorByCriteria(String criteria, String orderBy) {
+
+		int coeff;
+
+		if (orderBy.equals(ASC)) {
+			coeff = 1;
+		} else {
+			coeff = -1;
+		}
+
 		switch (criteria) {
 		case DATE:
 			return new Comparator<TransactionDTO>() {
 				@Override
 				public int compare(TransactionDTO o1, TransactionDTO o2) {
-					return o1.getCreationDate().compareTo(o2.getCreationDate());
+
+					return coeff * o1.getCreationDate().compareTo(o2.getCreationDate());
+
 				}
 			};
 		case AMOUNT:
 			return new Comparator<TransactionDTO>() {
 				@Override
 				public int compare(TransactionDTO o1, TransactionDTO o2) {
-					return o1.getAmount().compareTo(o2.getAmount());
+					return coeff * o1.getAmount().compareTo(o2.getAmount());
+
 				}
 			};
 		case TYPE:
 			return new Comparator<TransactionDTO>() {
 				@Override
 				public int compare(TransactionDTO o1, TransactionDTO o2) {
-					return o1.getTransactionType()
+
+					return coeff * o1.getTransactionType()
+
 							.compareTo(o2.getTransactionType());
 				}
 			};
@@ -67,14 +83,18 @@ public abstract class Helper {
 			return new Comparator<TransactionDTO>() {
 				@Override
 				public int compare(TransactionDTO o1, TransactionDTO o2) {
-					return o1.getCategoryType().compareTo(o2.getCategoryType());
+
+					return coeff * o1.getCategoryType().compareTo(o2.getCategoryType());
+
 				}
 			};
 		case WALLET:
 			return new Comparator<TransactionDTO>() {
 				@Override
 				public int compare(TransactionDTO o1, TransactionDTO o2) {
-					return o1.getWalletName().compareTo(o2.getWalletName());
+
+					return coeff * o1.getWalletName().compareTo(o2.getWalletName());
+
 				}
 			};
 
@@ -82,7 +102,9 @@ public abstract class Helper {
 			return new Comparator<TransactionDTO>() {
 				@Override
 				public int compare(TransactionDTO o1, TransactionDTO o2) {
-					return o1.getCreationDate().compareTo(o2.getCreationDate());
+
+					return coeff * o1.getCreationDate().compareTo(o2.getCreationDate());
+
 				}
 			};
 		}

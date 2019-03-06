@@ -63,16 +63,8 @@ public class TransactionService {
 		if (!wallet.getUser().getId().equals(userId)) {
 			throw new UnauthorizedException();
 		}
-		
-		TransactionDTO transactionDTO = new TransactionDTO();
-		
-		transactionDTO.setTransactionType(transaction.getCategory().getTransactionType().getName());
-		transactionDTO.setCategoryType(transaction.getCategory().getName());
-		transactionDTO.setWalletName(wallet.getName());
-		transactionDTO.setAmount(transaction.getAmount());
-		transactionDTO.setCreationDate(transaction.getCreationDate());
 
-		return transactionDTO;
+		return this.convertFromTransactionToTransactionDTO(transaction);
 
 	}
 
@@ -170,16 +162,21 @@ public class TransactionService {
 		newTransactionDTO.setWalletName(transaction.getWallet().getName());
 		newTransactionDTO.setTransactionType(transaction.getCategory().getTransactionType().getName());
 		newTransactionDTO.setCreationDate(transaction.getCreationDate());
+
 			return newTransactionDTO;
 	}
 	
 	
-	public List<TransactionDTO> getAllTransactionsOfUser(User user,String criteria){
+
+	
+	
+	public List<TransactionDTO> getAllTransactionsOfUser(User user, String criteria, String orderBy){
+
 		
 		List<Transaction> transactions = this.transactionRepo.findAllTransactionsByUser(user);
 		
 		return transactions.stream()
-				.map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
+				.map(transaction -> this.convertFromTransactionToTransactionDTO(transaction)).sorted(Helper.giveComparatorByCriteria(criteria, orderBy))
 				.collect(Collectors.toList());
 	}
 	

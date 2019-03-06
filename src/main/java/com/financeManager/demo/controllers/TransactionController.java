@@ -35,13 +35,12 @@ import com.financeManager.demo.services.UserService;
 @RequestMapping(path = "/transactions")
 public class TransactionController {
 
-
 	@Autowired
 	private TransactionService transactionService;
 	@Autowired
 	private UserService userService;
 
-	@GetMapping(path = "{id}")
+	@GetMapping(path = "/{id}")
 	public TransactionDTO getTransactionById(@PathVariable Long id, HttpServletRequest request,
 			HttpServletResponse response) {
 		HttpSession session = request.getSession();
@@ -133,18 +132,17 @@ public class TransactionController {
 	public List<TransactionDTO> findAllExpenses() {
 		return this.transactionService.getAllExpenseTransactions();
 	}
-	
-	
-	@GetMapping()
+
+	@GetMapping
 	public List<TransactionDTO> giveTransaction(HttpServletRequest request, HttpServletResponse response) {
-		
+
 		HttpSession session = request.getSession();
-		
-		if(!Helper.isThereLoggedUser(response, session)) {
+
+		if (!Helper.isThereLoggedUser(response, session)) {
 			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 			return null;
 		}
-		
+
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
 		User user = null;
 		try {
@@ -152,12 +150,9 @@ public class TransactionController {
 		} catch (NotExistingUserException e) {
 			response.setStatus(HttpStatus.NOT_FOUND.value());
 		}
-		
-		return transactionService.getAllTransactionsOfUser(user,null);
-	}
-	
 
-	
-	
-	
+		return transactionService.getAllTransactionsOfUser(user, null, null);
+
+	}
+
 }
