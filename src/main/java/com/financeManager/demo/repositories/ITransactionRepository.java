@@ -14,5 +14,4 @@ public interface ITransactionRepository  extends JpaRepository<Transaction, Long
 //	List<Transaction>findPositive();
 	List<Transaction> findAllByAmountIsGreaterThan(Double amount);
 	List<Transaction> findAllByAmountIsLessThan(Double amount);
-
 }

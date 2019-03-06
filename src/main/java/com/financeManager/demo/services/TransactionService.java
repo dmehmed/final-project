@@ -45,29 +45,57 @@ public class TransactionService {
 
 	@Autowired
 	private IWalletDAO walletDAO;
-	
-	
-	public void deleteTransactionById(Long transactionId, Long userId) throws NotExistingTransactionException, NotExistingWalletException, UnauthorizedException {
-		
+
+	public TransactionDTO getTransactionById(Long transactionId, Long userId)
+			throws NotExistingTransactionException, NotExistingWalletException, UnauthorizedException {
+
 		Optional<Transaction> result = transactionRepo.findById(transactionId);
-		
-		if(!result.isPresent()) {
+
+		if (!result.isPresent()) {
 			throw new NotExistingTransactionException();
 		}
-		
+
 		Transaction transaction = result.get();
-		
 		Wallet wallet = this.walletDAO.getWalletById(transaction.getWallet().getId());
+
+		if (!wallet.getUser().getId().equals(userId)) {
+			throw new UnauthorizedException();
+		}
 		
-//		if(!wallet.getUser().getId().equals(userId)){
-//			throw new UnauthorizedException();
-//		}
+		TransactionDTO transactionDTO = new TransactionDTO();
+		
+		transactionDTO.setTransactionType(transaction.getCategory().getTransactionType().getName());
+		transactionDTO.setCategoryType(transaction.getCategory().getName());
+		transactionDTO.setWalletName(wallet.getName());
+		transactionDTO.setAmount(transaction.getAmount());
+		transactionDTO.setCreationDate(transaction.getCreationDate());
+
+		return transactionDTO;
+
+	}
+
+	public void deleteTransactionById(Long transactionId, Long userId)
+			throws NotExistingTransactionException, NotExistingWalletException, UnauthorizedException {
+
+		Optional<Transaction> result = transactionRepo.findById(transactionId);
+
+		if (!result.isPresent()) {
+			throw new NotExistingTransactionException();
+		}
+
+		Transaction transaction = result.get();
+
+		Wallet wallet = this.walletDAO.getWalletById(transaction.getWallet().getId());
+
+		if (!wallet.getUser().getId().equals(userId)) {
+			throw new UnauthorizedException();
+		}
 
 		wallet.setBalance(wallet.getBalance() - transaction.getAmount());
 		this.walletDAO.saveUpdatedWallet(wallet.getId());
-		
+
 		this.transactionRepo.deleteById(transactionId);
-		
+
 	}
 
 	public void createTransaction(CreateTransactionDTO newTransaction, Long userId)
@@ -89,62 +117,56 @@ public class TransactionService {
 			e.printStackTrace();
 			throw new InvalidTransactionEntryException("Invalid category type");
 		}
-		
+
 		Double amount = newTransaction.getAmount();
-				
-		if(transactionCategory.getTransactionType().getId().equals(EXPENSE)) {
-			 amount = -amount;
+
+		if (transactionCategory.getTransactionType().getId().equals(EXPENSE)) {
+			amount = -amount;
 		}
-		
-		if(userWallet.getBalance() + amount < 0) {
+
+		if (userWallet.getBalance() + amount < 0) {
 			throw new InsufficientBalanceException("Insufficient account balance.");
 		}
 
-		Transaction transaction = new Transaction(amount, newTransaction.getDescription(),
-				userWallet, transactionCategory);
-		
+		Transaction transaction = new Transaction(amount, newTransaction.getDescription(), userWallet,
+				transactionCategory);
+
 		userWallet.setBalance(userWallet.getBalance() + amount);
 		walletDAO.saveUpdatedWallet(userWallet.getId());
-		
+
 		this.transactionRepo.save(transaction);
 	}
-	
-	
 
-	public List<TransactionDTO> getAllIncomeTransactions(){
+	public List<TransactionDTO> getAllIncomeTransactions() {
 		List<Transaction> incomes = this.transactionRepo.findAllByAmountIsGreaterThan(new Double(0));
 		List<TransactionDTO> incomesDTO = new LinkedList<TransactionDTO>();
-		for(Transaction tr : incomes) {
+		for (Transaction tr : incomes) {
 			TransactionDTO newTransactionDTO = new TransactionDTO();
 			newTransactionDTO.setAmount(tr.getAmount());
 			newTransactionDTO.setCategoryType(tr.getCategory().getName());
 			newTransactionDTO.setWalletName(tr.getWallet().getName());
 			newTransactionDTO.setTransactionType(tr.getCategory().getTransactionType().getName());
-			
+
 			incomesDTO.add(newTransactionDTO);
 		}
 
-		
-		return incomesDTO;	
+		return incomesDTO;
 	}
-	
-	public List<TransactionDTO> getAllExpenseTransactions(){
+
+	public List<TransactionDTO> getAllExpenseTransactions() {
 		List<Transaction> expenses = this.transactionRepo.findAllByAmountIsLessThan(new Double(0));
 		List<TransactionDTO> expensesDTO = new LinkedList<TransactionDTO>();
-		for(Transaction tr : expenses) {
+		for (Transaction tr : expenses) {
 			TransactionDTO newTransactionDTO = new TransactionDTO();
 			newTransactionDTO.setAmount(tr.getAmount() * -1);
 			newTransactionDTO.setCategoryType(tr.getCategory().getName());
 			newTransactionDTO.setWalletName(tr.getWallet().getName());
 			newTransactionDTO.setTransactionType(tr.getCategory().getTransactionType().getName());
-			
+
 			expensesDTO.add(newTransactionDTO);
 		}
-	
-		return expensesDTO;	
+
+		return expensesDTO;
 	}
-	
-	
-	
 
 }

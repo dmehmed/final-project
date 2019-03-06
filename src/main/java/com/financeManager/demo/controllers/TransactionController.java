@@ -34,19 +34,41 @@ public class TransactionController {
 
 	@Autowired
 	private TransactionService transactionService;
-	
+
+	@GetMapping(path = "{id}")
+	public TransactionDTO getTransactionById(@PathVariable Long id, HttpServletRequest request,
+			HttpServletResponse response) {
+		HttpSession session = request.getSession();
+
+		if (!Helper.isThereLoggedUser(response, session)) {
+			return null;
+		}
+
+		try {
+			return this.transactionService.getTransactionById(id, (Long) session.getAttribute(Helper.USER_ID));
+		} catch (NotExistingTransactionException | NotExistingWalletException e) {
+			e.printStackTrace();
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return null;
+		} catch (UnauthorizedException e) {
+			e.printStackTrace();
+			response.setStatus(HttpStatus.FORBIDDEN.value());
+			return null;
+		}
+
+	}
+
 	@DeleteMapping(path = "/delete/{id}")
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
 	public void deleteWalletById(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response) {
 		HttpSession session = request.getSession();
-		
 
 		if (!Helper.isThereLoggedUser(response, session)) {
 			return;
 		}
-		
+
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-		
+
 		try {
 			this.transactionService.deleteTransactionById(id, userId);
 		} catch (NotExistingTransactionException | NotExistingWalletException e) {
@@ -55,27 +77,27 @@ public class TransactionController {
 			return;
 		} catch (UnauthorizedException e) {
 			e.printStackTrace();
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			response.setStatus(HttpStatus.FORBIDDEN.value());
 			return;
 		}
 	}
-	
+
 	@PostMapping("/create")
-	public String createTransaction(@RequestBody @Valid CreateTransactionDTO newTransaction, Errors errors, 
+	public String createTransaction(@RequestBody @Valid CreateTransactionDTO newTransaction, Errors errors,
 			HttpServletRequest request, HttpServletResponse response) {
-		
+
 		if (Helper.isThereRequestError(errors, response)) {
 			return HttpStatus.BAD_REQUEST.getReasonPhrase();
 		}
-		
+
 		HttpSession session = request.getSession();
 
 		if (!Helper.isThereLoggedUser(response, session)) {
 			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
 		}
-		
+
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-		
+
 		try {
 			this.transactionService.createTransaction(newTransaction, userId);
 		} catch (NotExistingWalletException e) {
@@ -90,22 +112,20 @@ public class TransactionController {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.BAD_REQUEST.value());
 			return e.getMessage();
-		} 
-		
+		}
+
 		response.setStatus(HttpStatus.CREATED.value());
 		return HttpStatus.CREATED.getReasonPhrase();
 	}
-	
-	
+
 	@GetMapping("/incomes")
-	public List<TransactionDTO> findAllIncomes(){
+	public List<TransactionDTO> findAllIncomes() {
 		return this.transactionService.getAllIncomeTransactions();
 	}
-	
-	
+
 	@GetMapping("/expenses")
-	public List<TransactionDTO> findAllExpenses(){
+	public List<TransactionDTO> findAllExpenses() {
 		return this.transactionService.getAllExpenseTransactions();
 	}
-	
+
 }
