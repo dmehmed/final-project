@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.financeManager.demo.controllers.Helper;
 import com.financeManager.demo.dao.ICategoryDao;
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.CreateTransactionDTO;
@@ -139,18 +140,20 @@ public class TransactionService {
 	}
 
 	public List<TransactionDTO> getAllIncomeTransactions() {
+		
 		List<Transaction> incomes = this.transactionRepo.findAllByAmountIsGreaterThan(new Double(0));
-
-		return incomes.stream()
+		
+		return incomes.stream().filter(transaction -> transaction.getAmount().doubleValue() > 0)
 				.map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
 				.collect(Collectors.toList());
 	}
 	
 	public List<TransactionDTO> getAllExpenseTransactions(){
 		
+		
 		List<Transaction> expenses = this.transactionRepo.findAllByAmountIsLessThan(new Double(0));
 		
-		return expenses.stream()
+		return expenses.stream().filter(transaction -> transaction.getAmount().doubleValue() < 0)
 				.map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
 				.collect(Collectors.toList());
 	}
@@ -158,7 +161,6 @@ public class TransactionService {
 	
 	
 	private TransactionDTO convertFromTransactionToTransactionDTO(Transaction transaction) {
-		
 		TransactionDTO newTransactionDTO = new TransactionDTO();
 		if(transaction.getAmount() < 0) {
 		newTransactionDTO.setAmount(transaction.getAmount() * -1);
@@ -167,14 +169,15 @@ public class TransactionService {
 		newTransactionDTO.setCategoryType(transaction.getCategory().getName());
 		newTransactionDTO.setWalletName(transaction.getWallet().getName());
 		newTransactionDTO.setTransactionType(transaction.getCategory().getTransactionType().getName());
-		newTransactionDTO.setTimeMade(transaction.getCreationDate());
+		newTransactionDTO.setCreationDate(transaction.getCreationDate());
 			return newTransactionDTO;
-					
 	}
 	
 	
-	public List<TransactionDTO> getAllTransactionsOfUser(User user){
+	public List<TransactionDTO> getAllTransactionsOfUser(User user,String criteria){
+		
 		List<Transaction> transactions = this.transactionRepo.findAllTransactionsByUser(user);
+		
 		return transactions.stream()
 				.map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
 				.collect(Collectors.toList());

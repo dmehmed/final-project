@@ -24,16 +24,22 @@ import com.financeManager.demo.dto.TransactionDTO;
 import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
 import com.financeManager.demo.exceptions.NotExistingTransactionException;
+import com.financeManager.demo.exceptions.NotExistingUserException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.exceptions.UnauthorizedException;
+import com.financeManager.demo.model.User;
 import com.financeManager.demo.services.TransactionService;
+import com.financeManager.demo.services.UserService;
 
 @RestController
 @RequestMapping(path = "/transactions")
 public class TransactionController {
 
+
 	@Autowired
 	private TransactionService transactionService;
+	@Autowired
+	private UserService userService;
 
 	@GetMapping(path = "{id}")
 	public TransactionDTO getTransactionById(@PathVariable Long id, HttpServletRequest request,
@@ -129,16 +135,29 @@ public class TransactionController {
 	}
 	
 	
-	@GetMapping("/user/{id}")
-	public List<TransactionDTO> giveTransaction(@PathVariable Long id) {
-//		User user = this.userRepo.findById(id).get();
-	return null;
+	@GetMapping()
+	public List<TransactionDTO> giveTransaction(HttpServletRequest request, HttpServletResponse response) {
+		
+		HttpSession session = request.getSession();
+		
+		if(!Helper.isThereLoggedUser(response, session)) {
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			return null;
+		}
+		
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		User user = null;
+		try {
+			user = this.userService.getExistingUserById(userId);
+		} catch (NotExistingUserException e) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+		}
+		
+		return transactionService.getAllTransactionsOfUser(user,null);
 	}
 	
-//	@GetMapping("/all")
-//	public List<TransactionDTO> findAllTransactionsOfUser(@PathVariable Long id){
-//		return this.transactionService.getAllTransactionsOfUser(id);
-//	}
-//	
+
+	
+	
 	
 }
