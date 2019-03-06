@@ -1,6 +1,7 @@
 package com.financeManager.demo.services;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -258,10 +259,10 @@ public class TransactionService {
 				.collect(Collectors.toList());
 	}
 
-	public List<TransactionDTO> getAllTransactionsBetweenDates(User user, TransactionByDateDTO searchInfo,
+	public List<TransactionDTO> getAllTransactionsBetweenDates(User user, TransactionByDateDTO dates,
 			String sortBy, String orderBy) throws InvalidDateException {
-		Timestamp startDate = Helper.parseStringToTimeStamp(searchInfo.getStartDate());
-		Timestamp endDate = Helper.parseStringToTimeStamp(searchInfo.getEndDate());
+		Timestamp startDate = Helper.parseStringToTimeStamp(dates.getStartDate());
+		Timestamp endDate = Helper.parseStringToTimeStamp(dates.getEndDate());
 
 		if (startDate == null && endDate == null) {
 			return this.getAllTransactionsOfUser(user, sortBy, orderBy);
@@ -317,6 +318,46 @@ public class TransactionService {
 		List<Transaction> between = this.transactionRepo.findAllTransactionsByUserWhereAmountIsBetween(user, min, max);
 		return between.stream().map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
 				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy)).collect(Collectors.toList());
+	}
+
+	public List<TransactionDTO> giveAllTransactionInWalletBetweenAmounts(User user, TransactionByDateDTO dates,
+			Long walletId, String sortBy, String orderBy) throws NotExistingWalletException, InvalidDateException {
+		
+		List<TransactionDTO> walletTransactions = this.getAllTransactionsOfUserInWallet(user, walletId, sortBy, orderBy);
+		
+		LocalDateTime startDate = Helper.parseStringToLocalDateTime(dates.getStartDate());
+		LocalDateTime endDate = Helper.parseStringToLocalDateTime(dates.getEndDate());
+
+		return filterTransactionByDate(walletTransactions, startDate, endDate);
+	}
+
+	private List<TransactionDTO> filterTransactionByDate(List<TransactionDTO> walletTransactions,
+			LocalDateTime startDate, LocalDateTime endDate) throws InvalidDateException {
+		if (startDate == null && endDate == null) {
+			return walletTransactions;
+		}
+
+		if (startDate == null && endDate != null) {
+			return walletTransactions.stream().filter(transaction -> transaction.getCreationDate().isBefore(endDate)).collect(Collectors.toList());
+		}
+
+		if (startDate != null && startDate.isAfter(endDate)) {
+			throw new InvalidDateException("Invalid data input!");
+		}
+
+		if (startDate != null && endDate == null) {
+			return walletTransactions.stream().filter(transaction -> transaction.getCreationDate().isAfter(startDate)).collect(Collectors.toList());
+		}
+
+		if (startDate == endDate) {
+			return walletTransactions.stream().filter(transaction -> transaction.getCreationDate().isEqual(endDate)).collect(Collectors.toList());
+		}
+
+		if (startDate != null && endDate != null) {
+			return walletTransactions.stream().filter(transaction -> transaction.getCreationDate().isAfter(startDate) && transaction.getCreationDate().isBefore(endDate)).collect(Collectors.toList());
+		}
+		
+		return null;
 	}
 
 }

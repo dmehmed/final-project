@@ -48,7 +48,7 @@ public class TransactionController {
 	private UserService userService;
 
 	@PostMapping(path = "/betweenDates")
-	public List<TransactionDTO> listAllTransactionsBetweenDates(@RequestBody TransactionByDateDTO searchInfo,
+	public List<TransactionDTO> listAllTransactionsBetweenDates(@RequestBody TransactionByDateDTO dates,
 			@RequestParam(name = "sortBy", required = false) String sortBy,
 			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
 			HttpServletResponse response) {
@@ -68,13 +68,40 @@ public class TransactionController {
 		}
 
 		try {
-			return this.transactionService.getAllTransactionsBetweenDates(user, searchInfo, sortBy, orderBy);
+			return this.transactionService.getAllTransactionsBetweenDates(user, dates, sortBy, orderBy);
 		} catch (InvalidDateException e) {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.BAD_REQUEST.value());
 			return null;
 		}
 
+	}
+
+	@GetMapping(path = "/wallet/{walletId}/betweenDates")
+	public List<TransactionDTO> getAllTransactionsInWalletBetweenDates(@RequestBody TransactionByDateDTO dates,
+			@PathVariable Long walletId,
+			@RequestParam(name = "sortBy", required = false) String sortBy,
+			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
+			HttpServletResponse response) {
+		HttpSession session = request.getSession();
+
+		if (!Helper.isThereLoggedUser(response, session)) {
+			return null;
+		}
+
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		User user = null;
+
+		try {
+			user = this.userService.getExistingUserById(userId);
+		} catch (NotExistingUserException e) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+		}
+		
+		return null;
+		
+//		return this.transactionService.giveAllTransactionInWalletBetweenAmounts(user, dates, walletId, sortBy,
+//				orderBy);
 	}
 
 	@GetMapping(path = "/{id}")
