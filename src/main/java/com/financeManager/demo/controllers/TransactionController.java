@@ -1,5 +1,6 @@
 package com.financeManager.demo.controllers;
 
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -25,6 +26,11 @@ import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
 import com.financeManager.demo.exceptions.NotExistingTransactionException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
+import com.financeManager.demo.exceptions.UnauthorizedException;
+import com.financeManager.demo.model.Transaction;
+import com.financeManager.demo.model.User;
+import com.financeManager.demo.repositories.ITransactionRepository;
+import com.financeManager.demo.repositories.IUsersRepository;
 import com.financeManager.demo.services.TransactionService;
 
 @RestController
@@ -33,20 +39,29 @@ public class TransactionController {
 
 	@Autowired
 	private TransactionService transactionService;
+
 	
 	@DeleteMapping(path = "/delete/{id}")
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
 	public void deleteWalletById(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response) {
 		HttpSession session = request.getSession();
+		
 
 		if (!Helper.isThereLoggedUser(response, session)) {
 			return;
 		}
 		
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		
 		try {
-			this.transactionService.deleteTransactionById(id);
+			this.transactionService.deleteTransactionById(id, userId);
 		} catch (NotExistingTransactionException | NotExistingWalletException e) {
 			e.printStackTrace();
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return;
+		} catch (UnauthorizedException e) {
+			e.printStackTrace();
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 			return;
 		}
 	}
@@ -98,5 +113,18 @@ public class TransactionController {
 	public List<TransactionDTO> findAllExpenses(){
 		return this.transactionService.getAllExpenseTransactions();
 	}
+	
+	
+	@GetMapping("/user/{id}")
+	public List<TransactionDTO> giveTransaction(@PathVariable Long id) {
+//		User user = this.userRepo.findById(id).get();
+	return null;
+	}
+	
+//	@GetMapping("/all")
+//	public List<TransactionDTO> findAllTransactionsOfUser(@PathVariable Long id){
+//		return this.transactionService.getAllTransactionsOfUser(id);
+//	}
+//	
 	
 }

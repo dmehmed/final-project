@@ -21,7 +21,6 @@ public class WalletDAO implements IWalletDAO {
 
 	@Override
 	public Wallet getWalletById(Long id) throws NotExistingWalletException {
-		System.out.println(wallets);
 		try {
 			return this.wallets.stream().filter(wallet -> wallet.getId().equals(id)).findFirst().get();
 		} catch (NoSuchElementException e) {
