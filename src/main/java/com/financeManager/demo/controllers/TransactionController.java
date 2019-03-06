@@ -77,10 +77,9 @@ public class TransactionController {
 
 	}
 
-	@GetMapping(path = "/wallet/{walletId}/betweenDates")
+	@PostMapping(path = "/wallet/{walletId}/betweenDates")
 	public List<TransactionDTO> getAllTransactionsInWalletBetweenDates(@RequestBody TransactionByDateDTO dates,
-			@PathVariable Long walletId,
-			@RequestParam(name = "sortBy", required = false) String sortBy,
+			@PathVariable Long walletId, @RequestParam(name = "sortBy", required = false) String sortBy,
 			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
 			HttpServletResponse response) {
 		HttpSession session = request.getSession();
@@ -97,11 +96,46 @@ public class TransactionController {
 		} catch (NotExistingUserException e) {
 			response.setStatus(HttpStatus.NOT_FOUND.value());
 		}
-		
-		return null;
-		
-//		return this.transactionService.giveAllTransactionInWalletBetweenAmounts(user, dates, walletId, sortBy,
-//				orderBy);
+
+		try {
+			return this.transactionService.giveAllTransactionInWalletBetweenDates(user, dates, walletId, sortBy,
+					orderBy);
+		} catch (NotExistingWalletException | InvalidDateException e) {
+			e.printStackTrace();
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			return null;
+		}
+	}
+
+	@PostMapping(path = "/category/{categoryId}/betweenDates")
+	public List<TransactionDTO> getAllTransactionsByCategoryBetweenDates(@RequestBody TransactionByDateDTO dates,
+			@PathVariable Long categoryId, @RequestParam(name = "sortBy", required = false) String sortBy,
+			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
+			HttpServletResponse response) {
+		HttpSession session = request.getSession();
+
+		if (!Helper.isThereLoggedUser(response, session)) {
+			return null;
+		}
+
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		User user = null;
+
+		try {
+			user = this.userService.getExistingUserById(userId);
+		} catch (NotExistingUserException e) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+		}
+
+		try {
+			return this.transactionService.giveAllTransactionByCategoryBetweenDates(user, dates, categoryId, sortBy,
+					orderBy);
+		} catch (InvalidDateException e) {
+			e.printStackTrace();
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			return null;
+		}
+
 	}
 
 	@GetMapping(path = "/{id}")
@@ -326,7 +360,6 @@ public class TransactionController {
 
 	@GetMapping("/category/{id}")
 	public List<TransactionDTO> giveTransactionsByCategory(@PathVariable Long id,
-			@RequestBody TransactionBetweenAmountsDTO amounts,
 			@RequestParam(name = "sortBy", required = false) String sortBy,
 			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
 			HttpServletResponse response) {
@@ -349,6 +382,39 @@ public class TransactionController {
 
 		return this.transactionService.getAllTransactionsOfUserForGivenCategory(user, sortBy, orderBy, id);
 
+	}
+
+	@GetMapping("/category/{id}/betweenAmounts")
+	public List<TransactionDTO> getAllTransactionInCategoryBetweenAmounts(@PathVariable Long id,
+			@RequestBody @Valid TransactionBetweenAmountsDTO amounts,
+			@RequestParam(name = "sortBy", required = false) String sortBy,
+			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
+			HttpServletResponse response) {
+		HttpSession session = request.getSession();
+
+		if (!Helper.isThereLoggedUser(response, session)) {
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			return null;
+		}
+
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		User user = null;
+
+		try {
+			user = this.userService.getExistingUserById(userId);
+		} catch (NotExistingUserException e) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+		}
+
+		try {
+			return this.transactionService.getAllTransactionsOfUserForGivenCategoryBetweenAmounts(user, amounts, sortBy,
+					orderBy, id);
+		} catch (InvalidAmountsEntry e) {
+			e.printStackTrace();
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			return null;
+
+		}
 	}
 
 	@GetMapping("/categories")
@@ -397,15 +463,13 @@ public class TransactionController {
 			response.setStatus(HttpStatus.NOT_FOUND.value());
 		}
 
-		if (amounts.getMin() == null || amounts.getMin() == 0) {
-			return this.transactionService.listAllTransactionsSmallerThan(user, amounts.getMax(), sortBy, orderBy);
+		try {
+			return this.transactionService.getTransactionsBetweenAmounts(user, amounts, sortBy, orderBy);
+		} catch (InvalidAmountsEntry e) {
+			e.printStackTrace();
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			return null;
 		}
-
-		if (amounts.getMax() == null || amounts.getMax() == 0) {
-			return this.transactionService.listAllTransactionsGreaterThan(user, amounts.getMin(), sortBy, orderBy);
-		}
-		return this.transactionService.listAllTransactionsBetween(user, amounts.getMin(), amounts.getMax(), sortBy,
-				orderBy);
 	}
 
 }

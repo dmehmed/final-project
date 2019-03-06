@@ -84,14 +84,25 @@ public class TransactionService {
 
 		List<TransactionDTO> walletTransactions = this.getAllTransactionsOfUserInWallet(user, walletId, sortBy,
 				orderBy);
+	
+		return filterTransactionBetweenAmounts(amounts, walletTransactions);
 
+	}
+
+	private List<TransactionDTO> filterTransactionBetweenAmounts(TransactionBetweenAmountsDTO amounts,
+			List<TransactionDTO> transactions) throws InvalidAmountsEntry {
+		
+		if(amounts.getMax() == null && amounts.getMin()==null) {
+			return transactions;
+		}
+		
 		if ((amounts.getMax() == null || amounts.getMax() == 0) && amounts.getMin() != null && amounts.getMin() > 0) {
-			return walletTransactions.stream().filter(transaction -> transaction.getAmount() >= amounts.getMin())
+			return transactions.stream().filter(transaction -> transaction.getAmount() >= amounts.getMin())
 					.collect(Collectors.toList());
 		}
 
 		if ((amounts.getMin() == null || amounts.getMin() == 0) && amounts.getMax() != null && amounts.getMax() > 0) {
-			return walletTransactions.stream().filter(transaction -> transaction.getAmount() <= amounts.getMax())
+			return transactions.stream().filter(transaction -> transaction.getAmount() <= amounts.getMax())
 					.collect(Collectors.toList());
 		}
 
@@ -100,17 +111,16 @@ public class TransactionService {
 		}
 
 		if (amounts.getMax() == amounts.getMin()) {
-			return walletTransactions.stream().filter(transaction -> transaction.getAmount() == amounts.getMax())
+			return transactions.stream().filter(transaction -> transaction.getAmount() == amounts.getMax())
 					.collect(Collectors.toList());
 		}
 
 		if (amounts.getMax() > amounts.getMin()) {
-			return walletTransactions.stream().filter(transaction -> transaction.getAmount() <= amounts.getMax()
+			return transactions.stream().filter(transaction -> transaction.getAmount() <= amounts.getMax()
 					&& transaction.getAmount() >= amounts.getMin()).collect(Collectors.toList());
 		}
 
 		return null;
-
 	}
 
 	public TransactionDTO getTransactionById(Long transactionId, Long userId)
@@ -246,7 +256,14 @@ public class TransactionService {
 		return transactions.stream().filter(transaction -> transaction.getCategory().getId().equals(categoryId))
 				.map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
 				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy)).collect(Collectors.toList());
-
+	}
+	
+	public List<TransactionDTO>  getAllTransactionsOfUserForGivenCategoryBetweenAmounts(User user, TransactionBetweenAmountsDTO amounts, String criteria, String orderBy,
+			Long categoryId) throws InvalidAmountsEntry{
+		
+		List<TransactionDTO> allTransactionOfUserForCategory = this.getAllTransactionsOfUserForGivenCategory(user, criteria, orderBy, categoryId);
+		
+		return this.filterTransactionBetweenAmounts(amounts,allTransactionOfUserForCategory);
 	}
 
 	public List<CategoryDTO> listAllCategories() {
@@ -261,6 +278,7 @@ public class TransactionService {
 
 	public List<TransactionDTO> getAllTransactionsBetweenDates(User user, TransactionByDateDTO dates,
 			String sortBy, String orderBy) throws InvalidDateException {
+
 		Timestamp startDate = Helper.parseStringToTimeStamp(dates.getStartDate());
 		Timestamp endDate = Helper.parseStringToTimeStamp(dates.getEndDate());
 
@@ -297,9 +315,8 @@ public class TransactionService {
 
 	public List<TransactionDTO> listAllTransactionsSmallerThan(User user, Double amount, String criteria,
 			String orderBy) {
-
 		List<Transaction> smallers = this.transactionRepo.findAllTransactionsByUserWhereAmountIsLessThan(user, amount);
-
+		
 		return smallers.stream().map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
 				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy)).collect(Collectors.toList());
 	}
@@ -319,8 +336,45 @@ public class TransactionService {
 		return between.stream().map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
 				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy)).collect(Collectors.toList());
 	}
+	
+	public List<TransactionDTO> listAllTransactionsEqualsTo(User user, Double value, String criteria,
+			String orderBy) {
+		List<Transaction> transactions = this.transactionRepo.findAllTransactionsByUserWhereAmountEquals(user, value);
+		
+		return transactions.stream().map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
+				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy)).collect(Collectors.toList());
+	}
+	
+	
+	public List<TransactionDTO> getTransactionsBetweenAmounts(User user, TransactionBetweenAmountsDTO amounts,
+			String sortBy, String orderBy) throws InvalidAmountsEntry {
+		
+		if(amounts.getMax() == null && amounts.getMin() == null) {
+			return this.getAllTransactionsOfUser(user, sortBy, orderBy);
+		}
+		
+		if (amounts.getMin() == null || amounts.getMin() == 0) {
+			return this.listAllTransactionsSmallerThan(user, amounts.getMax(), sortBy, orderBy);
+		}
 
-	public List<TransactionDTO> giveAllTransactionInWalletBetweenAmounts(User user, TransactionByDateDTO dates,
+		if (amounts.getMax() == null || amounts.getMax() == 0) {
+			return this.listAllTransactionsGreaterThan(user, amounts.getMin(), sortBy, orderBy);
+		}
+		
+		if (amounts.getMin() > amounts.getMax()) {
+			throw new InvalidAmountsEntry();
+		}
+		
+		if(amounts.getMax() == amounts.getMin()) {
+			return this.listAllTransactionsEqualsTo(user,amounts.getMin(), sortBy, orderBy);
+		}
+		
+		return this.listAllTransactionsBetween(user, amounts.getMin(), amounts.getMax(), sortBy,
+				orderBy);
+	}
+	
+
+	public List<TransactionDTO> giveAllTransactionInWalletBetweenDates(User user, TransactionByDateDTO dates,
 			Long walletId, String sortBy, String orderBy) throws NotExistingWalletException, InvalidDateException {
 		
 		List<TransactionDTO> walletTransactions = this.getAllTransactionsOfUserInWallet(user, walletId, sortBy, orderBy);
@@ -358,6 +412,18 @@ public class TransactionService {
 		}
 		
 		return null;
+	}
+
+	public List<TransactionDTO> giveAllTransactionByCategoryBetweenDates(User user, TransactionByDateDTO dates,
+			Long categoryId, String sortBy, String orderBy) throws InvalidDateException {
+		
+		List<TransactionDTO> walletTransactions = this.getAllTransactionsOfUserForGivenCategory(user, sortBy, orderBy, categoryId);
+		
+		LocalDateTime startDate = Helper.parseStringToLocalDateTime(dates.getStartDate());
+		LocalDateTime endDate = Helper.parseStringToLocalDateTime(dates.getEndDate());
+
+		return filterTransactionByDate(walletTransactions, startDate, endDate);
+		
 	}
 
 }
