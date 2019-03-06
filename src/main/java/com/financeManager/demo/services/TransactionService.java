@@ -1,5 +1,6 @@
 package com.financeManager.demo.services;
 
+
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -14,9 +15,11 @@ import com.financeManager.demo.dao.ITransactionTypeDAO;
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.CategoryDTO;
 import com.financeManager.demo.dto.CreateTransactionDTO;
+import com.financeManager.demo.dto.TransactionBetweenAmountsDTO;
 import com.financeManager.demo.dto.TransactionDTO;
 import com.financeManager.demo.dto.TransactionTypeDTO;
 import com.financeManager.demo.exceptions.InsufficientBalanceException;
+import com.financeManager.demo.exceptions.InvalidAmountsEntry;
 import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
 import com.financeManager.demo.exceptions.NotExistingTransactionException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
@@ -54,7 +57,7 @@ public class TransactionService {
 	@Autowired 
 	private ITransactionTypeDAO typeDAO;
 
-	public List<TransactionDTO> getAllTransactionsOfUserInWallet(User user, Long walletId, String sortBy,
+	public List<TransactionDTO> getAllTransactionsOfUserInWallet(User user,Long walletId, String sortBy,
 			String orderBy) throws NotExistingWalletException {
 
 		Optional<Wallet> result = this.walletDAO.getAllUserWallets(user.getId()).stream()
@@ -67,11 +70,53 @@ public class TransactionService {
 		Wallet wallet = result.get();
 
 		List<Transaction> walletTransactions = this.transactionRepo.findAllByWalletId(wallet.getId());
-
-		return walletTransactions.stream().map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
+		
+		
+		return walletTransactions.stream().
+				map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
 				.sorted(Helper.giveComparatorByCriteria(sortBy, orderBy)).collect(Collectors.toList());
 	}
 
+	
+	
+	public List<TransactionDTO> giveAllTransactionInWalletBetweenAmounts(User user, TransactionBetweenAmountsDTO amounts,Long walletId, String sortBy,
+			String orderBy) throws NotExistingWalletException, InvalidAmountsEntry{
+		
+		List<TransactionDTO> walletTransactions = this.getAllTransactionsOfUserInWallet(user,walletId,sortBy,orderBy);
+
+		if((amounts.getMax() == null || amounts.getMax() == 0) && amounts.getMin() != null && amounts.getMin() > 0) {
+			return walletTransactions.stream()
+					.filter(transaction -> transaction.getAmount() >= amounts.getMin())
+					.collect(Collectors.toList());
+		}
+		
+		if((amounts.getMin() == null || amounts.getMin() == 0) && amounts.getMax() != null && amounts.getMax() > 0) {
+			return walletTransactions.stream()
+					.filter(transaction -> transaction.getAmount() <= amounts.getMax())
+					.collect(Collectors.toList());
+		}
+		
+		if(amounts.getMin() > amounts.getMax()) {
+			throw new InvalidAmountsEntry();
+		}
+		
+		if(amounts.getMax() == amounts.getMin()) {
+			return walletTransactions.stream()
+					.filter(transaction -> transaction.getAmount() == amounts.getMax())
+					.collect(Collectors.toList());
+		}
+		
+		
+		if(amounts.getMax() > amounts.getMin()) {
+			return walletTransactions.stream()
+					.filter(transaction -> transaction.getAmount() <= amounts.getMax() && transaction.getAmount() >= amounts.getMin())
+					.collect(Collectors.toList());
+		}
+		
+		return null;
+		
+	}
+	
 	public TransactionDTO getTransactionById(Long transactionId, Long userId)
 			throws NotExistingTransactionException, NotExistingWalletException, UnauthorizedException {
 
@@ -165,6 +210,7 @@ public class TransactionService {
 				.collect(Collectors.toList());
 	}
 
+	
 	public List<TransactionDTO> getAllExpenseTransactions(User us, String criteria, String orderBy) {
 
 		List<Transaction> expenses = this.transactionRepo.findAllTransactionsByUser(us);
@@ -175,6 +221,7 @@ public class TransactionService {
 				.collect(Collectors.toList());
 	}
 
+	
 	private TransactionDTO convertFromTransactionToTransactionDTO(Transaction transaction) {
 		TransactionDTO newTransactionDTO = new TransactionDTO();
 		
@@ -183,7 +230,6 @@ public class TransactionService {
 		} else {
 		newTransactionDTO.setAmount(transaction.getAmount());
 		}
-		
 		
 		newTransactionDTO.setCategoryType(transaction.getCategory().getName());
 		newTransactionDTO.setWalletName(transaction.getWallet().getName());
@@ -219,6 +265,30 @@ public class TransactionService {
 
 	public List<TransactionTypeDTO> listAllTransactionTypes() {
 		return this.typeDAO.getAll().stream().map(type -> new TransactionTypeDTO(type.getId(), type.getName())).collect(Collectors.toList());
+	}
+	
+	
+	public List<TransactionDTO> listAllTransactionsSmallerThan(User user, Double amount,String criteria,String orderBy){
+		
+		List<Transaction> smallers = this.transactionRepo.findAllTransactionsByUserWhereAmountIsLessThan(user,amount);
+		
+		return smallers.stream().map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
+				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy)).collect(Collectors.toList());
+	}
+	
+	
+	public List<TransactionDTO> listAllTransactionsGreaterThan(User user, Double amount,String criteria,String orderBy){
+		List<Transaction> greater = this.transactionRepo.findAllTransactionsByUserWhereAmountIsGreaterThan(user,amount);
+		
+		return greater.stream().map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
+				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy)).collect(Collectors.toList());
+	}
+	
+	
+	public List<TransactionDTO> listAllTransactionsBetween(User user, Double min,Double max,String criteria,String orderBy){
+		List<Transaction> between = this.transactionRepo.findAllTransactionsByUserWhereAmountIsBetween(user,min,max);
+		return between.stream().map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
+				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy)).collect(Collectors.toList());
 	}
 
 }

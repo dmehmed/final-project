@@ -22,9 +22,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.financeManager.demo.dto.CategoryDTO;
 import com.financeManager.demo.dto.CreateTransactionDTO;
+import com.financeManager.demo.dto.TransactionBetweenAmountsDTO;
 import com.financeManager.demo.dto.TransactionDTO;
 import com.financeManager.demo.dto.TransactionTypeDTO;
 import com.financeManager.demo.exceptions.InsufficientBalanceException;
+import com.financeManager.demo.exceptions.InvalidAmountsEntry;
 import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
 import com.financeManager.demo.exceptions.NotExistingTransactionException;
 import com.financeManager.demo.exceptions.NotExistingUserException;
@@ -90,12 +92,49 @@ public class TransactionController {
 		}
 		
 		try {
-			return this.transactionService.getAllTransactionsOfUserInWallet(user, walletId, sortBy, orderBy);
+			return this.transactionService.getAllTransactionsOfUserInWallet(user,walletId, sortBy, orderBy);
 		} catch (NotExistingWalletException e) {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 			return null;
+		} 
+	}
+	
+	@GetMapping(path = "/wallet/{walletId}/betweenAmounts")
+	public List<TransactionDTO> getAllTransactionInWalletBetweenAmounts(
+			@PathVariable Long walletId, 
+			@RequestBody TransactionBetweenAmountsDTO amounts,
+			@RequestParam(name = "sortBy", required = false) String sortBy, 
+			@RequestParam(name = "orderBy", required = false) String orderBy,
+			HttpServletRequest request, HttpServletResponse response){
+		
+		HttpSession session = request.getSession();
+
+		if (!Helper.isThereLoggedUser(response, session)) {
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			return null;
 		}
+		
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		User user = null;
+		
+		try {
+			user = this.userService.getExistingUserById(userId);
+		} catch (NotExistingUserException e) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+		}
+		
+		try {
+			return this.transactionService.giveAllTransactionInWalletBetweenAmounts(user,amounts,walletId, sortBy, orderBy);
+		} catch (NotExistingWalletException e) {
+			e.printStackTrace();
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			return null;
+		} catch (InvalidAmountsEntry e) {
+			e.printStackTrace();
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			return null;
+		} 
 	}
 	
 
@@ -234,6 +273,7 @@ public class TransactionController {
 	@GetMapping("/category/{id}")
 	public List<TransactionDTO> giveTransactionsByCategory(
 			@PathVariable Long id,
+			@RequestBody TransactionBetweenAmountsDTO amounts,
 			@RequestParam(name="sortBy",required = false) String sortBy,
 			@RequestParam(name="orderBy",required = false)String orderBy,
 			HttpServletRequest request, HttpServletResponse response){
@@ -247,12 +287,13 @@ public class TransactionController {
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
 		User user = null;
+		
 		try {
 			user = this.userService.getExistingUserById(userId);
 		} catch (NotExistingUserException e) {
 			response.setStatus(HttpStatus.NOT_FOUND.value());
 		}
-		
+
 		return this.transactionService.getAllTransactionsOfUserForGivenCategory(user, sortBy, orderBy, id);
 
 	}
@@ -281,7 +322,39 @@ public class TransactionController {
 		}
 		
 		return this.transactionService.listAllTransactionTypes();
+	}
 	
+
+	
+	@GetMapping("/betweenAmounts")
+	public List<TransactionDTO> listAllTransactionsSmallerThan(@RequestBody TransactionBetweenAmountsDTO amounts,
+			@RequestParam(name="sortBy",required = false) String sortBy,
+			@RequestParam(name="orderBy",required = false)String orderBy,
+			HttpServletRequest request, HttpServletResponse response){
+		
+		HttpSession session = request.getSession();
+
+		if (!Helper.isThereLoggedUser(response, session)) {
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			return null;
+		}
+
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		User user = null;
+		try {
+			user = this.userService.getExistingUserById(userId);
+		} catch (NotExistingUserException e) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+		}
+		
+		if(amounts.getMin() == null || amounts.getMin() == 0) {
+			return this.transactionService.listAllTransactionsSmallerThan(user,amounts.getMax(),sortBy, orderBy);
+		}
+		
+		if(amounts.getMax() == null || amounts.getMax() == 0) {
+			return this.transactionService.listAllTransactionsGreaterThan(user, amounts.getMin(), sortBy, orderBy);
+		}
+		return this.transactionService.listAllTransactionsBetween(user, amounts.getMin(), amounts.getMax(), sortBy, orderBy);
 	}
 
 }
