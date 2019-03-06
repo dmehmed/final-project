@@ -1,6 +1,6 @@
 package com.financeManager.demo.dto;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,6 +17,6 @@ public class TransactionDTO {
 	private String categoryType;
 	private String walletName;
 	private Double amount;
-	private Timestamp creationDate;
+	private LocalDateTime creationDate;
 	
 }

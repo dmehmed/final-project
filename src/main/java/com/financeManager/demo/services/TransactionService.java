@@ -10,9 +10,12 @@ import org.springframework.stereotype.Service;
 
 import com.financeManager.demo.controllers.Helper;
 import com.financeManager.demo.dao.ICategoryDao;
+import com.financeManager.demo.dao.ITransactionTypeDAO;
 import com.financeManager.demo.dao.IWalletDAO;
+import com.financeManager.demo.dto.CategoryDTO;
 import com.financeManager.demo.dto.CreateTransactionDTO;
 import com.financeManager.demo.dto.TransactionDTO;
+import com.financeManager.demo.dto.TransactionTypeDTO;
 import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
 import com.financeManager.demo.exceptions.NotExistingTransactionException;
@@ -48,21 +51,25 @@ public class TransactionService {
 	@Autowired
 	private IWalletDAO walletDAO;
 	
-	public List<TransactionDTO> getAllTransactionsOfUserInWallet(User user, Long walletId, String sortBy, String orderBy) throws NotExistingWalletException {
-		
-		Optional<Wallet> result = this.walletDAO.getAllUserWallets(user.getId()).stream().filter(w -> w.getId().equals(walletId)).findFirst();
+	@Autowired 
+	private ITransactionTypeDAO typeDAO;
+
+	public List<TransactionDTO> getAllTransactionsOfUserInWallet(User user, Long walletId, String sortBy,
+			String orderBy) throws NotExistingWalletException {
+
+		Optional<Wallet> result = this.walletDAO.getAllUserWallets(user.getId()).stream()
+				.filter(w -> w.getId().equals(walletId)).findFirst();
 
 		if (!result.isPresent()) {
 			throw new NotExistingWalletException();
 		}
-		
+
 		Wallet wallet = result.get();
-		
+
 		List<Transaction> walletTransactions = this.transactionRepo.findAllByWalletId(wallet.getId());
 
-		return walletTransactions.stream()
-				.map(transaction -> this.convertFromTransactionToTransactionDTO(transaction)).sorted(Helper.giveComparatorByCriteria(sortBy, orderBy))
-				.collect(Collectors.toList());
+		return walletTransactions.stream().map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
+				.sorted(Helper.giveComparatorByCriteria(sortBy, orderBy)).collect(Collectors.toList());
 	}
 
 	public TransactionDTO getTransactionById(Long transactionId, Long userId)
@@ -175,23 +182,19 @@ public class TransactionService {
 		newTransactionDTO.setCategoryType(transaction.getCategory().getName());
 		newTransactionDTO.setWalletName(transaction.getWallet().getName());
 		newTransactionDTO.setTransactionType(transaction.getCategory().getTransactionType().getName());
-		newTransactionDTO.setCreationDate(transaction.getCreationDate());
-
+		newTransactionDTO.setCreationDate(transaction.getCreationDate().toLocalDateTime());
 
 		return newTransactionDTO;
 	}
 
-	
 	public List<TransactionDTO> getAllTransactionsOfUser(User user, String criteria, String orderBy) {
-		
+
 		List<Transaction> transactions = this.transactionRepo.findAllTransactionsByUser(user);
 
 		return transactions.stream().map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
 				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy)).collect(Collectors.toList());
 	}
 
-	
-	
 	public List<TransactionDTO> getAllTransactionsOfUserForGivenCategory(User user, String criteria, String orderBy,
 			Long categoryId) {
 		List<Transaction> transactions = this.transactionRepo.findAllTransactionsByUser(user);
@@ -199,12 +202,16 @@ public class TransactionService {
 		return transactions.stream().filter(transaction -> transaction.getCategory().getId().equals(categoryId))
 				.map(transaction -> this.convertFromTransactionToTransactionDTO(transaction))
 				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy)).collect(Collectors.toList());
-			
+
 	}
 
-	
-	
+	public List<CategoryDTO> listAllCategories() {
+		return this.categoryDAO.getAll().stream().map(category -> new CategoryDTO(category.getId(), category.getName()))
+				.collect(Collectors.toList());
+	}
 
-		
-	
+	public List<TransactionTypeDTO> listAllTransactionTypes() {
+		return this.typeDAO.getAll().stream().map(type -> new TransactionTypeDTO(type.getId(), type.getName())).collect(Collectors.toList());
+	}
+
 }

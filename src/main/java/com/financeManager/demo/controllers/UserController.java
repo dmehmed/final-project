@@ -54,24 +54,6 @@ public class UserController {
 //				.collect(Collectors.toList());
 //	}
 
-	// we need to move that in other controller
-//	@GetMapping("/categories")
-//	public List<CurrencyDTO> listAllCategories(HttpServletResponse response) {
-//
-//		return this.categoryDao.getAll().stream().map(category -> new CurrencyDTO(category.getId(), category.getName()))
-//				.collect(Collectors.toList());
-//
-//	}
-	
-	//we need to move that in other controller
-//	@Autowired
-//	private ITransactionTypeDAO typeDAO;
-//	
-//	@GetMapping("/transactionTypes")
-//	public List<TransactionTypeDTO> listAllTransactionTypes(HttpServletResponse response){
-//		return this.typeDAO.getAll().stream().map(type -> new TransactionTypeDTO(type.getId(), type.getName())).collect(Collectors.toList());
-//	}
-
 	@PostMapping("/register")
 	public String makeAccount(@RequestBody @Valid CreateUserDTO newUser, Errors errors, HttpServletResponse response)
 			throws SQLException {
@@ -165,7 +147,7 @@ public class UserController {
 
 	}
 
-	@GetMapping("/logout")                    //ui9asdsauihd
+	@GetMapping("/logout")                   
 	public void logout(HttpServletRequest request,HttpServletResponse response) {
 
 		HttpSession session = request.getSession();
@@ -325,9 +307,4 @@ public class UserController {
 		return "Password retreival: " +  HttpStatus.ACCEPTED.getReasonPhrase();
 	}
 	
-
-//	@GetMapping("/deleted")
-//	public int getDeletedUsers(){
-//		return this.userService.listOfDeleted();
-//	}
 }

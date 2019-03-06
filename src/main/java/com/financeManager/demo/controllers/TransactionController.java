@@ -20,8 +20,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.financeManager.demo.dto.CategoryDTO;
 import com.financeManager.demo.dto.CreateTransactionDTO;
 import com.financeManager.demo.dto.TransactionDTO;
+import com.financeManager.demo.dto.TransactionTypeDTO;
 import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
 import com.financeManager.demo.exceptions.NotExistingTransactionException;
@@ -40,6 +42,7 @@ public class TransactionController {
 	private TransactionService transactionService;
 	@Autowired
 	private UserService userService;
+	
 
 	@GetMapping(path = "/{id}")
 	public TransactionDTO getTransactionById(@PathVariable Long id, HttpServletRequest request,
@@ -216,6 +219,33 @@ public class TransactionController {
 		
 		return this.transactionService.getAllTransactionsOfUserForGivenCategory(user, sortBy, orderBy, id);
 
+	}
+	
+
+	@GetMapping("/categories")
+	public List<CategoryDTO> listAllCategories(HttpServletRequest request, HttpServletResponse response) {
+		HttpSession session = request.getSession();
+
+		if (!Helper.isThereLoggedUser(response, session)) {
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			return null;
+		}
+
+		return this.transactionService.listAllCategories();
+		
+	}
+	
+	@GetMapping("/types")
+	public List<TransactionTypeDTO> listAllTransactionTypes(HttpServletRequest request, HttpServletResponse response){
+		HttpSession session = request.getSession();
+
+		if (!Helper.isThereLoggedUser(response, session)) {
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			return null;
+		}
+		
+		return this.transactionService.listAllTransactionTypes();
+	
 	}
 
 }
