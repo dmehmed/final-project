@@ -1,6 +1,5 @@
 package com.financeManager.demo.controllers;
 
-import java.util.Comparator;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,7 +26,6 @@ import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
 import com.financeManager.demo.exceptions.NotExistingTransactionException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.exceptions.UnauthorizedException;
-import com.financeManager.demo.model.Transaction;
 import com.financeManager.demo.services.TransactionService;
 
 @RestController
@@ -38,7 +36,7 @@ public class TransactionController {
 	@Autowired
 	private TransactionService transactionService;
 
-	@GetMapping(path = "{id}")
+	@GetMapping(path = "/{id}")
 	public TransactionDTO getTransactionById(@PathVariable Long id, HttpServletRequest request,
 			HttpServletResponse response) {
 		HttpSession session = request.getSession();
