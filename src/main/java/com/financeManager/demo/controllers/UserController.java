@@ -59,12 +59,14 @@ public class UserController {
 //	}
 
 	@PostMapping("/register")
+
 	public void makeAccount(@RequestBody @Valid CreateUserDTO newUser, Errors errors, HttpServletResponse response)
 			throws SQLException, UserWithThisEmailAlreadyExistsException, ValidationException {
 
 		Helper.isThereRequestError(errors, response);
 		this.userService.hasUserWithEmail(newUser.getEmail());
 		User usi = this.userService.makeAccount(newUser);
+
 		response.setStatus(HttpStatus.CREATED.value());
 		
 
