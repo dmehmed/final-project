@@ -94,8 +94,7 @@ public class UserController {
 		if (Helper.isThereAlreadySomeoneLogged(session)) {
 			return Helper.createResponse((Long) session.getAttribute("userId"), "You are already logged in",
 					HttpStatus.OK);
-			}
-		
+		}
 
 		User us = this.userService.login(user);
 		session.setAttribute(Helper.USER_ID, us.getId());
