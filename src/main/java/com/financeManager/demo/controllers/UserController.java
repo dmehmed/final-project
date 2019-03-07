@@ -1,6 +1,8 @@
 package com.financeManager.demo.controllers;
 
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -18,12 +20,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.financeManager.demo.controllers.GlobalExceptionHandler.ErrorMessageDTO;
 import com.financeManager.demo.dao.IBudgetDAO;
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.CreateUserDTO;
 import com.financeManager.demo.dto.ForgottenPasswordDTO;
 import com.financeManager.demo.dto.LoginDTO;
+import com.financeManager.demo.dto.ResponseDTO;
 import com.financeManager.demo.dto.UpdateProfileDTO;
 import com.financeManager.demo.dto.UserDTO;
 import com.financeManager.demo.exceptions.DateFormatException;
@@ -59,137 +61,85 @@ public class UserController {
 //	}
 
 	@PostMapping("/register")
-	public void makeAccount(@RequestBody @Valid CreateUserDTO newUser, Errors errors, HttpServletResponse response)
+
+	public ResponseEntity<ResponseDTO> makeAccount(@RequestBody @Valid CreateUserDTO newUser, Errors errors,
+			HttpServletResponse response)
 			throws SQLException, UserWithThisEmailAlreadyExistsException, ValidationException {
 
 		Helper.isThereRequestError(errors, response);
 		this.userService.hasUserWithEmail(newUser.getEmail());
 		User usi = this.userService.makeAccount(newUser);
-		response.setStatus(HttpStatus.CREATED.value());
-		
+		return Helper.createResponse(usi.getId(), "User created!", HttpStatus.CREATED);
 
 	}
-	
-
 
 	@GetMapping("/profile")
-	public UserDTO getUserProfile(HttpServletRequest request, HttpServletResponse response) {
+	public UserDTO getUserProfile(HttpServletRequest request, HttpServletResponse response)
+			throws UnauthorizedException, NotExistingUserException {
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			return null;
-		}
-
+		Helper.isThereLoggedUser(session);
 
 		Long id = (Long) session.getAttribute(Helper.USER_ID);
-		User usi = null;
-
-		try {
-			usi = userService.getExistingUserById(id);
-		} catch (NotExistingUserException e) {
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-			e.printStackTrace();
-			return null;
-		}
+		User usi = usi = userService.getExistingUserById(id);
 
 		return this.userService.getUserProfile(usi.getId());
 	}
 
 	@PostMapping("/login")
-	public String login(@RequestBody @Valid LoginDTO user, Errors errors, HttpServletRequest request,
-			HttpServletResponse response) throws UnauthorizedException {
+	public ResponseEntity<ResponseDTO> login(@RequestBody @Valid LoginDTO user, Errors errors,
+			HttpServletRequest request, HttpServletResponse response)
+			throws UnauthorizedException, ValidationException, WrongPasswordException, NotExistingUserException {
 
-		if (Helper.isThereRequestError(errors, response)) {
-			return HttpStatus.BAD_REQUEST.getReasonPhrase();
-		}
-		
-		
+		Helper.isThereRequestError(errors, response);
 		HttpSession session = request.getSession();
-		
-		Helper.isThereLoggedUser(session);
-		
 
-		User us = null;
-		try {
-			try {
-				us = this.userService.login(user);
-			} catch (NotExistingUserException e) {
-
-				e.printStackTrace();
-				response.setStatus(HttpStatus.NOT_FOUND.value());
-				return (HttpStatus.NOT_FOUND.getReasonPhrase());
-			}
-		} catch (WrongPasswordException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			return HttpStatus.BAD_REQUEST.getReasonPhrase();
+		if (Helper.isThereAlreadySomeoneLogged(session)) {
+			return Helper.createResponse((Long) session.getAttribute("userId"), "You are already logged in",
+					HttpStatus.OK);
 		}
+		;
 
-		response.setStatus(HttpStatus.ACCEPTED.value());
-
-
+		User us = this.userService.login(user);
 		session.setAttribute(Helper.USER_ID, us.getId());
 		this.walletDAO.loadUserWallets(us.getId());
 		this.budgetDAO.loadUserBudgets(us.getId());
-		return "Login " + HttpStatus.ACCEPTED.getReasonPhrase();
+		return Helper.createResponse(us.getId(), "Welcome " + us.getUsername() + " !", HttpStatus.OK);
 
 	}
 
-	@GetMapping("/logout")                   
-	public void logout(HttpServletRequest request,HttpServletResponse response) {
+	@GetMapping("/logout")
+	public ResponseEntity<ResponseDTO> logout(HttpServletRequest request, HttpServletResponse response) {
 
 		HttpSession session = request.getSession();
-		
-		if(session.getAttribute(Helper.USER_ID) == null) {
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-			return;
-		} 
+
+		if (!Helper.isThereAlreadySomeoneLogged(session)) {
+			return Helper.createResponse(null, "There is nobody logged in!", HttpStatus.NOT_FOUND);
+		}
 
 		this.walletDAO.clearUserWallets((Long) session.getAttribute(Helper.USER_ID));
 		this.budgetDAO.clearUserBudgets((Long) session.getAttribute(Helper.USER_ID));
 
 		session.invalidate();
-		
+		return Helper.createResponse((Long) session.getAttribute("userId"), "Goodbye!", HttpStatus.OK);
 	}
 
 	@PatchMapping(path = "/profile/update", consumes = "application/json")
-	public String updateProfile(@RequestBody @Valid UpdateProfileDTO updates, Errors errors, HttpServletRequest request,
-			HttpServletResponse response) {
+	public ResponseEntity<ResponseDTO> updateProfile(@RequestBody @Valid UpdateProfileDTO updates, Errors errors,
+			HttpServletRequest request, HttpServletResponse response) throws ValidationException, UnauthorizedException,
+			NotExistingUserException, NoSuchSettingsOptionException, DateFormatException {
 
-		
+		Helper.isThereRequestError(errors, response);
 
-		if (Helper.isThereRequestError(errors, response)) {
-			return HttpStatus.BAD_REQUEST.getReasonPhrase();
-		}
-		
 		HttpSession session = request.getSession();
-		if (!Helper.isThereLoggedUser(response, session)) {
-			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
-		}
+		Helper.isThereLoggedUser(session);
 
 		Long id = (Long) session.getAttribute(Helper.USER_ID);
-		User usi = null;
+		User usi = userService.getExistingUserById(id);
 
-		try {
-			usi = userService.getExistingUserById(id);
-		} catch (NotExistingUserException e) {
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-			e.printStackTrace();
-			return HttpStatus.NOT_FOUND.getReasonPhrase();
-		}
+		this.userService.updateProfile(usi.getId(), updates);
 
-		try {
-
-			this.userService.updateProfile(usi.getId(), updates);
-
-		} catch (DateFormatException | NoSuchSettingsOptionException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			return HttpStatus.BAD_REQUEST.getReasonPhrase();
-		}
-
-		response.setStatus(HttpStatus.OK.value());
-		return HttpStatus.OK.getReasonPhrase();
+		return Helper.createResponse(usi.getId(), "Profile successfully changed!", HttpStatus.ACCEPTED);
 
 	}
 
@@ -200,8 +150,8 @@ public class UserController {
 		if (!Helper.isThereLoggedUser(response, session)) {
 			return HttpStatus.UNAUTHORIZED.getReasonPhrase() + " Could not delete!";
 
-		};
-
+		}
+		;
 
 		Long id = (Long) session.getAttribute(Helper.USER_ID);
 		try {
@@ -220,8 +170,6 @@ public class UserController {
 		return HttpStatus.NO_CONTENT.getReasonPhrase();
 	}
 
-	
-	
 	@PostMapping("/retrieve")
 	public String retrieveUser(@RequestBody @Valid LoginDTO lazarus, HttpServletRequest request,
 			HttpServletResponse response) {
@@ -247,52 +195,48 @@ public class UserController {
 		return HttpStatus.ACCEPTED.getReasonPhrase() + " you have risen from the deleted!";
 
 	}
-	
-	
-	
+
 	@PostMapping(path = "/forgottenpassword")
-	public String sendNewPass(@RequestBody @Valid ForgottenPasswordDTO user,Errors errors,
-			HttpServletResponse response,HttpServletRequest request) {
-		
-		if(Helper.isThereRequestError(errors, response)) {
+	public String sendNewPass(@RequestBody @Valid ForgottenPasswordDTO user, Errors errors,
+			HttpServletResponse response, HttpServletRequest request) {
+
+		if (Helper.isThereRequestError(errors, response)) {
 			return HttpStatus.BAD_REQUEST.getReasonPhrase();
 		}
-		
+
 		HttpSession session = request.getSession();
-		
-		if(Helper.isThereLoggedUser(response, session)) {
+
+		if (Helper.isThereLoggedUser(response, session)) {
 			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
 		}
-		
-		
-		
+
 		User owner;
 		try {
 			owner = userService.getExistingUserByEmail(user.getEmail());
-			
-			if(!owner.getUsername().equals(user.getUsername())) {
-				throw new WrongUsernameException();	
-			 } 
+
+			if (!owner.getUsername().equals(user.getUsername())) {
+				throw new WrongUsernameException();
+			}
 			String newPass = EmailSender.generateCommonLangPassword();
-			EmailSender.SendEmail(user.getEmail(),newPass);
-			
+			EmailSender.SendEmail(user.getEmail(), newPass);
+
 			owner.setPassword(DigestUtils.sha256Hex(newPass));
 			this.userService.saveUserInRepo(owner);
-			
+
 		} catch (NotExistingUserException e) {
-				e.printStackTrace();
-				response.setStatus(HttpStatus.NOT_FOUND.value());
-				return HttpStatus.NOT_FOUND.getReasonPhrase();
+			e.printStackTrace();
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return HttpStatus.NOT_FOUND.getReasonPhrase();
 		} catch (WrongUsernameException e) {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.FORBIDDEN.value());
 			return HttpStatus.FORBIDDEN.getReasonPhrase();
 		}
-	
+
 		response.setStatus(HttpStatus.ACCEPTED.value());
-	
-		return "Password retreival: " +  HttpStatus.ACCEPTED.getReasonPhrase();
+
+		return "Password retreival: " + HttpStatus.ACCEPTED.getReasonPhrase();
 	}
-	
+
 }
