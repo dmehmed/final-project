@@ -103,7 +103,7 @@ public class BudgetService {
 		try {
 			this.budgetDao.getBudgetById(id);
 		} catch (NotExistingBudgetException e) {
-			throw new NotExistingBudgetException();
+			throw new NotExistingBudgetException("Budget doesn't exists");
 		}
 		
 		
@@ -127,7 +127,7 @@ public class BudgetService {
 			
 			this.budgetDao.saveUpdatedBudget(id);
 		} catch (NoSuchElementException e) {
-			throw new InvalidBudgetEntryException();
+			throw new InvalidBudgetEntryException("Bad update budget input!");
 		}
 		
 		
@@ -137,7 +137,7 @@ public class BudgetService {
 	public void deleteBudgetById(Long budgetId) throws NotExistingBudgetException {
 		
 		if (!this.budgetDao.deleteBudgetById(budgetId)) {
-			throw new NotExistingBudgetException();
+			throw new NotExistingBudgetException("Budget doesn't exists");
 		}
 		
 	}

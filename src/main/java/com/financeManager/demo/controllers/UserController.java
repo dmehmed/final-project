@@ -10,6 +10,7 @@ import javax.validation.Valid;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.financeManager.demo.controllers.GlobalExceptionHandler.ErrorMessageDTO;
 import com.financeManager.demo.dao.IBudgetDAO;
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.CreateUserDTO;
@@ -27,7 +29,9 @@ import com.financeManager.demo.dto.UserDTO;
 import com.financeManager.demo.exceptions.DateFormatException;
 import com.financeManager.demo.exceptions.NoSuchSettingsOptionException;
 import com.financeManager.demo.exceptions.NotExistingUserException;
+import com.financeManager.demo.exceptions.UnauthorizedException;
 import com.financeManager.demo.exceptions.UserWithThisEmailAlreadyExistsException;
+import com.financeManager.demo.exceptions.ValidationException;
 import com.financeManager.demo.exceptions.WrongPasswordException;
 import com.financeManager.demo.exceptions.WrongUsernameException;
 import com.financeManager.demo.model.User;
@@ -55,28 +59,14 @@ public class UserController {
 //	}
 
 	@PostMapping("/register")
-	public String makeAccount(@RequestBody @Valid CreateUserDTO newUser, Errors errors, HttpServletResponse response)
-			throws SQLException {
+	public void makeAccount(@RequestBody @Valid CreateUserDTO newUser, Errors errors, HttpServletResponse response)
+			throws SQLException, UserWithThisEmailAlreadyExistsException, ValidationException {
 
-		if (Helper.isThereRequestError(errors, response)) {
-			return HttpStatus.BAD_REQUEST.getReasonPhrase();
-		}
-
-		if (this.userService.hasUserWithEmail(newUser.getEmail())) {
-			response.setStatus(HttpStatus.CONFLICT.value());
-			return HttpStatus.CONFLICT.getReasonPhrase();
-		}
-		User usi;
-		try {
-			usi = this.userService.makeAccount(newUser);
-		} catch (UserWithThisEmailAlreadyExistsException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.CONFLICT.value());
-			return HttpStatus.CONFLICT.getReasonPhrase();
-		}
-
+		Helper.isThereRequestError(errors, response);
+		this.userService.hasUserWithEmail(newUser.getEmail());
+		User usi = this.userService.makeAccount(newUser);
 		response.setStatus(HttpStatus.CREATED.value());
-		return HttpStatus.CREATED.getReasonPhrase() + " " + usi.getId();
+		
 
 	}
 	
@@ -107,7 +97,7 @@ public class UserController {
 
 	@PostMapping("/login")
 	public String login(@RequestBody @Valid LoginDTO user, Errors errors, HttpServletRequest request,
-			HttpServletResponse response) {
+			HttpServletResponse response) throws UnauthorizedException {
 
 		if (Helper.isThereRequestError(errors, response)) {
 			return HttpStatus.BAD_REQUEST.getReasonPhrase();
@@ -116,10 +106,8 @@ public class UserController {
 		
 		HttpSession session = request.getSession();
 		
-		if(Helper.isThereLoggedUser(response, session)) {
-			response.setStatus(HttpStatus.OK.value());	
-			return "You are already logged in";
-		}
+		Helper.isThereLoggedUser(session);
+		
 
 		User us = null;
 		try {

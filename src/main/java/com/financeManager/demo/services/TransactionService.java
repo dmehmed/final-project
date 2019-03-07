@@ -20,8 +20,9 @@ import com.financeManager.demo.dto.TransactionBetweenAmountsDTO;
 import com.financeManager.demo.dto.TransactionByDateDTO;
 import com.financeManager.demo.dto.TransactionDTO;
 import com.financeManager.demo.dto.TransactionTypeDTO;
+import com.financeManager.demo.exceptions.ForbiddenException;
 import com.financeManager.demo.exceptions.InsufficientBalanceException;
-import com.financeManager.demo.exceptions.InvalidAmountsEntry;
+import com.financeManager.demo.exceptions.InvalidAmountsEntryException;
 import com.financeManager.demo.exceptions.InvalidDateException;
 import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
 import com.financeManager.demo.exceptions.NotExistingTransactionException;
@@ -67,7 +68,7 @@ public class TransactionService {
 				.filter(w -> w.getId().equals(walletId)).findFirst();
 
 		if (!result.isPresent()) {
-			throw new NotExistingWalletException();
+			throw new NotExistingWalletException("Not existing wallet!");
 		}
 
 		Wallet wallet = result.get();
@@ -80,7 +81,7 @@ public class TransactionService {
 
 	public List<TransactionDTO> giveAllTransactionInWalletBetweenAmounts(User user,
 			TransactionBetweenAmountsDTO amounts, Long walletId, String sortBy, String orderBy)
-			throws NotExistingWalletException, InvalidAmountsEntry {
+			throws NotExistingWalletException, InvalidAmountsEntryException {
 
 		List<TransactionDTO> walletTransactions = this.getAllTransactionsOfUserInWallet(user, walletId, sortBy,
 				orderBy);
@@ -90,7 +91,7 @@ public class TransactionService {
 	}
 
 	private List<TransactionDTO> filterTransactionBetweenAmounts(TransactionBetweenAmountsDTO amounts,
-			List<TransactionDTO> transactions) throws InvalidAmountsEntry {
+			List<TransactionDTO> transactions) throws InvalidAmountsEntryException {
 		
 		if(amounts.getMax() == null && amounts.getMin()==null) {
 			return transactions;
@@ -107,7 +108,7 @@ public class TransactionService {
 		}
 
 		if (amounts.getMin() > amounts.getMax()) {
-			throw new InvalidAmountsEntry();
+			throw new InvalidAmountsEntryException("Bad amounts entered!");
 		}
 
 		if (amounts.getMax() == amounts.getMin()) {
@@ -124,19 +125,19 @@ public class TransactionService {
 	}
 
 	public TransactionDTO getTransactionById(Long transactionId, Long userId)
-			throws NotExistingTransactionException, NotExistingWalletException, UnauthorizedException {
+			throws NotExistingTransactionException, NotExistingWalletException, ForbiddenException {
 
 		Optional<Transaction> result = transactionRepo.findById(transactionId);
 
 		if (!result.isPresent()) {
-			throw new NotExistingTransactionException();
+			throw new NotExistingTransactionException("Transaction not existing!");
 		}
 
 		Transaction transaction = result.get();
 		Wallet wallet = this.walletDAO.getWalletById(transaction.getWallet().getId());
 
 		if (!wallet.getUser().getId().equals(userId)) {
-			throw new UnauthorizedException();
+			throw new ForbiddenException("Can't touch this!");
 		}
 
 		return this.convertFromTransactionToTransactionDTO(transaction);
@@ -259,7 +260,7 @@ public class TransactionService {
 	}
 	
 	public List<TransactionDTO>  getAllTransactionsOfUserForGivenCategoryBetweenAmounts(User user, TransactionBetweenAmountsDTO amounts, String criteria, String orderBy,
-			Long categoryId) throws InvalidAmountsEntry{
+			Long categoryId) throws InvalidAmountsEntryException{
 		
 		List<TransactionDTO> allTransactionOfUserForCategory = this.getAllTransactionsOfUserForGivenCategory(user, criteria, orderBy, categoryId);
 		
@@ -349,7 +350,7 @@ public class TransactionService {
 	
 	
 	public List<TransactionDTO> getTransactionsBetweenAmounts(User user, TransactionBetweenAmountsDTO amounts,
-			String sortBy, String orderBy) throws InvalidAmountsEntry {
+			String sortBy, String orderBy) throws InvalidAmountsEntryException {
 		
 		if(amounts.getMax() == null && amounts.getMin() == null) {
 			return this.getAllTransactionsOfUser(user, sortBy, orderBy);
@@ -364,7 +365,7 @@ public class TransactionService {
 		}
 		
 		if (amounts.getMin() > amounts.getMax()) {
-			throw new InvalidAmountsEntry();
+			throw new InvalidAmountsEntryException();
 		}
 		
 		if(amounts.getMax() == amounts.getMin()) {

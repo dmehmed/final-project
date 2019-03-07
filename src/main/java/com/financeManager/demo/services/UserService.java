@@ -56,7 +56,7 @@ public class UserService {
 		ResultSet rs = con.createStatement().executeQuery("SELECT * FROM users where email = '" + newUser.getEmail() + "'");	
 		
 		if(rs.next()) { 
-			throw new UserWithThisEmailAlreadyExistsException();
+			throw new UserWithThisEmailAlreadyExistsException("User with this email already exists!");
 		}
 
 		User usi = new User(newUser.getEmail(), DigestUtils.sha256Hex(newUser.getPassword()), newUser.getUsername());
@@ -72,7 +72,7 @@ public class UserService {
 			User usi = this.userRepo.findById(id).get();
 			 return usi;
 		} catch (NoSuchElementException e){
-			throw new NotExistingUserException();
+			throw new NotExistingUserException("User doesn't exists!");
 		}
 	}
 	
@@ -81,7 +81,7 @@ public class UserService {
 			DeletedUser usi = this.deletedUsers.findByEmail(email).get();
 			return usi;
 		} catch (NoSuchElementException e){
-			throw new NotExistingUserException();
+			throw new NotExistingUserException("User doesn't exists!");
 		}
 	}
 	
@@ -90,12 +90,12 @@ public class UserService {
 		try {
 			us = this.userRepo.findByEmail(logger.getEmail()).get();
 		}catch(NoSuchElementException e) {
-			throw new NotExistingUserException();
+			throw new NotExistingUserException("User doesn't exists!");
 		}
 		
 		String decrypted = DigestUtils.sha256Hex(logger.getPassword());
 		if(!us.getPassword().equals(decrypted)){
-			throw new WrongPasswordException();
+			throw new WrongPasswordException("Wrong password!");
 		} 
 		
 		Settings settings = this.settingsRepo.findById(us.getId()).get();
@@ -113,7 +113,7 @@ public class UserService {
 			User usi = this.userRepo.findByEmail(email).get();
 			return usi;
 		} catch (NoSuchElementException e){
-			throw new NotExistingUserException();
+			throw new NotExistingUserException("User doesn't exists!");
 		}
 	
 	}
@@ -191,10 +191,10 @@ public class UserService {
 			if(pass.equals(DigestUtils.sha256Hex(lazarus.getPassword()))) {
 					con.createStatement().executeUpdate("update users set is_deleted = 0 where email = '" + lazarus.getEmail() + "'");
 			} else { 
-				throw new WrongPasswordException();
+				throw new WrongPasswordException("Wrong password!");
 			}
 		} else { 
-			throw new NotExistingUserException();
+			throw new NotExistingUserException("User doesn't exists!");
 		}
 
 		return this.userRepo.findByEmail(lazarus.getEmail()).get();

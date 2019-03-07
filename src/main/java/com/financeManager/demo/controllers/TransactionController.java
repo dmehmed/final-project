@@ -27,7 +27,7 @@ import com.financeManager.demo.dto.TransactionByDateDTO;
 import com.financeManager.demo.dto.TransactionDTO;
 import com.financeManager.demo.dto.TransactionTypeDTO;
 import com.financeManager.demo.exceptions.InsufficientBalanceException;
-import com.financeManager.demo.exceptions.InvalidAmountsEntry;
+import com.financeManager.demo.exceptions.InvalidAmountsEntryException;
 import com.financeManager.demo.exceptions.InvalidDateException;
 import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
 import com.financeManager.demo.exceptions.NotExistingTransactionException;
@@ -222,7 +222,7 @@ public class TransactionController {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 			return null;
-		} catch (InvalidAmountsEntry e) {
+		} catch (InvalidAmountsEntryException e) {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.BAD_REQUEST.value());
 			return null;
@@ -411,7 +411,7 @@ public class TransactionController {
 		try {
 			return this.transactionService.getAllTransactionsOfUserForGivenCategoryBetweenAmounts(user, amounts, sortBy,
 					orderBy, id);
-		} catch (InvalidAmountsEntry e) {
+		} catch (InvalidAmountsEntryException e) {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.BAD_REQUEST.value());
 			return null;
@@ -467,7 +467,7 @@ public class TransactionController {
 
 		try {
 			return this.transactionService.getTransactionsBetweenAmounts(user, amounts, sortBy, orderBy);
-		} catch (InvalidAmountsEntry e) {
+		} catch (InvalidAmountsEntryException e) {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.BAD_REQUEST.value());
 			return null;

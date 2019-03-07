@@ -57,7 +57,7 @@ public class WalletService {
 	public void deleteWalletById(Long walletId) throws NotExistingWalletException {
 
 		if (!this.walletDao.deleteWalletById(walletId)) {
-			throw new NotExistingWalletException();
+			throw new NotExistingWalletException("Not existing wallet!");
 		}
 
 	}
@@ -68,7 +68,7 @@ public class WalletService {
 		try {
 			this.walletDao.getWalletById(walletId);
 		} catch (NotExistingWalletException e) {
-			throw new NotExistingWalletException();
+			throw new NotExistingWalletException("Not existing wallet!");
 		}
 
 		if (updates.getName() != null) {

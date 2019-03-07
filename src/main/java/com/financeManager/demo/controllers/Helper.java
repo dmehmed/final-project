@@ -13,6 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.Errors;
 
 import com.financeManager.demo.dto.TransactionDTO;
+import com.financeManager.demo.exceptions.ForbiddenException;
+import com.financeManager.demo.exceptions.UnauthorizedException;
+import com.financeManager.demo.exceptions.ValidationException;
 
 public abstract class Helper {
 
@@ -30,24 +33,28 @@ public abstract class Helper {
 	
 	private static DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
-	public static boolean isThereRequestError(Errors errors, HttpServletResponse response) {
+	public static void isThereRequestError(Errors errors, HttpServletResponse response) throws ValidationException {
 
 		if (errors.hasErrors()) {
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			System.out.println(errors.getAllErrors());
-			return true;
+			throw new ValidationException(errors.getFieldError().getDefaultMessage());  
 		}
-		return false;
-
+		
 	}
 
-	public static boolean isThereLoggedUser(HttpServletResponse response, HttpSession session) {
-		if (session == null || session.getAttribute(USER_ID) == null) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return false;
+	public static void isThereLoggedUser(HttpSession session) throws UnauthorizedException {
+		if (session == null || session.getAttribute("userId") == null) {		
+			throw new UnauthorizedException("You are not logged in!");
 		}
-		return true;
+
 	}
+	public static void isThisTheCorrectUser(HttpSession session, Long userId,Long resourcesUserId) throws UnauthorizedException, ForbiddenException  {
+		Helper.isThereLoggedUser(session);
+		if(!userId.equals(resourcesUserId)) {
+			throw new ForbiddenException("Can't touch this!");
+		}
+
+	}
+	
 
 	public static Comparator<TransactionDTO> giveComparatorByCriteria(String criteria, String orderBy) {
 
