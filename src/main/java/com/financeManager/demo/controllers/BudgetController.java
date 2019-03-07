@@ -1,6 +1,5 @@
 package com.financeManager.demo.controllers;
 
-import java.util.LinkedList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -10,6 +9,7 @@ import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,8 +23,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.financeManager.demo.dto.BudgetDTO;
 import com.financeManager.demo.dto.CrudBudgetDTO;
+import com.financeManager.demo.dto.ResponseDTO;
+import com.financeManager.demo.exceptions.ForbiddenException;
 import com.financeManager.demo.exceptions.InvalidBudgetEntryException;
 import com.financeManager.demo.exceptions.NotExistingBudgetException;
+import com.financeManager.demo.exceptions.UnauthorizedException;
+import com.financeManager.demo.exceptions.ValidationException;
 import com.financeManager.demo.services.BudgetService;
 
 @RestController
@@ -35,21 +39,16 @@ public class BudgetController {
 	private BudgetService budgetService;
 
 	@GetMapping
-	public List<BudgetDTO> getBudgets(HttpServletRequest request, HttpServletResponse response) {
+	public List<BudgetDTO> getBudgets(HttpServletRequest request, HttpServletResponse response)
+			throws UnauthorizedException {
+
 		HttpSession session = request.getSession();
 
-		if(!Helper.isThereLoggedUser(response, session)) {
-			return new LinkedList<BudgetDTO>();
-		}
+		Helper.isThereLoggedUser(session);
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
 
-		List<BudgetDTO> userBudgets = this.budgetService.getAllUserWallets(userId);
-
-		if (budgetService == null) {
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-			return new LinkedList<BudgetDTO>();
-		}
+		List<BudgetDTO> userBudgets = this.budgetService.getAllUserBugdets(userId);
 
 		response.setStatus(HttpStatus.OK.value());
 		return userBudgets;
@@ -57,98 +56,64 @@ public class BudgetController {
 	}
 
 	@GetMapping(path = "/{id}")
-	public BudgetDTO giveBudgetById(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response) {
+	public BudgetDTO giveBudgetById(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response)
+			throws UnauthorizedException, NotExistingBudgetException, ForbiddenException {
 
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			return null;
-		}
+		Helper.isThereLoggedUser(session);
+		Long userId = (Long) session.getAttribute("userId");
+		return this.budgetService.getBudgetById(userId, id);
 
-		try {
-			return this.budgetService.getBudgetById(id);
-		} catch (NotExistingBudgetException e) {
-			response.setStatus(HttpStatus.FORBIDDEN.value());
-			return null;
-		}
 	}
 
 	@DeleteMapping(path = "/delete/{id}")
-	@ResponseStatus(code = HttpStatus.NO_CONTENT)
-	public void deleteBudgetById(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response) {
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void deleteBudgetById(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response)
+			throws UnauthorizedException, NotExistingBudgetException, ForbiddenException {
+
 		HttpSession session = request.getSession();
+		Helper.isThereLoggedUser(session);
+		Long userId = (Long) session.getAttribute("userId");
+		this.budgetService.deleteBudgetById(userId, id);
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			return;
-		}
-
-		try {
-			this.budgetService.deleteBudgetById(id);
-		} catch (NotExistingBudgetException e) {
-			e.printStackTrace();
-			return;
-		}
 	}
 
 	@PostMapping("/create")
+	public ResponseEntity<ResponseDTO> createNewBudget(@RequestBody @Valid CrudBudgetDTO newBudget, Errors errors,
+			HttpServletRequest request, HttpServletResponse response)
+			throws ValidationException, UnauthorizedException, InvalidBudgetEntryException {
 
-	public String createNewBudget(@RequestBody @Valid CrudBudgetDTO newBudget, Errors errors,
-			HttpServletRequest request, HttpServletResponse response) {
-
-		if (Helper.isThereRequestError(errors, response)) {
-			return HttpStatus.BAD_REQUEST.getReasonPhrase();
-		}
+		Helper.isThereRequestError(errors, response);
 
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
-		}
+		Helper.isThereLoggedUser(session);
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
 
-		try {
-			this.budgetService.addBudgetToUser(newBudget, userId);
-			response.setStatus(HttpStatus.CREATED.value());
-			return HttpStatus.CREATED.getReasonPhrase();
-		} catch (InvalidBudgetEntryException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			return e.getMessage();
-		}
+		return Helper.createResponse(this.budgetService.addBudgetToUser(newBudget, userId),
+				"Budget added successfully!", HttpStatus.CREATED);
 
 	}
 
 	@PatchMapping(path = "/update/{id}")
+	public ResponseEntity<ResponseDTO> update(@RequestBody @Valid CrudBudgetDTO updateBudget, Errors errors,
+			@PathVariable Long id, HttpServletRequest request, HttpServletResponse response)
+			throws NotExistingBudgetException, InvalidBudgetEntryException, ForbiddenException, UnauthorizedException,
+			ValidationException {
 
-	public String update(@RequestBody @Valid CrudBudgetDTO updateBudget, Errors errors, @PathVariable Long id,
-			HttpServletRequest request, HttpServletResponse response) {
-
-		if (Helper.isThereRequestError(errors, response)) {
-			return HttpStatus.BAD_REQUEST.getReasonPhrase();
-		}
+		Helper.isThereRequestError(errors, response);
 
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
-		}
+		Helper.isThereLoggedUser(session);
 
-		try {
-			this.budgetService.updateBudget(updateBudget, id);
-		} catch (NotExistingBudgetException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.FORBIDDEN.value());
-			return HttpStatus.FORBIDDEN.getReasonPhrase();
-		} catch (InvalidBudgetEntryException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			return HttpStatus.BAD_REQUEST.getReasonPhrase();
-		}
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
 
-		response.setStatus(HttpStatus.ACCEPTED.value());
-		return "Update " + HttpStatus.ACCEPTED.getReasonPhrase();
-
+		this.budgetService.updateBudget(updateBudget, userId, id);
+		
+		return Helper.createResponse(id,"Budget updated successfully!", HttpStatus.ACCEPTED);
 	}
 
 }

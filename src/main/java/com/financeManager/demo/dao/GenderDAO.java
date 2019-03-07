@@ -1,10 +1,12 @@
 package com.financeManager.demo.dao;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.financeManager.demo.exceptions.NoSuchSettingsOptionException;
 import com.financeManager.demo.model.Gender;
 import com.financeManager.demo.repositories.IGenderRepository;
 
@@ -21,8 +23,12 @@ public class GenderDAO implements IGenderDAO {
 	}
 
 	@Override
-	public Gender getById(Long id) {
-		return this.genders.stream().filter(country -> country.getId().equals(id)).findFirst().get();
+	public Gender getById(Long id) throws NoSuchSettingsOptionException {
+		try {
+			return this.genders.stream().filter(country -> country.getId().equals(id)).findFirst().get();
+		} catch (NoSuchElementException e) {
+			throw new NoSuchSettingsOptionException("This gender option does not exist!");
+		}
 	}
 
 	@Autowired

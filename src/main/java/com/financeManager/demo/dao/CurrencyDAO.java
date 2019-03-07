@@ -1,10 +1,12 @@
 package com.financeManager.demo.dao;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.financeManager.demo.exceptions.NoSuchSettingsOptionException;
 import com.financeManager.demo.model.Currency;
 import com.financeManager.demo.repositories.ICurrencyRepository;
 
@@ -21,8 +23,12 @@ public class CurrencyDAO implements ICurrencyDAO {
 	}
 
 	@Override
-	public Currency getById(Long id) {
-		return this.currencies.stream().filter(country -> country.getId().equals(id)).findFirst().get();
+	public Currency getById(Long id) throws NoSuchSettingsOptionException {
+		try {
+			return this.currencies.stream().filter(country -> country.getId().equals(id)).findFirst().get();
+		} catch (NoSuchElementException e) {
+			throw new NoSuchSettingsOptionException("This currency option does not exist!");
+		}
 	}
 
 	@Autowired
