@@ -9,8 +9,11 @@ import java.util.Comparator;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
 
+import com.financeManager.demo.dto.ResponseDTO;
 import com.financeManager.demo.dto.TransactionDTO;
 import com.financeManager.demo.exceptions.ForbiddenException;
 import com.financeManager.demo.exceptions.UnauthorizedException;
@@ -43,7 +46,15 @@ public abstract class Helper {
 	public static void isThereLoggedUser(HttpSession session) throws UnauthorizedException {
 		if (session == null || session.getAttribute("userId") == null) {
 			throw new UnauthorizedException("You are not logged in!");
-		}
+		} 
+
+	}
+	
+	public static boolean isThereAlreadySomeoneLogged(HttpSession session){
+		if (session == null || session.getAttribute("userId") == null) {		
+			return false;
+		} 
+		return true;
 
 	}
 
@@ -138,5 +149,14 @@ public abstract class Helper {
 
 	public static LocalDateTime parseStringToLocalDateTime(String date) {
 		return date != null ? LocalDate.parse(date, dateTimeFormatter).atStartOfDay() : null;
+	}
+	
+	public static ResponseEntity<ResponseDTO> createResponse(Long id,String message,HttpStatus status) {
+		ResponseDTO json = new ResponseDTO();
+		json.setTimeStamp(Timestamp.valueOf(LocalDateTime.now()));
+		json.setId(id);
+		json.setMessage(message);
+		json.setStatus(status.value());
+		return new ResponseEntity<ResponseDTO>(json, status);
 	}
 }
