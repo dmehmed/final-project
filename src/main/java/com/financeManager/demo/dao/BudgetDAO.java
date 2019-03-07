@@ -24,14 +24,15 @@ public class BudgetDAO implements IBudgetDAO {
 		try{
 			return this.budgets.stream().filter(budget -> budget.getId().equals(id)).findAny().get();
 		} catch (NoSuchElementException e) {
-			throw new NotExistingBudgetException();
+			throw new NotExistingBudgetException("This budget does not exist!");
 		}
 	}
 	
 	@Override
-	public void addBudget(Budget budget) {
+	public Long addBudget(Budget budget) {
 		this.budgetRepo.save(budget);
 		this.budgets.add(budget);
+		return budget.getId();
 	}
 	
 	@Override
@@ -53,17 +54,13 @@ public class BudgetDAO implements IBudgetDAO {
 	}
 	
 	@Override
-	public boolean deleteBudgetById(Long budgetId) {
-		try {
+	public void deleteBudgetById(Long budgetId) {
+
 			Budget b = this.budgets.stream().
 					filter(budget -> budget.getId().equals(budgetId)).findFirst().get();
 			this.budgets.remove(b);
 
 			this.budgetRepo.deleteById(budgetId);
-			return true;
-		} catch (NoSuchElementException e) {
-			return false;
-		}
 	}
 	
 	@Override

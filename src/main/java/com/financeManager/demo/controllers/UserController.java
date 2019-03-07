@@ -1,8 +1,6 @@
 package com.financeManager.demo.controllers;
 
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -61,7 +59,6 @@ public class UserController {
 //	}
 
 	@PostMapping("/register")
-
 	public ResponseEntity<ResponseDTO> makeAccount(@RequestBody @Valid CreateUserDTO newUser, Errors errors,
 			HttpServletResponse response)
 			throws SQLException, UserWithThisEmailAlreadyExistsException, ValidationException {
@@ -81,7 +78,7 @@ public class UserController {
 		Helper.isThereLoggedUser(session);
 
 		Long id = (Long) session.getAttribute(Helper.USER_ID);
-		User usi = usi = userService.getExistingUserById(id);
+		User usi = userService.getExistingUserById(id);
 
 		return this.userService.getUserProfile(usi.getId());
 	}
@@ -97,8 +94,8 @@ public class UserController {
 		if (Helper.isThereAlreadySomeoneLogged(session)) {
 			return Helper.createResponse((Long) session.getAttribute("userId"), "You are already logged in",
 					HttpStatus.OK);
-		}
-		;
+			}
+		
 
 		User us = this.userService.login(user);
 		session.setAttribute(Helper.USER_ID, us.getId());
@@ -108,7 +105,7 @@ public class UserController {
 
 	}
 
-	@GetMapping("/logout")
+	@PostMapping("/logout")
 	public ResponseEntity<ResponseDTO> logout(HttpServletRequest request, HttpServletResponse response) {
 
 		HttpSession session = request.getSession();
@@ -119,9 +116,9 @@ public class UserController {
 
 		this.walletDAO.clearUserWallets((Long) session.getAttribute(Helper.USER_ID));
 		this.budgetDAO.clearUserBudgets((Long) session.getAttribute(Helper.USER_ID));
-
+		ResponseEntity<ResponseDTO> resp = Helper.createResponse((Long) session.getAttribute("userId"), "Goodbye!", HttpStatus.OK);
 		session.invalidate();
-		return Helper.createResponse((Long) session.getAttribute("userId"), "Goodbye!", HttpStatus.OK);
+		return resp;
 	}
 
 	@PatchMapping(path = "/profile/update", consumes = "application/json")
@@ -143,100 +140,53 @@ public class UserController {
 
 	}
 
-	@GetMapping("/deactivate")
-	public String deactivate(HttpServletRequest request, HttpServletResponse response) {
+	@PostMapping("/deactivate")
+	public ResponseEntity<ResponseDTO> deactivate(HttpServletRequest request, HttpServletResponse response)
+			throws NotExistingUserException, UnauthorizedException {
+		
 		HttpSession session = request.getSession();
-
-		if (!Helper.isThereLoggedUser(response, session)) {
-			return HttpStatus.UNAUTHORIZED.getReasonPhrase() + " Could not delete!";
-
-		}
-		;
+		Helper.isThereLoggedUser(session);
 
 		Long id = (Long) session.getAttribute(Helper.USER_ID);
-		try {
-			this.userService.softDeleteUser(id);
-			this.walletDAO.clearUserWallets(id);
-			this.budgetDAO.clearUserBudgets(id);
 
-			session.invalidate();
-		} catch (NotExistingUserException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-			return HttpStatus.NOT_FOUND.getReasonPhrase();
-		}
+		this.userService.softDeleteUser(id);
+		this.walletDAO.clearUserWallets(id);
+		this.budgetDAO.clearUserBudgets(id);
 
-		response.setStatus(HttpStatus.NO_CONTENT.value());
-		return HttpStatus.NO_CONTENT.getReasonPhrase();
+		session.invalidate();
+
+		return Helper.createResponse(null, "Sorry you felt that!", HttpStatus.NO_CONTENT);
 	}
 
 	@PostMapping("/retrieve")
-	public String retrieveUser(@RequestBody @Valid LoginDTO lazarus, HttpServletRequest request,
-			HttpServletResponse response) {
-
-		try {
+	public ResponseEntity<ResponseDTO> retrieveUser(@RequestBody @Valid LoginDTO lazarus, HttpServletRequest request,
+			HttpServletResponse response) throws NotExistingUserException, WrongPasswordException, SQLException {
 			this.userService.retrieveUser(lazarus);
-		} catch (NotExistingUserException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-			return "User " + HttpStatus.NOT_FOUND.getReasonPhrase();
-		} catch (WrongPasswordException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			return HttpStatus.BAD_REQUEST.getReasonPhrase() + " - wrong password!";
-		} catch (SQLException e) {
-			e.printStackTrace();
-
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-			return "Database " + HttpStatus.NOT_FOUND.getReasonPhrase();
-		}
-
-		response.setStatus(HttpStatus.ACCEPTED.value());
-		return HttpStatus.ACCEPTED.getReasonPhrase() + " you have risen from the deleted!";
-
+			User lazar = this.userService.getExistingUserByEmail(lazarus.getEmail());
+		return Helper.createResponse(lazar.getId(), "You have risen from the deleted!", HttpStatus.OK);
 	}
 
 	@PostMapping(path = "/forgottenpassword")
-	public String sendNewPass(@RequestBody @Valid ForgottenPasswordDTO user, Errors errors,
-			HttpServletResponse response, HttpServletRequest request) {
+	public ResponseEntity<ResponseDTO> sendNewPass(@RequestBody @Valid ForgottenPasswordDTO user, Errors errors,
+			HttpServletResponse response, HttpServletRequest request) throws ValidationException, UnauthorizedException, NotExistingUserException, WrongUsernameException {
 
-		if (Helper.isThereRequestError(errors, response)) {
-			return HttpStatus.BAD_REQUEST.getReasonPhrase();
-		}
-
+		Helper.isThereRequestError(errors, response);
 		HttpSession session = request.getSession();
-
-		if (Helper.isThereLoggedUser(response, session)) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
+		if(Helper.isThereAlreadySomeoneLogged(session)) {
+			return Helper.createResponse((Long) session.getAttribute("userId"), "You are already logged in, you haven't forgotten your password!",
+					HttpStatus.BAD_REQUEST);
 		}
-
-		User owner;
-		try {
-			owner = userService.getExistingUserByEmail(user.getEmail());
-
+		
+		User owner = userService.getExistingUserByEmail(user.getEmail());
 			if (!owner.getUsername().equals(user.getUsername())) {
 				throw new WrongUsernameException();
 			}
+			
 			String newPass = EmailSender.generateCommonLangPassword();
 			EmailSender.SendEmail(user.getEmail(), newPass);
-
 			owner.setPassword(DigestUtils.sha256Hex(newPass));
 			this.userService.saveUserInRepo(owner);
-
-		} catch (NotExistingUserException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-			return HttpStatus.NOT_FOUND.getReasonPhrase();
-		} catch (WrongUsernameException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.FORBIDDEN.value());
-			return HttpStatus.FORBIDDEN.getReasonPhrase();
-		}
-
-		response.setStatus(HttpStatus.ACCEPTED.value());
-
-		return "Password retreival: " + HttpStatus.ACCEPTED.getReasonPhrase();
+			
+			return Helper.createResponse(owner.getId(), "Your password is restored", HttpStatus.ACCEPTED);
 	}
-
 }
