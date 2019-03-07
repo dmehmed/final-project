@@ -16,7 +16,6 @@ import com.financeManager.demo.exceptions.ForbiddenException;
 import com.financeManager.demo.exceptions.UnauthorizedException;
 import com.financeManager.demo.exceptions.ValidationException;
 
-
 public abstract class Helper {
 
 	private static final String ASC = "asc";
@@ -28,43 +27,43 @@ public abstract class Helper {
 	private static final String TYPE = "type";
 	private static final String AMOUNT = "amount";
 	private static final String DATE = "date";
-	
+
 	private static final String DATE_FORMAT = "yyyy-MM-dd";
-	
+
 	private static DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
 	public static void isThereRequestError(Errors errors, HttpServletResponse response) throws ValidationException {
 
 		if (errors.hasErrors()) {
-			throw new ValidationException(errors.getFieldError().getDefaultMessage());  
+			throw new ValidationException(errors.getFieldError().getDefaultMessage());
 		}
-		
+
 	}
 
 	public static void isThereLoggedUser(HttpSession session) throws UnauthorizedException {
-		if (session == null || session.getAttribute("userId") == null) {		
+		if (session == null || session.getAttribute("userId") == null) {
 			throw new UnauthorizedException("You are not logged in!");
 		}
 
 	}
-	public static void isThisTheCorrectUser(HttpSession session, Long userId,Long resourcesUserId) throws UnauthorizedException, ForbiddenException  {
+
+	public static void isThisTheCorrectUser(HttpSession session, Long userId, Long resourcesUserId)
+			throws UnauthorizedException, ForbiddenException {
 		Helper.isThereLoggedUser(session);
-		if(!userId.equals(resourcesUserId)) {
+		if (!userId.equals(resourcesUserId)) {
 			throw new ForbiddenException("Can't touch this!");
 		}
 
 	}
-	
 
 	public static Comparator<TransactionDTO> giveComparatorByCriteria(String criteria, String orderBy) {
 
-		if(criteria == null) {
+		if (criteria == null) {
 			criteria = DATE;
 		}
-		if(orderBy == null) {
+		if (orderBy == null) {
 			orderBy = ASC;
 		}
-		
 
 		int coeff;
 
@@ -134,10 +133,10 @@ public abstract class Helper {
 	}
 
 	public static Timestamp parseStringToTimeStamp(String date) {
-		return date != null ? Timestamp.valueOf(LocalDate.parse(date, dateTimeFormatter).atStartOfDay()) : null;	
+		return date != null ? Timestamp.valueOf(LocalDate.parse(date, dateTimeFormatter).atStartOfDay()) : null;
 	}
 
 	public static LocalDateTime parseStringToLocalDateTime(String date) {
-		return date != null ? LocalDate.parse(date, dateTimeFormatter).atStartOfDay() : null;	
+		return date != null ? LocalDate.parse(date, dateTimeFormatter).atStartOfDay() : null;
 	}
 }

@@ -26,6 +26,7 @@ import com.financeManager.demo.dto.TransactionBetweenAmountsDTO;
 import com.financeManager.demo.dto.TransactionByDateDTO;
 import com.financeManager.demo.dto.TransactionDTO;
 import com.financeManager.demo.dto.TransactionTypeDTO;
+import com.financeManager.demo.exceptions.ForbiddenException;
 import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidAmountsEntryException;
 import com.financeManager.demo.exceptions.InvalidDateException;
@@ -34,6 +35,7 @@ import com.financeManager.demo.exceptions.NotExistingTransactionException;
 import com.financeManager.demo.exceptions.NotExistingUserException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.exceptions.UnauthorizedException;
+import com.financeManager.demo.exceptions.ValidationException;
 import com.financeManager.demo.model.User;
 import com.financeManager.demo.services.TransactionService;
 import com.financeManager.demo.services.UserService;
@@ -51,29 +53,17 @@ public class TransactionController {
 	public List<TransactionDTO> listAllTransactionsBetweenDates(@RequestBody TransactionByDateDTO dates,
 			@RequestParam(name = "sortBy", required = false) String sortBy,
 			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response) {
+			HttpServletResponse response) throws UnauthorizedException, NotExistingUserException, InvalidDateException {
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			return null;
-		}
+		Helper.isThereLoggedUser(session);
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
 		User user = null;
 
-		try {
-			user = this.userService.getExistingUserById(userId);
-		} catch (NotExistingUserException e) {
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-		}
+		user = this.userService.getExistingUserById(userId);
 
-		try {
-			return this.transactionService.getAllTransactionsBetweenDates(user, dates, sortBy, orderBy);
-		} catch (InvalidDateException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			return null;
-		}
+		return this.transactionService.getAllTransactionsBetweenDates(user, dates, sortBy, orderBy);
 
 	}
 
@@ -81,83 +71,49 @@ public class TransactionController {
 	public List<TransactionDTO> getAllTransactionsInWalletBetweenDates(@RequestBody TransactionByDateDTO dates,
 			@PathVariable Long walletId, @RequestParam(name = "sortBy", required = false) String sortBy,
 			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response) {
+			HttpServletResponse response)
+			throws UnauthorizedException, NotExistingUserException, NotExistingWalletException, InvalidDateException {
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			return null;
-		}
+		Helper.isThereLoggedUser(session);
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
 		User user = null;
 
-		try {
-			user = this.userService.getExistingUserById(userId);
-		} catch (NotExistingUserException e) {
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-		}
+		user = this.userService.getExistingUserById(userId);
 
-		try {
-			return this.transactionService.giveAllTransactionInWalletBetweenDates(user, dates, walletId, sortBy,
-					orderBy);
-		} catch (NotExistingWalletException | InvalidDateException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			return null;
-		}
+		return this.transactionService.giveAllTransactionInWalletBetweenDates(user, dates, walletId, sortBy, orderBy);
+
 	}
 
 	@PostMapping(path = "/category/{categoryId}/betweenDates")
 	public List<TransactionDTO> getAllTransactionsByCategoryBetweenDates(@RequestBody TransactionByDateDTO dates,
 			@PathVariable Long categoryId, @RequestParam(name = "sortBy", required = false) String sortBy,
 			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response) {
+			HttpServletResponse response) throws UnauthorizedException, NotExistingUserException, InvalidDateException {
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			return null;
-		}
+		Helper.isThereLoggedUser(session);
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
 		User user = null;
 
-		try {
-			user = this.userService.getExistingUserById(userId);
-		} catch (NotExistingUserException e) {
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-		}
+		user = this.userService.getExistingUserById(userId);
 
-		try {
-			return this.transactionService.giveAllTransactionByCategoryBetweenDates(user, dates, categoryId, sortBy,
-					orderBy);
-		} catch (InvalidDateException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			return null;
-		}
+		return this.transactionService.giveAllTransactionByCategoryBetweenDates(user, dates, categoryId, sortBy,
+				orderBy);
 
 	}
 
 	@GetMapping(path = "/{id}")
 	public TransactionDTO getTransactionById(@PathVariable Long id, HttpServletRequest request,
-			HttpServletResponse response) {
+			HttpServletResponse response) throws UnauthorizedException, NotExistingTransactionException,
+			NotExistingWalletException, ForbiddenException {
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			return null;
-		}
+		Helper.isThereLoggedUser(session);
 
-		try {
-			return this.transactionService.getTransactionById(id, (Long) session.getAttribute(Helper.USER_ID));
-		} catch (NotExistingTransactionException | NotExistingWalletException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-			return null;
-		} catch (UnauthorizedException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.FORBIDDEN.value());
-			return null;
-		}
+		return this.transactionService.getTransactionById(id, (Long) session.getAttribute(Helper.USER_ID));
 
 	}
 
@@ -165,31 +121,20 @@ public class TransactionController {
 	public List<TransactionDTO> getAllTransactionsInWallet(@PathVariable Long walletId,
 			@RequestParam(name = "sortBy", required = false) String sortBy,
 			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response) {
+			HttpServletResponse response)
+			throws UnauthorizedException, NotExistingUserException, NotExistingWalletException {
 
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return null;
-		}
+		Helper.isThereLoggedUser(session);
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
 		User user = null;
 
-		try {
-			user = this.userService.getExistingUserById(userId);
-		} catch (NotExistingUserException e) {
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-		}
+		user = this.userService.getExistingUserById(userId);
 
-		try {
-			return this.transactionService.getAllTransactionsOfUserInWallet(user, walletId, sortBy, orderBy);
-		} catch (NotExistingWalletException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return null;
-		}
+		return this.transactionService.getAllTransactionsOfUserInWallet(user, walletId, sortBy, orderBy);
+
 	}
 
 	@GetMapping(path = "/wallet/{walletId}/betweenAmounts")
@@ -197,93 +142,49 @@ public class TransactionController {
 			@RequestBody TransactionBetweenAmountsDTO amounts,
 			@RequestParam(name = "sortBy", required = false) String sortBy,
 			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response) {
+			HttpServletResponse response) throws NotExistingUserException, UnauthorizedException,
+			NotExistingWalletException, InvalidAmountsEntryException {
 
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return null;
-		}
+		Helper.isThereLoggedUser(session);
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-		User user = null;
+		User user = this.userService.getExistingUserById(userId);
 
-		try {
-			user = this.userService.getExistingUserById(userId);
-		} catch (NotExistingUserException e) {
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-		}
+		return this.transactionService.giveAllTransactionInWalletBetweenAmounts(user, amounts, walletId, sortBy,
+				orderBy);
 
-		try {
-			return this.transactionService.giveAllTransactionInWalletBetweenAmounts(user, amounts, walletId, sortBy,
-					orderBy);
-		} catch (NotExistingWalletException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return null;
-		} catch (InvalidAmountsEntryException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			return null;
-		}
 	}
 
 	@DeleteMapping(path = "/delete/{id}")
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
-	public void deleteWalletById(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response) {
+	public void deleteWalletById(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response)
+			throws NotExistingTransactionException, NotExistingWalletException, UnauthorizedException {
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			return;
-		}
+		Helper.isThereLoggedUser(session);
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
 
-		try {
-			this.transactionService.deleteTransactionById(id, userId);
-		} catch (NotExistingTransactionException | NotExistingWalletException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-			return;
-		} catch (UnauthorizedException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.FORBIDDEN.value());
-			return;
-		}
+		this.transactionService.deleteTransactionById(id, userId);
+
 	}
 
 	@PostMapping("/create")
 	public String createTransaction(@RequestBody @Valid CreateTransactionDTO newTransaction, Errors errors,
-			HttpServletRequest request, HttpServletResponse response) {
+			HttpServletRequest request, HttpServletResponse response) throws UnauthorizedException, ValidationException,
+			InvalidTransactionEntryException, NotExistingWalletException, InsufficientBalanceException {
 
-		if (Helper.isThereRequestError(errors, response)) {
-			return HttpStatus.BAD_REQUEST.getReasonPhrase();
-		}
+		Helper.isThereRequestError(errors, response);
 
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			return HttpStatus.UNAUTHORIZED.getReasonPhrase();
-		}
+		Helper.isThereLoggedUser(session);
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
 
-		try {
-			this.transactionService.createTransaction(newTransaction, userId);
-		} catch (NotExistingWalletException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.FORBIDDEN.value());
-			return HttpStatus.FORBIDDEN.getReasonPhrase();
-		} catch (InvalidTransactionEntryException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			return e.getMessage();
-		} catch (InsufficientBalanceException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			return e.getMessage();
-		}
+		this.transactionService.createTransaction(newTransaction, userId);
 
 		response.setStatus(HttpStatus.CREATED.value());
 		return HttpStatus.CREATED.getReasonPhrase();
@@ -292,21 +193,14 @@ public class TransactionController {
 	@GetMapping("/incomes")
 	public List<TransactionDTO> findAllIncomes(@RequestParam(name = "sortBy", required = false) String sortBy,
 			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response) {
+			HttpServletResponse response) throws UnauthorizedException, NotExistingUserException {
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return null;
-		}
+		Helper.isThereLoggedUser(session);
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-		User user = null;
-		try {
-			user = this.userService.getExistingUserById(userId);
-		} catch (NotExistingUserException e) {
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-		}
+		User user = this.userService.getExistingUserById(userId);
+		response.setStatus(HttpStatus.NOT_FOUND.value());
 
 		return this.transactionService.getAllIncomeTransactions(user, sortBy, orderBy);
 	}
@@ -314,22 +208,14 @@ public class TransactionController {
 	@GetMapping("/expenses")
 	public List<TransactionDTO> findAllExpenses(@RequestParam(name = "sortBy", required = false) String sortBy,
 			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response) {
+			HttpServletResponse response) throws UnauthorizedException, NotExistingUserException {
 
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return null;
-		}
+		Helper.isThereLoggedUser(session);
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-		User user = null;
-		try {
-			user = this.userService.getExistingUserById(userId);
-		} catch (NotExistingUserException e) {
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-		}
+		User user = this.userService.getExistingUserById(userId);
 
 		return this.transactionService.getAllExpenseTransactions(user, sortBy, orderBy);
 
@@ -338,22 +224,14 @@ public class TransactionController {
 	@GetMapping()
 	public List<TransactionDTO> giveTransactions(@RequestParam(name = "sortBy", required = false) String sortBy,
 			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response) {
+			HttpServletResponse response) throws UnauthorizedException, NotExistingUserException {
 
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return null;
-		}
+		Helper.isThereLoggedUser(session);
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-		User user = null;
-		try {
-			user = this.userService.getExistingUserById(userId);
-		} catch (NotExistingUserException e) {
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-		}
+		User user = this.userService.getExistingUserById(userId);
 
 		return transactionService.getAllTransactionsOfUser(user, sortBy, orderBy);
 	}
@@ -362,84 +240,54 @@ public class TransactionController {
 	public List<TransactionDTO> giveTransactionsByCategory(@PathVariable Long id,
 			@RequestParam(name = "sortBy", required = false) String sortBy,
 			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response) {
+			HttpServletResponse response) throws UnauthorizedException, NotExistingUserException {
 
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return null;
-		}
+		Helper.isThereLoggedUser(session);
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-		User user = null;
-
-		try {
-			user = this.userService.getExistingUserById(userId);
-		} catch (NotExistingUserException e) {
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-		}
+		User user = this.userService.getExistingUserById(userId);
 
 		return this.transactionService.getAllTransactionsOfUserForGivenCategory(user, sortBy, orderBy, id);
 
 	}
-	
-	
 
 	@GetMapping("/category/{id}/betweenAmounts")
 	public List<TransactionDTO> getAllTransactionInCategoryBetweenAmounts(@PathVariable Long id,
 			@RequestBody @Valid TransactionBetweenAmountsDTO amounts,
 			@RequestParam(name = "sortBy", required = false) String sortBy,
 			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response) {
+			HttpServletResponse response)
+			throws UnauthorizedException, NotExistingUserException, InvalidAmountsEntryException {
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return null;
-		}
+		Helper.isThereLoggedUser(session);
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-		User user = null;
+		User user = this.userService.getExistingUserById(userId);
 
-		try {
-			user = this.userService.getExistingUserById(userId);
-		} catch (NotExistingUserException e) {
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-		}
-
-		try {
-			return this.transactionService.getAllTransactionsOfUserForGivenCategoryBetweenAmounts(user, amounts, sortBy,
-					orderBy, id);
-		} catch (InvalidAmountsEntryException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			return null;
-
-		}
+		return this.transactionService.getAllTransactionsOfUserForGivenCategoryBetweenAmounts(user, amounts, sortBy,
+				orderBy, id);
 	}
 
 	@GetMapping("/categories")
-	public List<CategoryDTO> listAllCategories(HttpServletRequest request, HttpServletResponse response) {
+	public List<CategoryDTO> listAllCategories(HttpServletRequest request, HttpServletResponse response)
+			throws UnauthorizedException {
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return null;
-		}
+		Helper.isThereLoggedUser(session);
 
 		return this.transactionService.listAllCategories();
 
 	}
 
 	@GetMapping("/types")
-	public List<TransactionTypeDTO> listAllTransactionTypes(HttpServletRequest request, HttpServletResponse response) {
+	public List<TransactionTypeDTO> listAllTransactionTypes(HttpServletRequest request, HttpServletResponse response)
+			throws UnauthorizedException {
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return null;
-		}
+		Helper.isThereLoggedUser(session);
 
 		return this.transactionService.listAllTransactionTypes();
 	}
@@ -448,32 +296,18 @@ public class TransactionController {
 	public List<TransactionDTO> listAllTransactionsSmallerThan(@RequestBody TransactionBetweenAmountsDTO amounts,
 			@RequestParam(name = "sortBy", required = false) String sortBy,
 			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response) {
+			HttpServletResponse response)
+			throws UnauthorizedException, NotExistingUserException, InvalidAmountsEntryException {
 
 		HttpSession session = request.getSession();
 
-		if (!Helper.isThereLoggedUser(response, session)) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return null;
-		}
+		Helper.isThereLoggedUser(session);
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-		User user = null;
-		try {
-			user = this.userService.getExistingUserById(userId);
-		} catch (NotExistingUserException e) {
-			response.setStatus(HttpStatus.NOT_FOUND.value());
-		}
+		User user = this.userService.getExistingUserById(userId);
 
-		try {
-			return this.transactionService.getTransactionsBetweenAmounts(user, amounts, sortBy, orderBy);
-		} catch (InvalidAmountsEntryException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.BAD_REQUEST.value());
-			return null;
-		}
+		return this.transactionService.getTransactionsBetweenAmounts(user, amounts, sortBy, orderBy);
+
 	}
-
-	
 
 }
