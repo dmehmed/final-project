@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.CrudWalletDTO;
 import com.financeManager.demo.dto.WalletDTO;
+import com.financeManager.demo.exceptions.ForbiddenException;
 import com.financeManager.demo.exceptions.InvalidWalletEntryException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.model.User;
@@ -33,7 +34,7 @@ public class WalletService {
 	@Autowired
 	private IUsersRepository usersRepo;
 
-	public void addWalletToUser(CrudWalletDTO newWallet, Long userId) throws InvalidWalletEntryException {
+	public Long addWalletToUser(CrudWalletDTO newWallet, Long userId) throws InvalidWalletEntryException {
 		User owner = this.usersRepo.findById(userId).get();
 
 		if (newWallet.getName() == null) {
@@ -46,29 +47,49 @@ public class WalletService {
 		}
 
 		Wallet wallet = new Wallet(newWallet.getName(), newWallet.getBalance(), newWallet.getLimit(), owner);
-		this.walletDao.addWallet(wallet);
+		return this.walletDao.addWallet(wallet);
 	}
 
-	public WalletDTO getWalletById(Long walletId) throws NotExistingWalletException {
+	public WalletDTO getWalletById(Long walletId, Long userId) throws NotExistingWalletException, ForbiddenException {
 		Wallet wallet = this.walletDao.getWalletById(walletId);
+
+		if (!wallet.getUser().getId().equals(userId)) {
+			throw new ForbiddenException("You are not allowed to view this wallet!");
+		}
+
 		return new WalletDTO(wallet.getName(), wallet.getBalance(), wallet.getLimit());
 	}
 
-	public void deleteWalletById(Long walletId) throws NotExistingWalletException {
+	public void deleteWalletById(Long walletId, Long userId) throws NotExistingWalletException, ForbiddenException {
 
-		if (!this.walletDao.deleteWalletById(walletId)) {
+		Wallet wallet = null;
+
+		try {
+			wallet = this.walletDao.getWalletById(walletId);
+		} catch (NotExistingWalletException e) {
 			throw new NotExistingWalletException("Not existing wallet!");
 		}
 
+		if (!wallet.getUser().getId().equals(userId)) {
+			throw new ForbiddenException("You are not allowed to delete this wallet!");
+		}
+
+		this.walletDao.deleteWalletById(walletId);
 	}
 
-	public void updateWallet(Long walletId, CrudWalletDTO updates)
-			throws NotExistingWalletException, InvalidWalletEntryException {
+	public void updateWallet(Long walletId, CrudWalletDTO updates, Long userId)
+			throws NotExistingWalletException, InvalidWalletEntryException, ForbiddenException {
+
+		Wallet wallet = null;
 
 		try {
-			this.walletDao.getWalletById(walletId);
+			wallet = this.walletDao.getWalletById(walletId);
 		} catch (NotExistingWalletException e) {
 			throw new NotExistingWalletException("Not existing wallet!");
+		}
+
+		if (!wallet.getUser().getId().equals(userId)) {
+			throw new ForbiddenException("You are not allowed to update this wallet!");
 		}
 
 		if (updates.getName() != null) {

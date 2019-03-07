@@ -35,7 +35,6 @@ public class SettingsController {
 
 		return this.countryDAO.getAll().stream().map(country -> new CountryDTO(country.getId(), country.getName()))
 				.collect(Collectors.toList());
-
 	}
 
 	@GetMapping("/currencies")
@@ -43,7 +42,6 @@ public class SettingsController {
 
 		return this.currencyDAO.getAll().stream().map(currency -> new CurrencyDTO(currency.getId(), currency.getType()))
 				.collect(Collectors.toList());
-
 	}
 
 	@GetMapping("/genders")

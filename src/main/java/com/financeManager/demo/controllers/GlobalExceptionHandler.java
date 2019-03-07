@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import com.financeManager.demo.exceptions.DateFormatException;
+import com.financeManager.demo.exceptions.ForbiddenException;
 import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidAmountsEntryException;
 import com.financeManager.demo.exceptions.InvalidBudgetEntryException;
@@ -55,6 +56,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		return new ResponseEntity<ErrorMessageDTO>(errorMessage, HttpStatus.UNAUTHORIZED);
 	}
 
+	@ExceptionHandler(ForbiddenException.class)
+	public final ResponseEntity<ErrorMessageDTO> forbiddenProblem(Exception ex) {
+		ErrorMessageDTO errorMessage = new ErrorMessageDTO(Timestamp.valueOf(LocalDateTime.now()),
+				HttpStatus.FORBIDDEN.value(), HttpStatus.FORBIDDEN.getReasonPhrase(), ex.getMessage());
+
+		return new ResponseEntity<ErrorMessageDTO>(errorMessage, HttpStatus.FORBIDDEN);
+	}
+
 	@ExceptionHandler({ NotExistingUserException.class, NotExistingWalletException.class,
 			NotExistingBudgetException.class, NotExistingTransactionException.class,
 			NoSuchSettingsOptionException.class })
@@ -69,7 +78,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 			InvalidBudgetEntryException.class, InvalidDateException.class, InvalidTransactionEntryException.class,
 			InvalidWalletEntryException.class, InvalidWalletException.class, WrongPasswordException.class,
 			WrongUsernameException.class, UserWithThisEmailAlreadyExistsException.class,
-			InsufficientBalanceException.class,ValidationException.class })
+			InsufficientBalanceException.class, ValidationException.class })
 	public final ResponseEntity<ErrorMessageDTO> badInputProblem(Exception ex) {
 		ErrorMessageDTO errorMessage = new ErrorMessageDTO(Timestamp.valueOf(LocalDateTime.now()),
 				HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), ex.getMessage());

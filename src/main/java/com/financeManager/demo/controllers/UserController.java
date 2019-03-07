@@ -1,15 +1,12 @@
 package com.financeManager.demo.controllers;
 
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.financeManager.demo.dao.IBudgetDAO;
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.CreateUserDTO;
-import com.financeManager.demo.dto.ForgottenPasswordDTO;
 import com.financeManager.demo.dto.LoginDTO;
 import com.financeManager.demo.dto.ResponseDTO;
 import com.financeManager.demo.dto.UpdateProfileDTO;
@@ -35,9 +31,7 @@ import com.financeManager.demo.exceptions.UnauthorizedException;
 import com.financeManager.demo.exceptions.UserWithThisEmailAlreadyExistsException;
 import com.financeManager.demo.exceptions.ValidationException;
 import com.financeManager.demo.exceptions.WrongPasswordException;
-import com.financeManager.demo.exceptions.WrongUsernameException;
 import com.financeManager.demo.model.User;
-import com.financeManager.demo.services.EmailSender;
 import com.financeManager.demo.services.UserService;
 
 @RestController
@@ -80,7 +74,7 @@ public class UserController {
 		Helper.isThereLoggedUser(session);
 
 		Long id = (Long) session.getAttribute(Helper.USER_ID);
-		User usi = usi = userService.getExistingUserById(id);
+		User usi = userService.getExistingUserById(id);
 
 		return this.userService.getUserProfile(usi.getId());
 	}
@@ -96,7 +90,7 @@ public class UserController {
 		if (Helper.isThereAlreadySomeoneLogged(session)) {
 			return Helper.createResponse((Long) session.getAttribute("userId"), "You are already logged in",
 					HttpStatus.OK);
-		};
+		}
 
 		User us = this.userService.login(user);
 		session.setAttribute(Helper.USER_ID, us.getId());
@@ -115,8 +109,8 @@ public class UserController {
 			return Helper.createResponse(null, "There is nobody logged in!", HttpStatus.NOT_FOUND);
 		}
 
-		this.walletDAO.clearUserWallets((Long) session.getAttribute(Helper.USER_ID));
-		this.budgetDAO.clearUserBudgets((Long) session.getAttribute(Helper.USER_ID));
+//		this.walletDAO.clearUserWallets((Long) session.getAttribute(Helper.USER_ID));
+//		this.budgetDAO.clearUserBudgets((Long) session.getAttribute(Helper.USER_ID));
 
 		session.invalidate();
 		return Helper.createResponse((Long) session.getAttribute("userId"), "Goodbye!", HttpStatus.OK);

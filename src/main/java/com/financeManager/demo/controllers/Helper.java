@@ -36,26 +36,23 @@ public abstract class Helper {
 	private static DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
 	public static void isThereRequestError(Errors errors, HttpServletResponse response) throws ValidationException {
-
 		if (errors.hasErrors()) {
 			throw new ValidationException(errors.getFieldError().getDefaultMessage());
 		}
-
 	}
 
 	public static void isThereLoggedUser(HttpSession session) throws UnauthorizedException {
 		if (session == null || session.getAttribute("userId") == null) {
 			throw new UnauthorizedException("You are not logged in!");
-		} 
+		}
 
 	}
-	
-	public static boolean isThereAlreadySomeoneLogged(HttpSession session){
-		if (session == null || session.getAttribute("userId") == null) {		
-			return false;
-		} 
-		return true;
 
+	public static boolean isThereAlreadySomeoneLogged(HttpSession session) {
+		if (session == null || session.getAttribute("userId") == null) {
+			return false;
+		}
+		return true;
 	}
 
 	public static void isThisTheCorrectUser(HttpSession session, Long userId, Long resourcesUserId)
@@ -150,8 +147,8 @@ public abstract class Helper {
 	public static LocalDateTime parseStringToLocalDateTime(String date) {
 		return date != null ? LocalDate.parse(date, dateTimeFormatter).atStartOfDay() : null;
 	}
-	
-	public static ResponseEntity<ResponseDTO> createResponse(Long id,String message,HttpStatus status) {
+
+	public static ResponseEntity<ResponseDTO> createResponse(Long id, String message, HttpStatus status) {
 		ResponseDTO json = new ResponseDTO();
 		json.setTimeStamp(Timestamp.valueOf(LocalDateTime.now()));
 		json.setId(id);
