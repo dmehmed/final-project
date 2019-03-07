@@ -61,7 +61,6 @@ public class UserController {
 //	}
 
 	@PostMapping("/register")
-
 	public ResponseEntity<ResponseDTO> makeAccount(@RequestBody @Valid CreateUserDTO newUser, Errors errors,
 			HttpServletResponse response)
 			throws SQLException, UserWithThisEmailAlreadyExistsException, ValidationException {
@@ -97,8 +96,7 @@ public class UserController {
 		if (Helper.isThereAlreadySomeoneLogged(session)) {
 			return Helper.createResponse((Long) session.getAttribute("userId"), "You are already logged in",
 					HttpStatus.OK);
-		}
-		;
+		};
 
 		User us = this.userService.login(user);
 		session.setAttribute(Helper.USER_ID, us.getId());
