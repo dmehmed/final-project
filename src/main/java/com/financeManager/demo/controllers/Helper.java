@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.Errors;
 
 import com.financeManager.demo.dto.TransactionDTO;
+import com.financeManager.demo.exceptions.ForbiddenException;
+import com.financeManager.demo.exceptions.UnauthorizedException;
 
 public abstract class Helper {
 
@@ -41,13 +43,20 @@ public abstract class Helper {
 
 	}
 
-	public static boolean isThereLoggedUser(HttpServletResponse response, HttpSession session) {
-		if (session == null || session.getAttribute(USER_ID) == null) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			return false;
+	public static void isThereLoggedUser(HttpSession session) throws UnauthorizedException {
+		if (session == null || session.getAttribute("userId") == null) {		
+			throw new UnauthorizedException("You are not logged in!");
 		}
-		return true;
+
 	}
+	public static void isThisTheCorrectUser(HttpSession session, Long userId,Long resourcesUserId) throws UnauthorizedException, ForbiddenException  {
+		Helper.isThereLoggedUser(session);
+		if(!userId.equals(resourcesUserId)) {
+			throw new ForbiddenException("Can't touch this!");
+		}
+
+	}
+	
 
 	public static Comparator<TransactionDTO> giveComparatorByCriteria(String criteria, String orderBy) {
 

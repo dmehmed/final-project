@@ -66,15 +66,8 @@ public class UserController {
 			response.setStatus(HttpStatus.CONFLICT.value());
 			return HttpStatus.CONFLICT.getReasonPhrase();
 		}
-		User usi;
-		try {
-			usi = this.userService.makeAccount(newUser);
-		} catch (UserWithThisEmailAlreadyExistsException e) {
-			e.printStackTrace();
-			response.setStatus(HttpStatus.CONFLICT.value());
-			return HttpStatus.CONFLICT.getReasonPhrase();
-		}
-
+		User usi = this.userService.makeAccount(newUser);
+	
 		response.setStatus(HttpStatus.CREATED.value());
 		return HttpStatus.CREATED.getReasonPhrase() + " " + usi.getId();
 
