@@ -48,7 +48,7 @@ public class TransactionController {
 	private UserService userService;
 
 	@PostMapping(path = "/betweenDates")
-	public List<TransactionDTO> listAllTransactionsBetweenDates(@RequestBody TransactionByDateDTO searchInfo,
+	public List<TransactionDTO> listAllTransactionsBetweenDates(@RequestBody TransactionByDateDTO dates,
 			@RequestParam(name = "sortBy", required = false) String sortBy,
 			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
 			HttpServletResponse response) {
@@ -68,7 +68,68 @@ public class TransactionController {
 		}
 
 		try {
-			return this.transactionService.getAllTransactionsBetweenDates(user, searchInfo, sortBy, orderBy);
+			return this.transactionService.getAllTransactionsBetweenDates(user, dates, sortBy, orderBy);
+		} catch (InvalidDateException e) {
+			e.printStackTrace();
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			return null;
+		}
+
+	}
+
+	@PostMapping(path = "/wallet/{walletId}/betweenDates")
+	public List<TransactionDTO> getAllTransactionsInWalletBetweenDates(@RequestBody TransactionByDateDTO dates,
+			@PathVariable Long walletId, @RequestParam(name = "sortBy", required = false) String sortBy,
+			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
+			HttpServletResponse response) {
+		HttpSession session = request.getSession();
+
+		if (!Helper.isThereLoggedUser(response, session)) {
+			return null;
+		}
+
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		User user = null;
+
+		try {
+			user = this.userService.getExistingUserById(userId);
+		} catch (NotExistingUserException e) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+		}
+
+		try {
+			return this.transactionService.giveAllTransactionInWalletBetweenDates(user, dates, walletId, sortBy,
+					orderBy);
+		} catch (NotExistingWalletException | InvalidDateException e) {
+			e.printStackTrace();
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			return null;
+		}
+	}
+
+	@PostMapping(path = "/category/{categoryId}/betweenDates")
+	public List<TransactionDTO> getAllTransactionsByCategoryBetweenDates(@RequestBody TransactionByDateDTO dates,
+			@PathVariable Long categoryId, @RequestParam(name = "sortBy", required = false) String sortBy,
+			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
+			HttpServletResponse response) {
+		HttpSession session = request.getSession();
+
+		if (!Helper.isThereLoggedUser(response, session)) {
+			return null;
+		}
+
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		User user = null;
+
+		try {
+			user = this.userService.getExistingUserById(userId);
+		} catch (NotExistingUserException e) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+		}
+
+		try {
+			return this.transactionService.giveAllTransactionByCategoryBetweenDates(user, dates, categoryId, sortBy,
+					orderBy);
 		} catch (InvalidDateException e) {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.BAD_REQUEST.value());
@@ -323,15 +384,15 @@ public class TransactionController {
 
 	}
 	
+	
+
 	@GetMapping("/category/{id}/betweenAmounts")
-	public List<TransactionDTO> getAllTransactionInCategoryBetweenAmounts(
-			@PathVariable Long id,
-			@RequestBody  @Valid TransactionBetweenAmountsDTO amounts,
+	public List<TransactionDTO> getAllTransactionInCategoryBetweenAmounts(@PathVariable Long id,
+			@RequestBody @Valid TransactionBetweenAmountsDTO amounts,
 			@RequestParam(name = "sortBy", required = false) String sortBy,
 			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response){
+			HttpServletResponse response) {
 		HttpSession session = request.getSession();
-		
 
 		if (!Helper.isThereLoggedUser(response, session)) {
 			response.setStatus(HttpStatus.UNAUTHORIZED.value());
@@ -346,14 +407,15 @@ public class TransactionController {
 		} catch (NotExistingUserException e) {
 			response.setStatus(HttpStatus.NOT_FOUND.value());
 		}
-		
+
 		try {
-			return this.transactionService.getAllTransactionsOfUserForGivenCategoryBetweenAmounts(user,amounts,sortBy,orderBy,id);
+			return this.transactionService.getAllTransactionsOfUserForGivenCategoryBetweenAmounts(user, amounts, sortBy,
+					orderBy, id);
 		} catch (InvalidAmountsEntry e) {
 			e.printStackTrace();
 			response.setStatus(HttpStatus.BAD_REQUEST.value());
 			return null;
-			
+
 		}
 	}
 

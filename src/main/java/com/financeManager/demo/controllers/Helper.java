@@ -2,6 +2,7 @@ package com.financeManager.demo.controllers;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 
@@ -126,11 +127,10 @@ public abstract class Helper {
 	}
 
 	public static Timestamp parseStringToTimeStamp(String date) {
-		
-		if(date == null) {
-			return null;
-		}
-		
 		return date != null ? Timestamp.valueOf(LocalDate.parse(date, dateTimeFormatter).atStartOfDay()) : null;	
+	}
+
+	public static LocalDateTime parseStringToLocalDateTime(String date) {
+		return date != null ? LocalDate.parse(date, dateTimeFormatter).atStartOfDay() : null;	
 	}
 }
