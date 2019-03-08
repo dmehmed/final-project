@@ -33,7 +33,7 @@ public class BudgetDAO implements IBudgetDAO {
 	@Override
 	public Long addBudget(Budget budget) throws AlreadyExistingBudget {
 
-		if (this.budgets.stream().filter(b -> (b.getIsDeleted() == 0 && b.getCategory().equals(budget.getCategory())))
+		if (this.budgets.stream().filter(b -> (b.getIsDeleted() == 0 && b.getCategory().getId().equals(budget.getCategory().getId())))
 				.findFirst().isPresent()) {
 			throw new AlreadyExistingBudget("You already have such budget!");
 		}

@@ -17,6 +17,7 @@ import com.financeManager.demo.exceptions.InvalidAmountsEntryException;
 import com.financeManager.demo.exceptions.InvalidBudgetEntryException;
 import com.financeManager.demo.exceptions.InvalidDateException;
 import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
+import com.financeManager.demo.exceptions.InvalidTransactionTypeException;
 import com.financeManager.demo.exceptions.InvalidWalletEntryException;
 import com.financeManager.demo.exceptions.InvalidWalletException;
 import com.financeManager.demo.exceptions.NoSuchSettingsOptionException;
@@ -79,7 +80,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 			InvalidBudgetEntryException.class, InvalidDateException.class, InvalidTransactionEntryException.class,
 			InvalidWalletEntryException.class, InvalidWalletException.class, WrongPasswordException.class,
 			WrongUsernameException.class, UserWithThisEmailAlreadyExistsException.class,
-			InsufficientBalanceException.class, ValidationException.class, AlreadyExistingBudget.class })
+			InsufficientBalanceException.class, ValidationException.class, AlreadyExistingBudget.class,
+			InvalidTransactionTypeException.class })
 	public final ResponseEntity<ErrorMessageDTO> badInputProblem(Exception ex) {
 		ErrorMessageDTO errorMessage = new ErrorMessageDTO(Timestamp.valueOf(LocalDateTime.now()),
 				HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), ex.getMessage());
