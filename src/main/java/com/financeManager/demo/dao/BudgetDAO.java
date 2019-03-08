@@ -1,11 +1,14 @@
 package com.financeManager.demo.dao;
 
+import java.sql.Date;
+import java.time.LocalDate;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.financeManager.demo.exceptions.AlreadyExistingBudget;
@@ -18,6 +21,8 @@ public class BudgetDAO implements IBudgetDAO {
 
 	@Autowired
 	private IBudgetRepository budgetRepo;
+	@Autowired
+	private RepeatPeriodDAO repeatPeriodsDao;
 	private List<Budget> budgets = new LinkedList<Budget>();
 
 	@Override
@@ -35,7 +40,7 @@ public class BudgetDAO implements IBudgetDAO {
 
 		if (this.budgets.stream().filter(b -> (b.getIsDeleted() == 0 && b.getCategory().equals(budget.getCategory())))
 				.findFirst().isPresent()) {
-			throw new AlreadyExistingBudget("You already have such budget!");
+			throw new AlreadyExistingBudget("You already have wallet for this category!");
 		}
 
 		this.budgetRepo.save(budget);
@@ -80,4 +85,25 @@ public class BudgetDAO implements IBudgetDAO {
 				.collect(Collectors.toList());
 	}
 
+	@Override
+	@Scheduled(fixedDelay = 10000)
+	public void refreshAllBudgets() {
+		
+		this.budgetRepo.findAllActiveBudgets()
+		.stream().filter(budget -> budget.getEndDate().before(Date.valueOf(LocalDate.now())))
+		.map(budget-> {
+			budget.setIsDeleted((byte) 1);
+			this.budgetRepo.saveAndFlush(budget);
+			Budget b = new Budget();
+			b.setAmount(budget.getAmount());
+			b.setStartDate(Date.valueOf(LocalDate.now()));
+			b.setEndDate(this.repeatPeriodsDao.calculateEndDateByPeriod(budget.getRepeatPeriod().getId()));
+			b.setUser(budget.getUser());
+			b.setCategory(budget.getCategory());
+			b.setRepeatPeriod(budget.getRepeatPeriod());
+			this.budgetRepo.saveAndFlush(b);
+			System.out.println(budget.getId() + " was refreshed to " + b.getId());
+		return b;	
+		});
+	}
 }

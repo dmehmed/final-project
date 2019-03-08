@@ -11,6 +11,12 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.financeManager.demo.dao.BudgetDAO;
+import com.financeManager.demo.dao.RepeatPeriodDAO;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,7 +29,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class Budget {
 
 	@Id
@@ -52,6 +57,13 @@ public class Budget {
 	
 	private byte isDeleted;
 	
+	@Autowired
+	@Transient
+	private RepeatPeriodDAO repeatPeriodsDao;
+	@Autowired
+	@Transient
+	private BudgetDAO budgetDao;
+	
 	public Budget(Double amount, Date startDate, Date endDate, User owner, Category category, RepeatPeriod repeatPeriod) {
 		this.amount = amount;
 		this.startDate = startDate;
@@ -59,5 +71,8 @@ public class Budget {
 		this.user = owner;
 		this.category = category;
 		this.repeatPeriod = repeatPeriod;
-	}
+	} 
+	
+
+
 }

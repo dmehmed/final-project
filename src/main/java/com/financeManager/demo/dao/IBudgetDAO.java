@@ -16,4 +16,5 @@ public interface IBudgetDAO {
 	void clearUserBudgets(Long userId);
 	void deleteBudgetById(Long budgetId);
 	void saveUpdatedBudget(Long budgetId) throws NotExistingBudgetException;
+	void refreshAllBudgets();
 }
