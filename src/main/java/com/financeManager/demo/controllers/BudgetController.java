@@ -1,5 +1,7 @@
 package com.financeManager.demo.controllers;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -22,11 +24,15 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.financeManager.demo.dto.BudgetDTO;
+import com.financeManager.demo.dto.BudgetOverviewDTO;
 import com.financeManager.demo.dto.CrudBudgetDTO;
 import com.financeManager.demo.dto.ResponseDTO;
 import com.financeManager.demo.exceptions.AlreadyExistingBudget;
+import com.financeManager.demo.exceptions.DateFormatException;
 import com.financeManager.demo.exceptions.ForbiddenException;
+import com.financeManager.demo.exceptions.InvalidAmountsEntryException;
 import com.financeManager.demo.exceptions.InvalidBudgetEntryException;
+import com.financeManager.demo.exceptions.InvalidDateException;
 import com.financeManager.demo.exceptions.NotExistingBudgetException;
 import com.financeManager.demo.exceptions.UnauthorizedException;
 import com.financeManager.demo.exceptions.ValidationException;
@@ -117,4 +123,16 @@ public class BudgetController {
 		return Helper.createResponse(id,"Budget updated successfully!", HttpStatus.ACCEPTED);
 	}
 
+	@GetMapping(path = "/{id}/movement")
+	public BudgetOverviewDTO getBudgetMovementById(@PathVariable Long id,HttpServletRequest request, HttpServletResponse response)
+			throws UnauthorizedException, NotExistingBudgetException, ForbiddenException, InvalidAmountsEntryException, InvalidDateException, DateFormatException {
+		HttpSession session = request.getSession();
+
+		Helper.isThereLoggedUser(session);
+
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		
+		return this.budgetService.getBudgetMovement(id, userId);
+
+	}
 }
