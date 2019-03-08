@@ -13,6 +13,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class TransactionDTO {
 
+	private Long id;
 	private String transactionType;
 	private Double amount;
 	private LocalDateTime creationDate;

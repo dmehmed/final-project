@@ -13,10 +13,11 @@ import lombok.Setter;
 @AllArgsConstructor
 public class BudgetDTO {
 
+	private Long id;
 	private double amount;
 	private Date startDate;
 	private Date endDate;
 	private String category;
 	private String repeatPeriod;
-	
+
 }

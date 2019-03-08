@@ -41,14 +41,14 @@ public class WalletController {
 	private WalletService walletService;
 
 	@GetMapping
-	public List<CrudWalletDTO> getWallets(HttpServletRequest request, HttpServletResponse response)
+	public List<WalletDTO> getWallets(HttpServletRequest request, HttpServletResponse response)
 			throws UnauthorizedException {
 		HttpSession session = request.getSession();
 
 		Helper.isThereLoggedUser(session);
 
 		Long userId = (Long) session.getAttribute(USER_ID);
-		List<CrudWalletDTO> userWallets = this.walletService.getAllUserWallets(userId);
+		List<WalletDTO> userWallets = this.walletService.getAllUserWallets(userId);
 
 		response.setStatus(HttpStatus.OK.value());
 		return userWallets;

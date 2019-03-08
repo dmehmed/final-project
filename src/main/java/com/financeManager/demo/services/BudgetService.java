@@ -54,8 +54,8 @@ public class BudgetService {
 		}
 
 		return budgets.stream()
-				.map(budget -> new BudgetDTO(budget.getAmount(), budget.getStartDate(), budget.getEndDate(),
-						this.categoryDao.getById(budget.getCategory().getId()).getName(),
+				.map(budget -> new BudgetDTO(budget.getId(), budget.getAmount(), budget.getStartDate(),
+						budget.getEndDate(), this.categoryDao.getById(budget.getCategory().getId()).getName(),
 						this.repeatPeriodsDao.getById(budget.getRepeatPeriod().getId()).getPeriod()))
 				.collect(Collectors.toList());
 
@@ -90,41 +90,38 @@ public class BudgetService {
 		} catch (NoSuchElementException e) {
 			throw new InvalidBudgetEntryException("Bad input!");
 		}
-		
 
 	}
 
-	public BudgetDTO getBudgetById(Long userId,Long budgetId) throws NotExistingBudgetException, ForbiddenException {
-		
-		
-	
+	public BudgetDTO getBudgetById(Long userId, Long budgetId) throws NotExistingBudgetException, ForbiddenException {
+
 		Budget budget = this.budgetDao.getBudgetById(budgetId);
-		if(!userId.equals(budget.getUser().getId())){
+		if (!userId.equals(budget.getUser().getId())) {
 			throw new ForbiddenException("You are not allowed to see this budget!");
 		}
-			
-		return new BudgetDTO(budget.getAmount(), budget.getStartDate(), budget.getEndDate(),
+
+		return new BudgetDTO(budget.getId(), budget.getAmount(), budget.getStartDate(), budget.getEndDate(),
 				budget.getCategory().getName(), budget.getRepeatPeriod().getPeriod());
-		
+
 	}
 
-	public void updateBudget(CrudBudgetDTO budgetUpdater, Long userId, Long id) throws NotExistingBudgetException, InvalidBudgetEntryException, ForbiddenException {
+	public void updateBudget(CrudBudgetDTO budgetUpdater, Long userId, Long id)
+			throws NotExistingBudgetException, InvalidBudgetEntryException, ForbiddenException {
 		Budget budget = null;
 		try {
 			budget = this.budgetDao.getBudgetById(id);
 		} catch (NotExistingBudgetException e) {
 			throw new NotExistingBudgetException("Budget doesn't exists");
 		}
-		
-		if(!userId.equals(budget.getUser().getId())){
+
+		if (!userId.equals(budget.getUser().getId())) {
 			throw new ForbiddenException("You are not allowed to update this budget!");
 		}
-		
-		
-		if(budgetUpdater.getAmount() != null) {
+
+		if (budgetUpdater.getAmount() != null) {
 			this.budgetDao.getBudgetById(id).setAmount(budgetUpdater.getAmount());
 		}
-		
+
 		try {
 
 			if (budgetUpdater.getCategoryId() != null) {
@@ -137,32 +134,29 @@ public class BudgetService {
 				this.budgetDao.getBudgetById(id)
 						.setEndDate(this.repeatPeriodsDao.calculateEndDateByPeriod(budgetUpdater.getRepeatPeriodId()));
 			}
-			
+
 			this.budgetDao.saveUpdatedBudget(id);
 		} catch (NoSuchElementException e) {
 			throw new InvalidBudgetEntryException("Bad update budget input!");
 		}
-		
-		
 
 	}
 
-	public void deleteBudgetById(Long userId,Long budgetId) throws NotExistingBudgetException, ForbiddenException {
-		
+	public void deleteBudgetById(Long userId, Long budgetId) throws NotExistingBudgetException, ForbiddenException {
+
 		Budget budget = null;
 		try {
 			budget = this.budgetDao.getBudgetById(budgetId);
 		} catch (NotExistingBudgetException e) {
 			throw new NotExistingBudgetException("Budget doesn't exists");
 		}
-		
-		if(!userId.equals(budget.getUser().getId())){
+
+		if (!userId.equals(budget.getUser().getId())) {
 			throw new ForbiddenException("You are not allowed to delete this budget!");
 		}
-		
+
 		this.budgetDao.deleteBudgetById(budgetId);
-		
+
 	}
-	
 
 }

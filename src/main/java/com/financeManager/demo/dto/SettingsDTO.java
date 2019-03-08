@@ -15,5 +15,5 @@ public class SettingsDTO {
 	private String gender;
 	private String country;
 	private String currency;
-	
+
 }

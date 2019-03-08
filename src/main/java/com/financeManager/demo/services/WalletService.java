@@ -57,7 +57,7 @@ public class WalletService {
 			throw new ForbiddenException("You are not allowed to view this wallet!");
 		}
 
-		return new WalletDTO(wallet.getName(), wallet.getBalance(), wallet.getLimit());
+		return new WalletDTO(wallet.getId(), wallet.getName(), wallet.getBalance(), wallet.getLimit());
 	}
 
 	public void deleteWalletById(Long walletId, Long userId) throws NotExistingWalletException, ForbiddenException {
@@ -113,15 +113,15 @@ public class WalletService {
 
 	}
 
-	public List<CrudWalletDTO> getAllUserWallets(Long userId) {
+	public List<WalletDTO> getAllUserWallets(Long userId) {
 		List<Wallet> wallets = this.walletDao.getAllUserWallets(userId);
 
 		if (wallets == null) {
-			return new LinkedList<CrudWalletDTO>();
+			return new LinkedList<WalletDTO>();
 		}
 
 		return wallets.stream()
-				.map(wallet -> new CrudWalletDTO(wallet.getName(), wallet.getBalance(), wallet.getLimit()))
+				.map(wallet -> new WalletDTO(wallet.getId(), wallet.getName(), wallet.getBalance(), wallet.getLimit()))
 				.collect(Collectors.toList());
 	}
 

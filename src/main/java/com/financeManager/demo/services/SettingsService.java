@@ -30,7 +30,7 @@ import lombok.Setter;
 public class SettingsService {
 
 	private static final String DATE_FORMAT = "yyyy-MM-dd";
-	
+
 	@Autowired
 	private ISettingsRepository settingsRepo;
 	@Autowired
@@ -62,12 +62,13 @@ public class SettingsService {
 		view.setCountry(isOptionalFieldEmpty(settings.getCountry()) ? "" : settings.getCountry().getName());
 		view.setCurrency(isOptionalFieldEmpty(settings.getCurrency()) ? "" : settings.getCurrency().getType());
 		view.setGender(isOptionalFieldEmpty(settings.getGender()) ? "" : settings.getGender().getName());
-		
+
 	}
 
-	public Settings update(Long id, SettingsUpdateDTO update) throws DateFormatException, NoSuchSettingsOptionException {
-		
-		if(update.getBirthdate() != null) {
+	public Settings update(Long id, SettingsUpdateDTO update)
+			throws DateFormatException, NoSuchSettingsOptionException {
+
+		if (update.getBirthdate() != null) {
 			try {
 				java.util.Date newBirthdate = new SimpleDateFormat(DATE_FORMAT).parse(update.getBirthdate());
 				java.sql.Date sqlBirthday = new java.sql.Date(newBirthdate.getTime());
@@ -77,27 +78,27 @@ public class SettingsService {
 				throw new DateFormatException("Wrong date format", e);
 			}
 		}
-		
+
 		try {
-		
-		if(update.getCountryId() != null) {
-			this.settingsRepo.findById(id).get().setCountry(countryDAO.getById(update.getCountryId()));
-		}
-		
-		if(update.getCurrencyId() != null) {
-			this.settingsRepo.findById(id).get().setCurrency(currencyDAO.getById(update.getCurrencyId()));
-		}
-		
-		if(update.getGenderId() != null) {
-			this.settingsRepo.findById(id).get().setGender(genderDAO.getById(update.getGenderId()));
-		}
-		
+
+			if (update.getCountryId() != null) {
+				this.settingsRepo.findById(id).get().setCountry(countryDAO.getById(update.getCountryId()));
+			}
+
+			if (update.getCurrencyId() != null) {
+				this.settingsRepo.findById(id).get().setCurrency(currencyDAO.getById(update.getCurrencyId()));
+			}
+
+			if (update.getGenderId() != null) {
+				this.settingsRepo.findById(id).get().setGender(genderDAO.getById(update.getGenderId()));
+			}
+
 		} catch (NoSuchElementException e) {
 			throw new NoSuchSettingsOptionException("There is no such option", e);
 		}
-		
+
 		settingsRepo.save(this.settingsRepo.findById(id).get());
 		return this.settingsRepo.findById(id).get();
-		
+
 	}
 }
