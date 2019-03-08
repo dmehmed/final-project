@@ -50,6 +50,8 @@ public class Budget {
 	@JoinColumn(name = "repeat_period_id")
 	private RepeatPeriod repeatPeriod;
 	
+	private byte isDeleted;
+	
 	public Budget(Double amount, Date startDate, Date endDate, User owner, Category category, RepeatPeriod repeatPeriod) {
 		this.amount = amount;
 		this.startDate = startDate;

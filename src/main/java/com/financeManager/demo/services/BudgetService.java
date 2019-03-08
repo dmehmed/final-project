@@ -15,6 +15,7 @@ import com.financeManager.demo.dao.ICategoryDao;
 import com.financeManager.demo.dao.IRepeatPeriodDAO;
 import com.financeManager.demo.dto.BudgetDTO;
 import com.financeManager.demo.dto.CrudBudgetDTO;
+import com.financeManager.demo.exceptions.AlreadyExistingBudget;
 import com.financeManager.demo.exceptions.ForbiddenException;
 import com.financeManager.demo.exceptions.InvalidBudgetEntryException;
 import com.financeManager.demo.exceptions.NotExistingBudgetException;
@@ -47,7 +48,7 @@ public class BudgetService {
 	private IRepeatPeriodDAO repeatPeriodsDao;
 
 	public List<BudgetDTO> getAllUserBugdets(Long userId) {
-		List<Budget> budgets = this.budgetDao.getAllUserBudgets(userId);
+		List<Budget> budgets = this.budgetDao.getActiveUserBudgets(userId);
 
 		if (budgets == null) {
 			return new LinkedList<BudgetDTO>();
@@ -61,7 +62,7 @@ public class BudgetService {
 
 	}
 
-	public Long addBudgetToUser(CrudBudgetDTO newBudget, Long userId) throws InvalidBudgetEntryException {
+	public Long addBudgetToUser(CrudBudgetDTO newBudget, Long userId) throws InvalidBudgetEntryException, AlreadyExistingBudget {
 		User owner = this.usersRepo.findById(userId).get();
 
 		if (newBudget.getAmount() == null) {

@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.financeManager.demo.dto.BudgetDTO;
 import com.financeManager.demo.dto.CrudBudgetDTO;
 import com.financeManager.demo.dto.ResponseDTO;
+import com.financeManager.demo.exceptions.AlreadyExistingBudget;
 import com.financeManager.demo.exceptions.ForbiddenException;
 import com.financeManager.demo.exceptions.InvalidBudgetEntryException;
 import com.financeManager.demo.exceptions.NotExistingBudgetException;
@@ -82,7 +83,7 @@ public class BudgetController {
 	@PostMapping("/create")
 	public ResponseEntity<ResponseDTO> createNewBudget(@RequestBody @Valid CrudBudgetDTO newBudget, Errors errors,
 			HttpServletRequest request, HttpServletResponse response)
-			throws ValidationException, UnauthorizedException, InvalidBudgetEntryException {
+			throws ValidationException, UnauthorizedException, InvalidBudgetEntryException, AlreadyExistingBudget {
 
 		Helper.isThereRequestError(errors, response);
 
