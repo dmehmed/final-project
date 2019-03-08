@@ -142,8 +142,12 @@ public abstract class Helper {
 		}
 	}
 
-	public static Timestamp parseStringToTimeStamp(String date) {
-		return date != null ? Timestamp.valueOf(LocalDate.parse(date, dateTimeFormatter).atStartOfDay()) : null;
+	public static Timestamp parseStringToTimeStamp(String date) throws DateFormatException {
+		try {
+			return date != null ? Timestamp.valueOf(LocalDate.parse(date, dateTimeFormatter).atStartOfDay()) : null;
+		} catch (DateTimeParseException e) {
+			throw new DateFormatException("Invalid date format! Input: 'yyyy-MM-dd'!");
+		}
 	}
 
 	public static LocalDateTime parseStringToLocalDateTime(String date) throws DateFormatException {

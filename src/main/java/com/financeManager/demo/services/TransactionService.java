@@ -46,7 +46,7 @@ public class TransactionService {
 
 //	private static final Long INCOME = 1L;
 	private static final Long EXPENSE = 2L;
-
+	
 	@Autowired
 	private ITransactionRepository transactionRepo;
 
@@ -280,7 +280,6 @@ public class TransactionService {
 		return this.typeDAO.getAll().stream().map(type -> new TransactionTypeDTO(type.getId(), type.getName()))
 				.collect(Collectors.toList());
 	}
-
 
 	private List<TransactionDTO> filterTransactionByDate(List<TransactionDTO> transactions, String startDateString,
 			String endDateString) throws InvalidDateException, DateFormatException {

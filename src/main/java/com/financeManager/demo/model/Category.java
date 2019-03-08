@@ -27,15 +27,15 @@ public class Category {
 	@Id
 	private Long id;
 	private String name;
-	
+
 	@ManyToOne(fetch = FetchType.EAGER)
-	@JoinColumn(name="transaction_type_id")
+	@JoinColumn(name = "transaction_type_id")
 	private TransactionType transactionType;
-	
+
 	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	private Set<Budget> budgets;
-	
+
 	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	private Set<Transaction> transactions;
-	
+
 }

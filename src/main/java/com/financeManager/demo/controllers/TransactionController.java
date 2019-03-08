@@ -76,9 +76,7 @@ public class TransactionController {
 		Helper.isThereLoggedUser(session);
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-		User user = null;
-
-		user = this.userService.getExistingUserById(userId);
+		User user = this.userService.getExistingUserById(userId);
 
 		return this.transactionService.getAllTransactionsOfUserInWallet(walletId,user, sortBy, orderBy, min, max, startDate, endDate);
 
