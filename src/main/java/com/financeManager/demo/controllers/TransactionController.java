@@ -22,10 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.financeManager.demo.dto.CategoryDTO;
 import com.financeManager.demo.dto.CreateTransactionDTO;
-import com.financeManager.demo.dto.TransactionBetweenAmountsDTO;
-import com.financeManager.demo.dto.TransactionByDateDTO;
 import com.financeManager.demo.dto.TransactionDTO;
 import com.financeManager.demo.dto.TransactionTypeDTO;
+import com.financeManager.demo.exceptions.DateFormatException;
 import com.financeManager.demo.exceptions.ForbiddenException;
 import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidAmountsEntryException;
@@ -49,62 +48,6 @@ public class TransactionController {
 	@Autowired
 	private UserService userService;
 
-	@PostMapping(path = "/betweenDates")
-	public List<TransactionDTO> listAllTransactionsBetweenDates(@RequestBody TransactionByDateDTO dates,
-			@RequestParam(name = "sortBy", required = false) String sortBy,
-			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response) throws UnauthorizedException, NotExistingUserException, InvalidDateException {
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-
-		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-		User user = null;
-
-		user = this.userService.getExistingUserById(userId);
-
-		return this.transactionService.getAllTransactionsBetweenDates(user, dates, sortBy, orderBy);
-
-	}
-
-	@PostMapping(path = "/wallet/{walletId}/betweenDates")
-	public List<TransactionDTO> getAllTransactionsInWalletBetweenDates(@RequestBody TransactionByDateDTO dates,
-			@PathVariable Long walletId, @RequestParam(name = "sortBy", required = false) String sortBy,
-			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response)
-			throws UnauthorizedException, NotExistingUserException, NotExistingWalletException, InvalidDateException {
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-
-		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-		User user = null;
-
-		user = this.userService.getExistingUserById(userId);
-
-		return this.transactionService.giveAllTransactionInWalletBetweenDates(user, dates, walletId, sortBy, orderBy);
-
-	}
-
-	@PostMapping(path = "/category/{categoryId}/betweenDates")
-	public List<TransactionDTO> getAllTransactionsByCategoryBetweenDates(@RequestBody TransactionByDateDTO dates,
-			@PathVariable Long categoryId, @RequestParam(name = "sortBy", required = false) String sortBy,
-			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response) throws UnauthorizedException, NotExistingUserException, InvalidDateException {
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-
-		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-		User user = null;
-
-		user = this.userService.getExistingUserById(userId);
-
-		return this.transactionService.giveAllTransactionByCategoryBetweenDates(user, dates, categoryId, sortBy,
-				orderBy);
-
-	}
-
 	@GetMapping(path = "/{id}")
 	public TransactionDTO getTransactionById(@PathVariable Long id, HttpServletRequest request,
 			HttpServletResponse response) throws UnauthorizedException, NotExistingTransactionException,
@@ -120,9 +63,13 @@ public class TransactionController {
 	@GetMapping(path = "/wallet/{walletId}")
 	public List<TransactionDTO> getAllTransactionsInWallet(@PathVariable Long walletId,
 			@RequestParam(name = "sortBy", required = false) String sortBy,
-			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
+			@RequestParam(name = "orderBy", required = false) String orderBy,
+			@RequestParam(name = "min", required = false) Double min,
+			@RequestParam(name = "max", required = false) Double max,
+			@RequestParam(name = "startDate", required = false) String startDate,
+			@RequestParam(name = "endDate", required = false) String endDate, HttpServletRequest request,
 			HttpServletResponse response)
-			throws UnauthorizedException, NotExistingUserException, NotExistingWalletException {
+			throws UnauthorizedException, NotExistingUserException, NotExistingWalletException, InvalidAmountsEntryException, InvalidDateException, DateFormatException {
 
 		HttpSession session = request.getSession();
 
@@ -133,27 +80,7 @@ public class TransactionController {
 
 		user = this.userService.getExistingUserById(userId);
 
-		return this.transactionService.getAllTransactionsOfUserInWallet(user, walletId, sortBy, orderBy);
-
-	}
-
-	@GetMapping(path = "/wallet/{walletId}/betweenAmounts")
-	public List<TransactionDTO> getAllTransactionInWalletBetweenAmounts(@PathVariable Long walletId,
-			@RequestBody TransactionBetweenAmountsDTO amounts,
-			@RequestParam(name = "sortBy", required = false) String sortBy,
-			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response) throws NotExistingUserException, UnauthorizedException,
-			NotExistingWalletException, InvalidAmountsEntryException {
-
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-
-		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-		User user = this.userService.getExistingUserById(userId);
-
-		return this.transactionService.giveAllTransactionInWalletBetweenAmounts(user, amounts, walletId, sortBy,
-				orderBy);
+		return this.transactionService.getAllTransactionsOfUserInWallet(walletId,user, sortBy, orderBy, min, max, startDate, endDate);
 
 	}
 
@@ -222,9 +149,16 @@ public class TransactionController {
 	}
 
 	@GetMapping()
-	public List<TransactionDTO> giveTransactions(@RequestParam(name = "sortBy", required = false) String sortBy,
-			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response) throws UnauthorizedException, NotExistingUserException {
+	public List<TransactionDTO> getAllTransactionsOfUser(
+			@RequestParam(name = "sortBy", required = false) String sortBy,
+			@RequestParam(name = "orderBy", required = false) String orderBy,
+			@RequestParam(name = "min", required = false) Double min,
+			@RequestParam(name = "max", required = false) Double max,
+			@RequestParam(name = "startDate", required = false) String startDate,
+			@RequestParam(name = "endDate", required = false) String endDate, HttpServletRequest request,
+			HttpServletResponse response)
+			throws UnauthorizedException, NotExistingUserException, InvalidAmountsEntryException, InvalidDateException,
+			DateFormatException {
 
 		HttpSession session = request.getSession();
 
@@ -233,14 +167,18 @@ public class TransactionController {
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
 		User user = this.userService.getExistingUserById(userId);
 
-		return transactionService.getAllTransactionsOfUser(user, sortBy, orderBy);
+		return transactionService.getAllTransactionsOfUser(user, sortBy, orderBy, min, max, startDate, endDate);
 	}
 
 	@GetMapping("/category/{id}")
 	public List<TransactionDTO> giveTransactionsByCategory(@PathVariable Long id,
 			@RequestParam(name = "sortBy", required = false) String sortBy,
-			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response) throws UnauthorizedException, NotExistingUserException {
+			@RequestParam(name = "orderBy", required = false) String orderBy,
+			@RequestParam(name = "min", required = false) Double min,
+			@RequestParam(name = "max", required = false) Double max,
+			@RequestParam(name = "startDate", required = false) String startDate,
+			@RequestParam(name = "endDate", required = false) String endDate, HttpServletRequest request,
+			HttpServletResponse response) throws UnauthorizedException, NotExistingUserException, InvalidAmountsEntryException, InvalidDateException, DateFormatException {
 
 		HttpSession session = request.getSession();
 
@@ -249,26 +187,8 @@ public class TransactionController {
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
 		User user = this.userService.getExistingUserById(userId);
 
-		return this.transactionService.getAllTransactionsOfUserForGivenCategory(user, sortBy, orderBy, id);
+		return this.transactionService.getAllTransactionsOfUserForGivenCategory(user, sortBy, orderBy, min, max, startDate, endDate,id);
 
-	}
-
-	@GetMapping("/category/{id}/betweenAmounts")
-	public List<TransactionDTO> getAllTransactionInCategoryBetweenAmounts(@PathVariable Long id,
-			@RequestBody @Valid TransactionBetweenAmountsDTO amounts,
-			@RequestParam(name = "sortBy", required = false) String sortBy,
-			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response)
-			throws UnauthorizedException, NotExistingUserException, InvalidAmountsEntryException {
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-
-		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-		User user = this.userService.getExistingUserById(userId);
-
-		return this.transactionService.getAllTransactionsOfUserForGivenCategoryBetweenAmounts(user, amounts, sortBy,
-				orderBy, id);
 	}
 
 	@GetMapping("/categories")
@@ -290,24 +210,6 @@ public class TransactionController {
 		Helper.isThereLoggedUser(session);
 
 		return this.transactionService.listAllTransactionTypes();
-	}
-
-	@GetMapping("/betweenAmounts")
-	public List<TransactionDTO> listAllTransactionsSmallerThan(@RequestBody TransactionBetweenAmountsDTO amounts,
-			@RequestParam(name = "sortBy", required = false) String sortBy,
-			@RequestParam(name = "orderBy", required = false) String orderBy, HttpServletRequest request,
-			HttpServletResponse response)
-			throws UnauthorizedException, NotExistingUserException, InvalidAmountsEntryException {
-
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-
-		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-		User user = this.userService.getExistingUserById(userId);
-
-		return this.transactionService.getTransactionsBetweenAmounts(user, amounts, sortBy, orderBy);
-
 	}
 
 }

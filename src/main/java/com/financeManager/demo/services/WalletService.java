@@ -41,9 +41,11 @@ public class WalletService {
 			throw new InvalidWalletEntryException("Invalid wallet name!");
 		}
 
-		if (newWallet.getLimit() != null && newWallet.getBalance() != null
-				&& newWallet.getLimit().longValue() < newWallet.getBalance().longValue()) {
+		if ((newWallet.getLimit() != null && newWallet.getBalance() != null)
+				&& (newWallet.getLimit().longValue() < newWallet.getBalance().longValue())) {
+			System.out.println("Stigna li be");
 			throw new InvalidWalletEntryException("Invalid wallet settings");
+			
 		}
 
 		Wallet wallet = new Wallet(newWallet.getName(), newWallet.getBalance(), newWallet.getLimit(), owner);

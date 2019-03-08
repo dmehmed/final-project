@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Comparator;
 
 import javax.servlet.http.HttpServletResponse;
@@ -15,6 +16,7 @@ import org.springframework.validation.Errors;
 
 import com.financeManager.demo.dto.ResponseDTO;
 import com.financeManager.demo.dto.TransactionDTO;
+import com.financeManager.demo.exceptions.DateFormatException;
 import com.financeManager.demo.exceptions.ForbiddenException;
 import com.financeManager.demo.exceptions.UnauthorizedException;
 import com.financeManager.demo.exceptions.ValidationException;
@@ -144,8 +146,12 @@ public abstract class Helper {
 		return date != null ? Timestamp.valueOf(LocalDate.parse(date, dateTimeFormatter).atStartOfDay()) : null;
 	}
 
-	public static LocalDateTime parseStringToLocalDateTime(String date) {
-		return date != null ? LocalDate.parse(date, dateTimeFormatter).atStartOfDay() : null;
+	public static LocalDateTime parseStringToLocalDateTime(String date) throws DateFormatException {
+		try {
+			return date != null ? LocalDate.parse(date, dateTimeFormatter).atStartOfDay() : null;
+		} catch (DateTimeParseException e) {
+			throw new DateFormatException("Invalid date format! Input: 'yyyy-MM-dd'!");
+		}
 	}
 
 	public static ResponseEntity<ResponseDTO> createResponse(Long id, String message, HttpStatus status) {
