@@ -1,5 +1,7 @@
 package com.financeManager.demo.controllers;
 
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -80,6 +82,16 @@ public class StatisticController {
 		return this.statsService.getBudgetMovement(id, userId);
 	}
 	
+	@GetMapping(path = "/overview/budgets")
+	public List<BudgetOverviewDTO> getAllBudgetsStats(HttpServletRequest request, HttpServletResponse response) throws UnauthorizedException{
+		HttpSession session = request.getSession();
+
+		Helper.isThereLoggedUser(session);
+
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		
+		return this.statsService.getOverviewForAllBudgets(userId);
+	}
 	
 //	@GetMapping(path = "/categories")
 //	public List<OverviewDTO> getOverviewByCategories(

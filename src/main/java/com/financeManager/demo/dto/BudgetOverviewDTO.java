@@ -18,5 +18,5 @@ public class BudgetOverviewDTO {
 	private Double budgetAmount;
 	private Double moneySpent;
 	private Double finalCalculation;
-	
+	private String status;
 }

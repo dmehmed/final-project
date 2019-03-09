@@ -47,7 +47,9 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StatisticService {
-
+	private static final String EXCEEDED = "Exceeded";
+	private static final String NOT_EXCEEDED = "Not exceeded";
+	private static final String PENDING = "Pending";
 	private static final String NOW = "Now";
 	private static final String BEGINNING = "Beginning";
 	private static final int COEFF_FORMATING_EXPENSES = -1;
@@ -277,7 +279,72 @@ public class StatisticService {
 
 		budgetOverview.setMoneySpent(sum);
 		budgetOverview.setFinalCalculation(budget.getAmount() - sum);
+		String status = null;
+		if (budgetOverview.getFinalCalculation() > 0) {
+			status = NOT_EXCEEDED;
+		} else {
+			status = EXCEEDED;
+		}
+		budgetOverview.setStatus(status);
+
 		return budgetOverview;
+	}
+
+	public List<BudgetOverviewDTO> getOverviewForAllBudgets(Long userId) {
+
+		List<Budget> budgets = this.budgetDao.getAllUserBudgets(userId);
+
+		return budgets.stream().map(budget -> {
+
+			User user = this.userRepo.findById(userId).get();
+
+			Date startDate = budget.getStartDate();
+			Date endDate = budget.getEndDate();
+
+			DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+			String sDate = df.format(startDate);
+			String eDate = df.format(endDate);
+
+			List<TransactionDTO> dtos = null;
+			try {
+				dtos = this.transactionService.getAllTransactionsOfUserForGivenCategory(user, null, null, null, null,
+						sDate, eDate, budget.getCategory().getId());
+			} catch (InvalidAmountsEntryException | InvalidDateException | DateFormatException e) {
+				e.printStackTrace();
+			}
+
+			BudgetOverviewDTO budgetOverview = new BudgetOverviewDTO();
+
+			budgetOverview.setBudgetId(budget.getId());
+			budgetOverview.setBudgetAmount(budget.getAmount());
+			budgetOverview.setCategoryName(budget.getCategory().getName());
+			budgetOverview.setPeriodOfBudget(sDate + " - " + eDate);
+			Double sum = new Double(0);
+
+			if (dtos != null) {
+				budgetOverview.setTransactionCount(dtos.size());
+				sum = dtos.stream().map(dto -> dto.getAmount()).reduce((double) 0, (d1, d2) -> d1 + d2);
+			} else {
+				budgetOverview.setTransactionCount(0);
+			}
+
+			budgetOverview.setMoneySpent(sum);
+			budgetOverview.setFinalCalculation(budget.getAmount() - sum);
+			String status = null;
+
+			if (budgetOverview.getFinalCalculation() > 0) {
+				status = NOT_EXCEEDED;
+			} else {
+				status = EXCEEDED;
+			}
+
+			if (budget.getIsDeleted() == 0) {
+				status = PENDING;
+			}
+			budgetOverview.setStatus(status);
+			return budgetOverview;
+		}).collect(Collectors.toList());
+
 	}
 
 }
