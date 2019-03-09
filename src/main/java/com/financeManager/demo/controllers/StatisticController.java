@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.financeManager.demo.dto.AmountOverviewDTO;
 import com.financeManager.demo.dto.BudgetOverviewDTO;
 import com.financeManager.demo.dto.CategoryOverviewDTO;
+import com.financeManager.demo.dto.WalletSummaryDTO;
 import com.financeManager.demo.exceptions.DateFormatException;
 import com.financeManager.demo.exceptions.ForbiddenException;
 import com.financeManager.demo.exceptions.InvalidAmountsEntryException;
@@ -23,6 +24,7 @@ import com.financeManager.demo.exceptions.InvalidDateException;
 import com.financeManager.demo.exceptions.InvalidTransactionTypeException;
 import com.financeManager.demo.exceptions.NotExistingBudgetException;
 import com.financeManager.demo.exceptions.NotExistingUserException;
+import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.exceptions.UnauthorizedException;
 import com.financeManager.demo.model.User;
 import com.financeManager.demo.services.StatisticService;
@@ -37,6 +39,8 @@ public class StatisticController {
 
 	@Autowired
 	private UserService userService;
+	
+	
 
 
 	@GetMapping(path = "/overview")
@@ -93,19 +97,27 @@ public class StatisticController {
 		return this.statsService.getOverviewForAllBudgets(userId);
 	}
 	
-//	@GetMapping(path = "/categories")
-//	public List<OverviewDTO> getOverviewByCategories(
-//			@RequestParam(name = "from", required = false) String from,
-//			@RequestParam(name = "to", required = false) String to, HttpServletRequest request,
-//			HttpServletResponse response) throws UnauthorizedException, NotExistingUserException, DateFormatException {
-//
-//		HttpSession session = request.getSession();
-//		Helper.isThereLoggedUser(session);
-//
-//		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-//		User user = this.userService.getExistingUserById(userId);
-//
-//		return this.statsService.getOverviewOfUserActivity(user, from, to);
-//	}
+	@GetMapping(path = "/overview/wallets/{id}")
+	public WalletSummaryDTO getWalletSummary(@PathVariable Long id,HttpServletRequest request, HttpServletResponse response) 
+			throws UnauthorizedException, NotExistingWalletException, ForbiddenException {
+		
+		HttpSession session = request.getSession();
 
+		Helper.isThereLoggedUser(session);
+
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		
+		return this.statsService.getSummaryOfWallet(userId, id);
+	}
+	
+	@GetMapping(path = "/overview/wallets")
+	public List<WalletSummaryDTO> getAllWalletsSummary(HttpServletRequest request, HttpServletResponse response) throws UnauthorizedException{
+		
+		HttpSession session = request.getSession();
+
+		Helper.isThereLoggedUser(session);
+
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		return this.statsService.getAllWalletsSummary(userId);
+	}
 }

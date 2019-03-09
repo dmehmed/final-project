@@ -18,21 +18,25 @@ import org.springframework.stereotype.Service;
 
 import com.financeManager.demo.controllers.Helper;
 import com.financeManager.demo.dao.IBudgetDAO;
+import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.AmountOverviewDTO;
 import com.financeManager.demo.dto.BudgetOverviewDTO;
 import com.financeManager.demo.dto.CategoryOverviewDTO;
 import com.financeManager.demo.dto.PercentageOfCategoryAmountDTO;
 import com.financeManager.demo.dto.TransactionDTO;
+import com.financeManager.demo.dto.WalletSummaryDTO;
 import com.financeManager.demo.exceptions.DateFormatException;
 import com.financeManager.demo.exceptions.ForbiddenException;
 import com.financeManager.demo.exceptions.InvalidAmountsEntryException;
 import com.financeManager.demo.exceptions.InvalidDateException;
 import com.financeManager.demo.exceptions.InvalidTransactionTypeException;
 import com.financeManager.demo.exceptions.NotExistingBudgetException;
+import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.model.Budget;
 import com.financeManager.demo.model.Category;
 import com.financeManager.demo.model.Transaction;
 import com.financeManager.demo.model.User;
+import com.financeManager.demo.model.Wallet;
 import com.financeManager.demo.repositories.ITransactionRepository;
 import com.financeManager.demo.repositories.IUsersRepository;
 
@@ -71,6 +75,9 @@ public class StatisticService {
 
 	@Autowired
 	private IBudgetDAO budgetDao;
+	
+	@Autowired
+	private IWalletDAO walletDao;
 
 	private DecimalFormat df = new DecimalFormat("##.##%");
 
@@ -243,13 +250,8 @@ public class StatisticService {
 
 	public BudgetOverviewDTO getBudgetMovement(Long budgetId, Long userId) throws NotExistingBudgetException,
 			ForbiddenException, InvalidAmountsEntryException, InvalidDateException, DateFormatException {
-		Budget budget = null;
-		try {
-			budget = this.budgetDao.getBudgetById(budgetId);
-		} catch (NotExistingBudgetException e) {
-			e.printStackTrace();
-			throw new NotExistingBudgetException("Budget doesn't exists");
-		}
+		Budget	budget = this.budgetDao.getBudgetById(budgetId);
+		
 
 		if (!userId.equals(budget.getUser().getId())) {
 			throw new ForbiddenException("You are not allowed to view this budget!");
@@ -343,6 +345,55 @@ public class StatisticService {
 			}
 			budgetOverview.setStatus(status);
 			return budgetOverview;
+		}).collect(Collectors.toList());
+
+	}
+	
+	public WalletSummaryDTO getSummaryOfWallet(Long userId,Long walletId) throws NotExistingWalletException, ForbiddenException {
+		
+		Wallet	wallet = this.walletDao.getWalletById(walletId);
+
+		if (!userId.equals(wallet.getUser().getId())) {
+			throw new ForbiddenException("You are not allowed to view this wallet!");
+		}
+		
+		
+		List<Transaction> transactionsOfWallet = this.transactionRepo.findAllByWalletId(walletId);
+		
+		WalletSummaryDTO walletSummary = new WalletSummaryDTO();
+		walletSummary.setId(walletId);
+		walletSummary.setTransactionCount(transactionsOfWallet.size());
+		walletSummary.setName(wallet.getName());
+		walletSummary.setBalance(wallet.getBalance());
+		
+		double sumOfIncomes = transactionsOfWallet.stream()
+				.map(transaction -> transaction.getAmount())
+				.filter(amount -> amount > 0)
+				.reduce((double) 0, (amount1, amount2) -> amount1 + amount2);
+		
+		double sumOfExpenses = transactionsOfWallet.stream()
+				.map(transaction -> transaction.getAmount() *COEFF_FORMATING_EXPENSES)
+				.filter(amount -> amount > 0)
+				.reduce((double) 0, (amount1, amount2) -> amount1 + amount2);
+		walletSummary.setTotalMoneyPayed(sumOfExpenses);
+		walletSummary.setTotalMoneyReceived(sumOfIncomes);
+		
+		return walletSummary;
+	}
+	
+	public List<WalletSummaryDTO> getAllWalletsSummary(Long userId){
+		
+		List<Wallet> walletsOfUser = this.walletDao.getAllUserWallets(userId);
+	
+		return walletsOfUser.stream().map(wallet -> {
+			try {
+				return this.getSummaryOfWallet(userId, wallet.getId());
+			} catch (NotExistingWalletException e) {
+				e.printStackTrace();
+			} catch (ForbiddenException e) {
+				e.printStackTrace();
+			}
+			return null;
 		}).collect(Collectors.toList());
 
 	}
