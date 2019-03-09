@@ -1,5 +1,6 @@
 package com.financeManager.demo.controllers;
 
+import java.sql.SQLException;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -23,8 +24,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.financeManager.demo.dto.CrudWalletDTO;
 import com.financeManager.demo.dto.ResponseDTO;
+import com.financeManager.demo.dto.TransferDTO;
 import com.financeManager.demo.dto.WalletDTO;
 import com.financeManager.demo.exceptions.ForbiddenException;
+import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidWalletEntryException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.exceptions.UnauthorizedException;
@@ -108,6 +111,24 @@ public class WalletController {
 		Long userId = (Long) session.getAttribute(USER_ID);
 
 		this.walletService.deleteWalletById(id, userId);
+	}
+
+	@PostMapping(path = "/transfer")
+	public ResponseEntity<ResponseDTO> transferAmount(@RequestBody @Valid TransferDTO transfer, Errors errors,
+			HttpServletRequest request, HttpServletResponse response) throws ValidationException, UnauthorizedException,
+			NotExistingWalletException, ForbiddenException, InsufficientBalanceException, SQLException {
+
+		Helper.isThereRequestError(errors, response);
+		HttpSession session = request.getSession();
+
+		Helper.isThereLoggedUser(session);
+		Long userId = (Long) session.getAttribute(USER_ID);
+
+		this.walletService.makeTransfer(userId, transfer);
+
+		return Helper.createResponse(transfer.getToWalletId(),
+				"Transfer successfully made from wallet with id " + transfer.getFromWalletId() + "!",
+				HttpStatus.ACCEPTED);
 	}
 
 }

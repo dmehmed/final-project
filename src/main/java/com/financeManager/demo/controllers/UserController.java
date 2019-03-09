@@ -92,7 +92,7 @@ public class UserController {
 		HttpSession session = request.getSession();
 
 		if (Helper.isThereAlreadySomeoneLogged(session)) {
-			return Helper.createResponse((Long) session.getAttribute("userId"), "You are already logged in",
+			return Helper.createResponse((Long) session.getAttribute("userId"), "You are already logged in!",
 					HttpStatus.OK);
 		}
 
@@ -100,7 +100,7 @@ public class UserController {
 		session.setAttribute(Helper.USER_ID, us.getId());
 		this.walletDAO.loadUserWallets(us.getId());
 		this.budgetDAO.loadUserBudgets(us.getId());
-		return Helper.createResponse(us.getId(), "Welcome " + us.getUsername() + " !", HttpStatus.OK);
+		return Helper.createResponse(us.getId(), "Welcome " + us.getUsername() + "!", HttpStatus.OK);
 
 	}
 

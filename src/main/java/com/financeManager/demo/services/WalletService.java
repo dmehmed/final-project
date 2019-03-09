@@ -1,16 +1,22 @@
 package com.financeManager.demo.services;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.CrudWalletDTO;
+import com.financeManager.demo.dto.TransferDTO;
 import com.financeManager.demo.dto.WalletDTO;
 import com.financeManager.demo.exceptions.ForbiddenException;
+import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidWalletEntryException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.model.User;
@@ -29,10 +35,15 @@ import lombok.Setter;
 @AllArgsConstructor
 public class WalletService {
 
+	private static final String DECREASE = "update wallets set balance = balance - ? where id = ?";
+	private static final String INCREASE = "update wallets set balance = balance + ? where id = ?";
+
 	@Autowired
 	private IWalletDAO walletDao;
 	@Autowired
 	private IUsersRepository usersRepo;
+	@Autowired
+	private JdbcTemplate jdbcTemplate = new JdbcTemplate();
 
 	public Long addWalletToUser(CrudWalletDTO newWallet, Long userId) throws InvalidWalletEntryException {
 		User owner = this.usersRepo.findById(userId).get();
@@ -43,9 +54,8 @@ public class WalletService {
 
 		if ((newWallet.getLimit() != null && newWallet.getBalance() != null)
 				&& (newWallet.getLimit().longValue() < newWallet.getBalance().longValue())) {
-			System.out.println("Stigna li be");
 			throw new InvalidWalletEntryException("Invalid wallet settings");
-			
+
 		}
 
 		Wallet wallet = new Wallet(newWallet.getName(), newWallet.getBalance(), newWallet.getLimit(), owner);
@@ -125,6 +135,55 @@ public class WalletService {
 		return wallets.stream()
 				.map(wallet -> new WalletDTO(wallet.getId(), wallet.getName(), wallet.getBalance(), wallet.getLimit()))
 				.collect(Collectors.toList());
+	}
+
+	public void makeTransfer(Long userId, TransferDTO transfer)
+			throws NotExistingWalletException, ForbiddenException, InsufficientBalanceException, SQLException {
+		Wallet walletFrom = null;
+		Wallet walletTo = null;
+
+		try {
+			walletFrom = this.walletDao.getWalletById(transfer.getFromWalletId());
+			walletTo = this.walletDao.getWalletById(transfer.getToWalletId());
+		} catch (NotExistingWalletException e) {
+			throw new NotExistingWalletException("Not existing wallet!");
+		}
+
+		if (!walletFrom.getUser().getId().equals(userId) || !walletTo.getUser().getId().equals(userId)) {
+			throw new ForbiddenException("You are not allowed to change this wallet!");
+		}
+
+		if (walletFrom.getBalance() < transfer.getAmount()) {
+			throw new InsufficientBalanceException("Insufficient account balance.");
+		}
+
+		Connection con = null;
+		PreparedStatement preparedStatement = null;
+
+		try {
+			con = jdbcTemplate.getDataSource().getConnection();
+			con.setAutoCommit(false);
+
+			preparedStatement = con.prepareStatement(DECREASE);
+			preparedStatement.setDouble(1, transfer.getAmount());
+			preparedStatement.setLong(2, walletFrom.getId());
+			preparedStatement.executeUpdate();
+
+			preparedStatement = con.prepareStatement(INCREASE);
+			preparedStatement.setDouble(1, transfer.getAmount());
+			preparedStatement.setLong(2, walletTo.getId());
+			preparedStatement.executeUpdate();
+
+			con.commit();
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			con.rollback();
+			throw new NotExistingWalletException("Not existing wallet!");
+		} finally {
+			con.setAutoCommit(true);
+		}
+
 	}
 
 }

@@ -60,13 +60,13 @@ public class StatisticService {
 
 	@Autowired
 	private TransactionService transactionService;
-	
+
 	@Autowired
 	private BudgetService budgetService;
-	
+
 	@Autowired
 	private IUsersRepository userRepo;
-	
+
 	@Autowired
 	private IBudgetDAO budgetDao;
 
@@ -238,47 +238,45 @@ public class StatisticService {
 
 		return sumOfIncomes;
 	}
-	
-	public BudgetOverviewDTO getBudgetMovement(Long budgetId,Long userId) throws NotExistingBudgetException, ForbiddenException, InvalidAmountsEntryException, InvalidDateException, DateFormatException {
+
+	public BudgetOverviewDTO getBudgetMovement(Long budgetId, Long userId) throws NotExistingBudgetException,
+			ForbiddenException, InvalidAmountsEntryException, InvalidDateException, DateFormatException {
 		Budget budget = null;
 		try {
-			 budget = this.budgetDao.getBudgetById(budgetId);
+			budget = this.budgetDao.getBudgetById(budgetId);
 		} catch (NotExistingBudgetException e) {
 			e.printStackTrace();
 			throw new NotExistingBudgetException("Budget doesn't exists");
 		}
-		
-		
+
 		if (!userId.equals(budget.getUser().getId())) {
 			throw new ForbiddenException("You are not allowed to view this budget!");
 		}
-		
-		
+
 		User user = this.userRepo.findById(userId).get();
-		
+
 		Date startDate = this.budgetService.getBudgetById(userId, budgetId).getStartDate();
 		Date endDate = this.budgetService.getBudgetById(userId, budgetId).getEndDate();
-		
-				DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-				String sDate = df.format(startDate);
-				String eDate = df.format(endDate);
-				
-	List<TransactionDTO> dtos = this.transactionService.
-			getAllTransactionsOfUserForGivenCategory(user, null, null, null, null, sDate, eDate, budget.getCategory().getId());
-	
-	BudgetOverviewDTO budgetOverview = new BudgetOverviewDTO();
-	
-	budgetOverview.setBudgetId(budgetId);
-	budgetOverview.setBudgetAmount(budget.getAmount());
-	budgetOverview.setCategoryName(budget.getCategory().getName());
-	budgetOverview.setPeriodOfBudget(sDate + " - " + eDate);
-	budgetOverview.setTransactionCount(dtos.size());
-	
-	Double sum = dtos.stream().map(dto -> dto.getAmount()).reduce((double)0, 
-            (d1, d2) -> d1+d2);
-	
-	budgetOverview.setMoneySpent(sum);
-	budgetOverview.setFinalCalculation(budget.getAmount() - sum);
+
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+		String sDate = df.format(startDate);
+		String eDate = df.format(endDate);
+
+		List<TransactionDTO> dtos = this.transactionService.getAllTransactionsOfUserForGivenCategory(user, null, null,
+				null, null, sDate, eDate, budget.getCategory().getId());
+
+		BudgetOverviewDTO budgetOverview = new BudgetOverviewDTO();
+
+		budgetOverview.setBudgetId(budgetId);
+		budgetOverview.setBudgetAmount(budget.getAmount());
+		budgetOverview.setCategoryName(budget.getCategory().getName());
+		budgetOverview.setPeriodOfBudget(sDate + " - " + eDate);
+		budgetOverview.setTransactionCount(dtos.size());
+
+		Double sum = dtos.stream().map(dto -> dto.getAmount()).reduce((double) 0, (d1, d2) -> d1 + d2);
+
+		budgetOverview.setMoneySpent(sum);
+		budgetOverview.setFinalCalculation(budget.getAmount() - sum);
 		return budgetOverview;
 	}
 
