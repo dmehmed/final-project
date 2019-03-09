@@ -92,12 +92,13 @@ public class BudgetDAO implements IBudgetDAO {
 		this.budgetRepo.findAllActiveBudgets()
 		.stream().filter(budget -> budget.getEndDate().before(Date.valueOf(LocalDate.now())))
 		.map(budget-> {
+
 			
 			this.budgets.remove(budget);
 			budget.setIsDeleted((byte)1);
 			this.budgetRepo.saveAndFlush(budget);
-			
-			
+
+
 			Budget b = new Budget();
 			b.setAmount(budget.getAmount());
 			b.setStartDate(Date.valueOf(LocalDate.now()));
@@ -107,10 +108,12 @@ public class BudgetDAO implements IBudgetDAO {
 			b.setRepeatPeriod(budget.getRepeatPeriod());
 			
 			this.budgetRepo.saveAndFlush(b);
+
 			this.budgets.add(b); // ako pusnem dolnoto triem tova!!!
 			
 //			this.loadUserBudgets(budget.getUser().getId());
 			
+
 		 System.out.println(budget.getId() + " was refreshed to " + b.getId());
 		return b;	
 		}).collect(Collectors.toList()).size());
