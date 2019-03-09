@@ -10,7 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BudgetOverviewDTO {
-	
+
 	private Long budgetId;
 	private int transactionCount;
 	private String periodOfBudget;
