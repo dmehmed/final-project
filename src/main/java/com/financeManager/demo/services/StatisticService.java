@@ -1,7 +1,10 @@
 package com.financeManager.demo.services;
 
+import java.sql.Date;
 import java.sql.Timestamp;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -14,16 +17,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.financeManager.demo.controllers.Helper;
+import com.financeManager.demo.dao.IBudgetDAO;
 import com.financeManager.demo.dto.AmountOverviewDTO;
+import com.financeManager.demo.dto.BudgetOverviewDTO;
 import com.financeManager.demo.dto.CategoryOverviewDTO;
 import com.financeManager.demo.dto.PercentageOfCategoryAmountDTO;
+import com.financeManager.demo.dto.TransactionDTO;
 import com.financeManager.demo.exceptions.DateFormatException;
+import com.financeManager.demo.exceptions.ForbiddenException;
+import com.financeManager.demo.exceptions.InvalidAmountsEntryException;
 import com.financeManager.demo.exceptions.InvalidDateException;
 import com.financeManager.demo.exceptions.InvalidTransactionTypeException;
+import com.financeManager.demo.exceptions.NotExistingBudgetException;
+import com.financeManager.demo.model.Budget;
 import com.financeManager.demo.model.Category;
 import com.financeManager.demo.model.Transaction;
 import com.financeManager.demo.model.User;
 import com.financeManager.demo.repositories.ITransactionRepository;
+import com.financeManager.demo.repositories.IUsersRepository;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -49,6 +60,15 @@ public class StatisticService {
 
 	@Autowired
 	private TransactionService transactionService;
+	
+	@Autowired
+	private BudgetService budgetService;
+	
+	@Autowired
+	private IUsersRepository userRepo;
+	
+	@Autowired
+	private IBudgetDAO budgetDao;
 
 	private DecimalFormat df = new DecimalFormat("##.##%");
 
@@ -217,6 +237,49 @@ public class StatisticService {
 		}
 
 		return sumOfIncomes;
+	}
+	
+	public BudgetOverviewDTO getBudgetMovement(Long budgetId,Long userId) throws NotExistingBudgetException, ForbiddenException, InvalidAmountsEntryException, InvalidDateException, DateFormatException {
+		Budget budget = null;
+		try {
+			 budget = this.budgetDao.getBudgetById(budgetId);
+		} catch (NotExistingBudgetException e) {
+			e.printStackTrace();
+			throw new NotExistingBudgetException("Budget doesn't exists");
+		}
+		
+		
+		if (!userId.equals(budget.getUser().getId())) {
+			throw new ForbiddenException("You are not allowed to view this budget!");
+		}
+		
+		
+		User user = this.userRepo.findById(userId).get();
+		
+		Date startDate = this.budgetService.getBudgetById(userId, budgetId).getStartDate();
+		Date endDate = this.budgetService.getBudgetById(userId, budgetId).getEndDate();
+		
+				DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+				String sDate = df.format(startDate);
+				String eDate = df.format(endDate);
+				
+	List<TransactionDTO> dtos = this.transactionService.
+			getAllTransactionsOfUserForGivenCategory(user, null, null, null, null, sDate, eDate, budget.getCategory().getId());
+	
+	BudgetOverviewDTO budgetOverview = new BudgetOverviewDTO();
+	
+	budgetOverview.setBudgetId(budgetId);
+	budgetOverview.setBudgetAmount(budget.getAmount());
+	budgetOverview.setCategoryName(budget.getCategory().getName());
+	budgetOverview.setPeriodOfBudget(sDate + " - " + eDate);
+	budgetOverview.setTransactionCount(dtos.size());
+	
+	Double sum = dtos.stream().map(dto -> dto.getAmount()).reduce((double)0, 
+            (d1, d2) -> d1+d2);
+	
+	budgetOverview.setMoneySpent(sum);
+	budgetOverview.setFinalCalculation(budget.getAmount() - sum);
+		return budgetOverview;
 	}
 
 }

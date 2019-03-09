@@ -43,7 +43,7 @@ public class BudgetDAO implements IBudgetDAO {
 			throw new AlreadyExistingBudget("You already have wallet for this category!");
 		}
 
-		this.budgetRepo.save(budget);
+		this.budgetRepo.saveAndFlush(budget);
 		this.budgets.add(budget);
 		return budget.getId();
 	}
@@ -71,12 +71,12 @@ public class BudgetDAO implements IBudgetDAO {
 		Budget b = this.budgets.stream()
 				.filter(budget -> (budget.getId().equals(budgetId) && budget.getIsDeleted() == 0)).findFirst().get();
 		b.setIsDeleted((byte) 1);
-		this.budgetRepo.save(b);
+		this.budgetRepo.saveAndFlush(b);
 	}
 
 	@Override
 	public void saveUpdatedBudget(Long budgetId) throws NotExistingBudgetException {
-		this.budgetRepo.save(this.getBudgetById(budgetId));
+		this.budgetRepo.saveAndFlush(this.getBudgetById(budgetId));
 	}
 
 	@Override
@@ -86,14 +86,18 @@ public class BudgetDAO implements IBudgetDAO {
 	}
 
 	@Override
-	@Scheduled(fixedDelay = 10000)
-	public void refreshAllBudgets() {
-		
+	@Scheduled(fixedDelay = 2000)
+	public void refreshAllBudgets() {	
+		System.out.println(
 		this.budgetRepo.findAllActiveBudgets()
 		.stream().filter(budget -> budget.getEndDate().before(Date.valueOf(LocalDate.now())))
 		.map(budget-> {
-			budget.setIsDeleted((byte) 1);
+			
+			this.budgets.remove(budget);
+			budget.setIsDeleted((byte)1);
 			this.budgetRepo.saveAndFlush(budget);
+			
+			
 			Budget b = new Budget();
 			b.setAmount(budget.getAmount());
 			b.setStartDate(Date.valueOf(LocalDate.now()));
@@ -101,9 +105,14 @@ public class BudgetDAO implements IBudgetDAO {
 			b.setUser(budget.getUser());
 			b.setCategory(budget.getCategory());
 			b.setRepeatPeriod(budget.getRepeatPeriod());
+			
 			this.budgetRepo.saveAndFlush(b);
-			System.out.println(budget.getId() + " was refreshed to " + b.getId());
+			this.budgets.add(b); // ako pusnem dolnoto triem tova!!!
+			
+//			this.loadUserBudgets(budget.getUser().getId());
+			
+		 System.out.println(budget.getId() + " was refreshed to " + b.getId());
 		return b;	
-		});
+		}).collect(Collectors.toList()).size());
 	}
 }

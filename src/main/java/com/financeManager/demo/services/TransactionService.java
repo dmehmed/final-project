@@ -268,7 +268,6 @@ public class TransactionService {
 		dtos = this.filterTransactionByDate(dtos, startDate, endDate);
 
 		return dtos;
-
 	}
 
 	public List<CategoryDTO> listAllCategories() {

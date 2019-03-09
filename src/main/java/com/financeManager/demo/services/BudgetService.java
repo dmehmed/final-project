@@ -46,6 +46,8 @@ public class BudgetService {
 	private ICategoryDao categoryDao;
 	@Autowired
 	private IRepeatPeriodDAO repeatPeriodsDao;
+	@Autowired
+	private TransactionService transactionService;
 
 	public List<BudgetDTO> getAllUserBugdets(Long userId) {
 		List<Budget> budgets = this.budgetDao.getActiveUserBudgets(userId);
@@ -89,6 +91,7 @@ public class BudgetService {
 			this.budgetDao.addBudget(budget);
 			return budget.getId();
 		} catch (NoSuchElementException e) {
+			e.printStackTrace();
 			throw new InvalidBudgetEntryException("Bad input!");
 		}
 
@@ -138,6 +141,7 @@ public class BudgetService {
 
 			this.budgetDao.saveUpdatedBudget(id);
 		} catch (NoSuchElementException e) {
+			e.printStackTrace();
 			throw new InvalidBudgetEntryException("Bad update budget input!");
 		}
 
@@ -149,6 +153,7 @@ public class BudgetService {
 		try {
 			budget = this.budgetDao.getBudgetById(budgetId);
 		} catch (NotExistingBudgetException e) {
+			e.printStackTrace();
 			throw new NotExistingBudgetException("Budget doesn't exists");
 		}
 
@@ -157,7 +162,8 @@ public class BudgetService {
 		}
 
 		this.budgetDao.deleteBudgetById(budgetId);
-
 	}
+	
+
 
 }

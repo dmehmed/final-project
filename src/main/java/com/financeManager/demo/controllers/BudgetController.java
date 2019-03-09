@@ -65,7 +65,6 @@ public class BudgetController {
 		Helper.isThereLoggedUser(session);
 		Long userId = (Long) session.getAttribute("userId");
 		return this.budgetService.getBudgetById(userId, id);
-
 	}
 
 	@DeleteMapping(path = "/delete/{id}")
@@ -117,4 +116,5 @@ public class BudgetController {
 		return Helper.createResponse(id,"Budget updated successfully!", HttpStatus.ACCEPTED);
 	}
 
+	
 }
