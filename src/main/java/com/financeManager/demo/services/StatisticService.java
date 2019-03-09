@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -22,6 +23,7 @@ import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.AmountOverviewDTO;
 import com.financeManager.demo.dto.BudgetOverviewDTO;
 import com.financeManager.demo.dto.CategoryOverviewDTO;
+import com.financeManager.demo.dto.CategoryWithMostExpensesDTO;
 import com.financeManager.demo.dto.PercentageOfCategoryAmountDTO;
 import com.financeManager.demo.dto.TransactionDTO;
 import com.financeManager.demo.dto.WalletSummaryDTO;
@@ -31,6 +33,7 @@ import com.financeManager.demo.exceptions.InvalidAmountsEntryException;
 import com.financeManager.demo.exceptions.InvalidDateException;
 import com.financeManager.demo.exceptions.InvalidTransactionTypeException;
 import com.financeManager.demo.exceptions.NotExistingBudgetException;
+import com.financeManager.demo.exceptions.NotExistingUserException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.model.Budget;
 import com.financeManager.demo.model.Category;
@@ -51,6 +54,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StatisticService {
+	private static final int EXPENSE_TRANSACTIONS_ID = 2;
 	private static final String EXCEEDED = "Exceeded";
 	private static final String NOT_EXCEEDED = "Not exceeded";
 	private static final String PENDING = "Pending";
@@ -200,7 +204,7 @@ public class StatisticService {
 			return this.transactionRepo.findAllTransactionsByUserAndCreationDateIsBefore(user, endDate);
 		}
 
-		if ((startDate != null && endDate != null) && startDate.before(endDate)) {
+		if ((startDate != null && endDate != null) && startDate.after(endDate)) {
 			throw new InvalidDateException("Invalid data input!");
 		}
 
@@ -396,6 +400,58 @@ public class StatisticService {
 			return null;
 		}).collect(Collectors.toList());
 
+	}
+	
+	public CategoryWithMostExpensesDTO getMostSpendingCategory(Long userId,String from,String till) throws NotExistingUserException, InvalidDateException, DateFormatException {
+		User user = null;
+		try {
+		 user = this.userRepo.findById(userId).get();
+		}catch(NoSuchElementException e) {
+			throw new NotExistingUserException("User doesn't exists");
+		}
+		
+		List<Transaction> transactions = this.transactionRepo.findAllTransactionsByUser(user);
+		
+		if(transactions.size() == 0) {
+			return new CategoryWithMostExpensesDTO("You have no transactions", (double) 0);
+		}
+		
+		Timestamp startDate = Helper.parseStringToTimeStamp(from);	
+		Timestamp endDate = Helper.parseStringToTimeStamp(till);	
+		transactions = this.checkParams(user, startDate, endDate);
+		
+		
+		Map<String,List<Double>> typeToSum = new HashMap<String,List<Double>>();
+		
+
+		transactions = transactions.stream().map(transaction -> {
+		
+			
+			if(transaction.getCategory().getTransactionType().getId() == EXPENSE_TRANSACTIONS_ID) {
+			if(!typeToSum.containsKey(transaction.getCategory().getName())) {
+				typeToSum.put(transaction.getCategory().getName(), new LinkedList<Double>());		
+
+			}
+
+			typeToSum.get(transaction.getCategory().getName()).add(transaction.getAmount() * COEFF_FORMATING_EXPENSES);			
+			}	
+			return transaction;
+		}).collect(Collectors.toList());
+		
+		double maxSum = 0f;
+
+		String nameOfCat = null;
+		
+		for(Entry<String,List<Double>> categories : typeToSum.entrySet()) {
+			double sumOfCategory = categories.getValue().stream().reduce(new Double(0),(t1,t2)-> t1+t2);
+	
+			
+			if(sumOfCategory > maxSum) {
+				maxSum = sumOfCategory;
+				nameOfCat = categories.getKey();
+			}
+		}
+		return new CategoryWithMostExpensesDTO(nameOfCat,maxSum);
 	}
 
 }

@@ -225,7 +225,7 @@ public class TransactionService {
 				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy)).collect(Collectors.toList());
 	}
 
-	private TransactionDTO convertFromTransactionToTransactionDTO(Transaction transaction) {
+	public TransactionDTO convertFromTransactionToTransactionDTO(Transaction transaction) {
 		TransactionDTO newTransactionDTO = new TransactionDTO();
 
 		if (transaction.getAmount() < 0) {
@@ -285,7 +285,7 @@ public class TransactionService {
 				.collect(Collectors.toList());
 	}
 
-	private List<TransactionDTO> filterTransactionByDate(List<TransactionDTO> transactions, String startDateString,
+	public List<TransactionDTO> filterTransactionByDate(List<TransactionDTO> transactions, String startDateString,
 			String endDateString) throws InvalidDateException, DateFormatException {
 
 		LocalDateTime startDate = Helper.parseStringToLocalDateTime(startDateString);
@@ -320,8 +320,9 @@ public class TransactionService {
 			return transactions.stream().filter(transaction -> transaction.getCreationDate().isAfter(startDate)
 					&& transaction.getCreationDate().isBefore(endDate)).collect(Collectors.toList());
 		}
-
 		return null;
 	}
+	
+	
 
 }

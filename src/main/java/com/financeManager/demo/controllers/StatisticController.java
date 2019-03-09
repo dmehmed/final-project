@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.financeManager.demo.dto.AmountOverviewDTO;
 import com.financeManager.demo.dto.BudgetOverviewDTO;
 import com.financeManager.demo.dto.CategoryOverviewDTO;
+import com.financeManager.demo.dto.CategoryWithMostExpensesDTO;
 import com.financeManager.demo.dto.WalletSummaryDTO;
 import com.financeManager.demo.exceptions.DateFormatException;
 import com.financeManager.demo.exceptions.ForbiddenException;
@@ -69,6 +70,25 @@ public class StatisticController {
 		User user = this.userService.getExistingUserById(userId);
 
 		return this.statsService.getOverviewOfUserActivityByCategories(user, from, till, type);
+	}
+	
+	
+	@GetMapping(path = "/categoryWithMostExpenses")
+	public CategoryWithMostExpensesDTO getMostSpendingCategory(String type,
+			@RequestParam(name = "from", required = false) String from,
+			@RequestParam(name = "till", required = false) String till,
+			HttpServletRequest request,
+			HttpServletResponse response) throws UnauthorizedException, NotExistingUserException, InvalidDateException, DateFormatException {
+		
+		HttpSession session = request.getSession();
+
+		Helper.isThereLoggedUser(session);
+		
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		
+		
+		return this.statsService.getMostSpendingCategory(userId,from,till);
+		
 	}
 
 	@GetMapping(path = "/overview/budgets/{id}")
