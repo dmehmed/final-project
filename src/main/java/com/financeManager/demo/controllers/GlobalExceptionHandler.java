@@ -1,5 +1,6 @@
 package com.financeManager.demo.controllers;
 
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
@@ -17,6 +18,7 @@ import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidAmountsEntryException;
 import com.financeManager.demo.exceptions.InvalidBudgetEntryException;
 import com.financeManager.demo.exceptions.InvalidDateException;
+import com.financeManager.demo.exceptions.InvalidPeriodException;
 import com.financeManager.demo.exceptions.InvalidTransactionEntryException;
 import com.financeManager.demo.exceptions.InvalidTransactionTypeException;
 import com.financeManager.demo.exceptions.InvalidWalletEntryException;
@@ -39,6 +41,9 @@ import lombok.Setter;
 
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+	private static final String DATABASE_NOT_AVAILABLE = "Sorry! Database is not available at this moment!";
+	private static final String SERVER_NOT_AVAILABLE = "Sorry! Server is not available at this moment!";
 
 	@Getter
 	@Setter
@@ -82,12 +87,30 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 			InvalidWalletEntryException.class, InvalidWalletException.class, WrongPasswordException.class,
 			WrongUsernameException.class, UserWithThisEmailAlreadyExistsException.class,
 			InsufficientBalanceException.class, ValidationException.class, AlreadyExistingBudget.class,
-			InvalidTransactionTypeException.class, ExceededLimitException.class })
+			InvalidTransactionTypeException.class, ExceededLimitException.class, InvalidPeriodException.class })
 	public final ResponseEntity<ErrorMessageDTO> badInputProblem(Exception ex) {
 		ErrorMessageDTO errorMessage = new ErrorMessageDTO(Timestamp.valueOf(LocalDateTime.now()),
 				HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), ex.getMessage());
 
 		return new ResponseEntity<ErrorMessageDTO>(errorMessage, HttpStatus.BAD_REQUEST);
+	}
+
+	@ExceptionHandler(RuntimeException.class)
+	public final ResponseEntity<ErrorMessageDTO> serverProblem(Exception ex) {
+		ErrorMessageDTO errorMessage = new ErrorMessageDTO(Timestamp.valueOf(LocalDateTime.now()),
+				HttpStatus.INTERNAL_SERVER_ERROR.value(), HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+				SERVER_NOT_AVAILABLE);
+
+		return new ResponseEntity<ErrorMessageDTO>(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+	
+	@ExceptionHandler(SQLException.class)
+	public final ResponseEntity<ErrorMessageDTO> sqlProblem(Exception ex) {
+		ErrorMessageDTO errorMessage = new ErrorMessageDTO(Timestamp.valueOf(LocalDateTime.now()),
+				HttpStatus.INTERNAL_SERVER_ERROR.value(), HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+				DATABASE_NOT_AVAILABLE);
+
+		return new ResponseEntity<ErrorMessageDTO>(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
 }

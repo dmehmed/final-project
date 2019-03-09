@@ -16,19 +16,19 @@ import org.springframework.web.bind.annotation.RestController;
 import com.financeManager.demo.dto.AmountOverviewDTO;
 import com.financeManager.demo.dto.BudgetOverviewDTO;
 import com.financeManager.demo.dto.CategoryOverviewDTO;
+import com.financeManager.demo.dto.DayActivityDTO;
 import com.financeManager.demo.dto.WalletSummaryDTO;
 import com.financeManager.demo.exceptions.DateFormatException;
 import com.financeManager.demo.exceptions.ForbiddenException;
 import com.financeManager.demo.exceptions.InvalidAmountsEntryException;
 import com.financeManager.demo.exceptions.InvalidDateException;
+import com.financeManager.demo.exceptions.InvalidPeriodException;
 import com.financeManager.demo.exceptions.InvalidTransactionTypeException;
 import com.financeManager.demo.exceptions.NotExistingBudgetException;
 import com.financeManager.demo.exceptions.NotExistingUserException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.exceptions.UnauthorizedException;
-import com.financeManager.demo.model.User;
 import com.financeManager.demo.services.StatisticService;
-import com.financeManager.demo.services.UserService;
 
 @RestController
 @RequestMapping(path = "/stats")
@@ -36,9 +36,6 @@ public class StatisticController {
 
 	@Autowired
 	private StatisticService statsService;
-
-	@Autowired
-	private UserService userService;
 
 	@GetMapping(path = "/overview")
 	public AmountOverviewDTO getAmountOverview(@RequestParam(name = "from", required = false) String from,
@@ -50,9 +47,8 @@ public class StatisticController {
 		Helper.isThereLoggedUser(session);
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-		User user = this.userService.getExistingUserById(userId);
 
-		return this.statsService.getOverviewOfUserActivity(user, from, till);
+		return this.statsService.getOverviewOfUserActivity(userId, from, till);
 	}
 
 	@GetMapping(path = "/overview/transactionType")
@@ -66,9 +62,8 @@ public class StatisticController {
 		Helper.isThereLoggedUser(session);
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-		User user = this.userService.getExistingUserById(userId);
 
-		return this.statsService.getOverviewOfUserActivityByCategories(user, from, till, type);
+		return this.statsService.getOverviewOfUserActivityByCategories(userId, from, till, type);
 	}
 
 	@GetMapping(path = "/overview/budgets/{id}")
@@ -120,4 +115,19 @@ public class StatisticController {
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
 		return this.statsService.getAllWalletsSummary(userId);
 	}
+
+	@GetMapping(path = "/overview/period")
+	public List<DayActivityDTO> getOverviewByPeriod(@RequestParam(name = "period", required = true) String period,
+			HttpServletRequest request, HttpServletResponse response)
+			throws UnauthorizedException, NotExistingUserException, InvalidDateException, InvalidPeriodException {
+
+		HttpSession session = request.getSession();
+		Helper.isThereLoggedUser(session);
+
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+
+		return this.statsService.getOverviewOfDayActivity(userId, period);
+
+	}
+
 }
