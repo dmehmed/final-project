@@ -95,14 +95,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		return new ResponseEntity<ErrorMessageDTO>(errorMessage, HttpStatus.BAD_REQUEST);
 	}
 
-	@ExceptionHandler(RuntimeException.class)
-	public final ResponseEntity<ErrorMessageDTO> serverProblem(Exception ex) {
-		ErrorMessageDTO errorMessage = new ErrorMessageDTO(Timestamp.valueOf(LocalDateTime.now()),
-				HttpStatus.INTERNAL_SERVER_ERROR.value(), HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-				SERVER_NOT_AVAILABLE);
-
-		return new ResponseEntity<ErrorMessageDTO>(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
-	}
+//	@ExceptionHandler(RuntimeException.class)
+//	public final ResponseEntity<ErrorMessageDTO> serverProblem(Exception ex) {
+//		ErrorMessageDTO errorMessage = new ErrorMessageDTO(Timestamp.valueOf(LocalDateTime.now()),
+//				HttpStatus.INTERNAL_SERVER_ERROR.value(), HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+//				SERVER_NOT_AVAILABLE);
+//
+//		return new ResponseEntity<ErrorMessageDTO>(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+//	}
 	
 	@ExceptionHandler(SQLException.class)
 	public final ResponseEntity<ErrorMessageDTO> sqlProblem(Exception ex) {

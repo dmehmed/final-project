@@ -23,6 +23,7 @@ import com.financeManager.demo.dao.IBudgetDAO;
 import com.financeManager.demo.dao.IRepeatPeriodDAO;
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.AmountOverviewDTO;
+import com.financeManager.demo.dto.BestAndWorseMonthOverviewDTO;
 import com.financeManager.demo.dto.BudgetOverviewDTO;
 import com.financeManager.demo.dto.CategoryOverviewDTO;
 import com.financeManager.demo.dto.DayActivityDTO;
@@ -417,9 +418,6 @@ public class StatisticService {
 		Timestamp startDate = this.repeatPeriodDao.calculateStartDateByPeriod(period);
 		Timestamp endDate = Timestamp.valueOf(LocalDateTime.now());
 
-		System.out.println(startDate.toString());
-		System.out.println(endDate.toString());
-		
 		User user = this.userService.getExistingUserById(userId);
 
 		List<Transaction> transactions = this.checkParams(user, startDate, endDate);
@@ -504,6 +502,148 @@ public class StatisticService {
 		}
 
 		return mappedByDays;
+	}
+
+	public BestAndWorseMonthOverviewDTO getBestAndWorseMonthOverview(Long userId) throws NotExistingUserException {
+
+		User user = this.userService.getExistingUserById(userId);
+
+		List<Transaction> transactions = this.transactionRepo.findAllTransactionsByUser(user);
+
+		System.out.println(transactions.size());
+
+		Map<Integer, Map<String, List<Transaction>>> transactionsMappedByYearAndMonth = mapTransactionsByYearAndMonth(
+				transactions);
+
+		Map<Integer, Map<String, Double>> incomesMappedByYearAndMonth = mapIncomesByYearAndMonth(
+				transactionsMappedByYearAndMonth);
+
+		Map<Integer, Map<String, Double>> expensesMappedByYearAndMonth = mapExpensesByYearAndMonth(
+				transactionsMappedByYearAndMonth);
+
+		Integer bestYear = null;
+		String bestMonth = null;
+		Double maxSum = ZERO;
+
+		Integer worstYear = null;
+		String worstMonth = null;
+		Double minSum = ZERO;
+
+		for (Entry<Integer, Map<String, Double>> yearEntry : incomesMappedByYearAndMonth.entrySet()) {
+
+			Map<String, Double> monthMap = yearEntry.getValue();
+
+			System.out.println(yearEntry.getValue().size());
+
+			for (Entry<String, Double> month : monthMap.entrySet()) {
+
+				if (month.getValue() > maxSum) {
+
+					maxSum = month.getValue();
+					bestMonth = month.getKey();
+					bestYear = yearEntry.getKey();
+				}
+
+				System.out.println(month.getKey());
+			}
+		}
+
+		for (Entry<Integer, Map<String, Double>> yearEntry : expensesMappedByYearAndMonth.entrySet()) {
+			for (Entry<String, Double> monthEntry : yearEntry.getValue().entrySet()) {
+
+				if (monthEntry.getValue() > minSum) {
+
+					minSum = monthEntry.getValue();
+					worstMonth = monthEntry.getKey();
+					worstYear = yearEntry.getKey();
+				}
+			}
+		}
+
+		BestAndWorseMonthOverviewDTO overview = new BestAndWorseMonthOverviewDTO();
+		overview.setBestMonth(bestMonth != null ? bestMonth + " " + bestYear : "");
+		overview.setMonthIncome(maxSum);
+		overview.setWorstMonth(worstMonth != null ? worstMonth + " " + worstYear : "");
+		overview.setMonthExpense(minSum * COEFF_FORMATING_EXPENSES);
+		return overview;
+	}
+
+	private Map<Integer, Map<String, Double>> mapIncomesByYearAndMonth(
+			Map<Integer, Map<String, List<Transaction>>> transactionsMappedByYearAndMonth) {
+		Map<Integer, Map<String, Double>> sumMappedByYearAndMonth = new HashMap<Integer, Map<String, Double>>();
+
+		for (Entry<Integer, Map<String, List<Transaction>>> yearEntry : transactionsMappedByYearAndMonth.entrySet()) {
+
+			if (!sumMappedByYearAndMonth.containsKey(yearEntry.getKey())) {
+				sumMappedByYearAndMonth.put(yearEntry.getKey(), new HashMap<String, Double>());
+			}
+
+			Map<String, Double> month = sumMappedByYearAndMonth.get(yearEntry.getKey());
+
+			for (Entry<String, List<Transaction>> monthEntry : yearEntry.getValue().entrySet()) {
+
+				if (!month.containsKey(monthEntry.getKey())) {
+					month.put(monthEntry.getKey(), ZERO);
+				}
+
+				Double sumOfMonth = monthEntry.getValue().stream().filter(transaction -> transaction.getAmount() > ZERO)
+						.map(transaction -> transaction.getAmount()).reduce(ZERO, (sum, amount) -> sum + amount);
+
+				month.put(monthEntry.getKey(), sumOfMonth);
+			}
+		}
+
+		return sumMappedByYearAndMonth;
+	}
+
+	private Map<Integer, Map<String, Double>> mapExpensesByYearAndMonth(
+			Map<Integer, Map<String, List<Transaction>>> transactionsMappedByYearAndMonth) {
+		Map<Integer, Map<String, Double>> sumMappedByYearAndMonth = new HashMap<Integer, Map<String, Double>>();
+
+		for (Entry<Integer, Map<String, List<Transaction>>> yearEntry : transactionsMappedByYearAndMonth.entrySet()) {
+
+			if (!sumMappedByYearAndMonth.containsKey(yearEntry.getKey())) {
+				sumMappedByYearAndMonth.put(yearEntry.getKey(), new HashMap<String, Double>());
+			}
+
+			Map<String, Double> month = sumMappedByYearAndMonth.get(yearEntry.getKey());
+
+			for (Entry<String, List<Transaction>> monthEntry : yearEntry.getValue().entrySet()) {
+
+				if (!month.containsKey(monthEntry.getKey())) {
+					month.put(monthEntry.getKey(), ZERO);
+				}
+
+				Double sumOfMonth = monthEntry.getValue().stream().filter(transaction -> transaction.getAmount() < ZERO)
+						.map(transaction -> transaction.getAmount() * COEFF_FORMATING_EXPENSES)
+						.reduce(ZERO, (sum, amount) -> sum + amount);
+
+				month.put(monthEntry.getKey(), sumOfMonth);
+			}
+		}
+
+		return sumMappedByYearAndMonth;
+	}
+
+	private Map<Integer, Map<String, List<Transaction>>> mapTransactionsByYearAndMonth(List<Transaction> transactions) {
+		Map<Integer, Map<String, List<Transaction>>> mappedByYearAndMonth = new HashMap<Integer, Map<String, List<Transaction>>>();
+
+		for (Transaction transaction : transactions) {
+			Integer year = transaction.getCreationDate().toLocalDateTime().getYear();
+			String month = transaction.getCreationDate().toLocalDateTime().getMonth().toString();
+
+			if (!mappedByYearAndMonth.containsKey(year)) {
+				mappedByYearAndMonth.put(year, new HashMap<String, List<Transaction>>());
+			}
+
+			if (!mappedByYearAndMonth.get(year).containsKey(month)) {
+				mappedByYearAndMonth.get(year).put(month, new LinkedList<Transaction>());
+			}
+
+			mappedByYearAndMonth.get(year).get(month).add(transaction);
+		}
+
+		return mappedByYearAndMonth;
 	}
 
 }

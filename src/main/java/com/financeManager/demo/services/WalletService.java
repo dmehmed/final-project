@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.CrudWalletDTO;
-import com.financeManager.demo.dto.MergeDTO;
+import com.financeManager.demo.dto.MergeWalletsDTO;
 import com.financeManager.demo.dto.TransferDTO;
 import com.financeManager.demo.dto.WalletDTO;
 import com.financeManager.demo.exceptions.ForbiddenException;
@@ -190,7 +190,7 @@ public class WalletService {
 		}
 	}
 
-	public MergeDTO makeMerge(Long userId, MergeDTO merge)
+	public MergeWalletsDTO makeMerge(Long userId, MergeWalletsDTO merge)
 			throws NotExistingWalletException, ForbiddenException, SQLException {
 
 		Wallet firstWallet = this.walletDao.getWalletById(merge.getFirstWalletId());

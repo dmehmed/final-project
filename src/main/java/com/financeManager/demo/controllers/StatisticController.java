@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.financeManager.demo.dto.AmountOverviewDTO;
+import com.financeManager.demo.dto.BestAndWorseMonthOverviewDTO;
 import com.financeManager.demo.dto.BudgetOverviewDTO;
 import com.financeManager.demo.dto.CategoryOverviewDTO;
 import com.financeManager.demo.dto.DayActivityDTO;
@@ -37,7 +38,7 @@ public class StatisticController {
 	@Autowired
 	private StatisticService statsService;
 
-	@GetMapping(path = "/overview")
+	@GetMapping(path = "/overview/period")
 	public AmountOverviewDTO getAmountOverview(@RequestParam(name = "from", required = false) String from,
 			@RequestParam(name = "till", required = false) String till, HttpServletRequest request,
 			HttpServletResponse response)
@@ -116,7 +117,7 @@ public class StatisticController {
 		return this.statsService.getAllWalletsSummary(userId);
 	}
 
-	@GetMapping(path = "/overview/period")
+	@GetMapping(path = "/overview/transactions")
 	public List<DayActivityDTO> getOverviewByPeriod(@RequestParam(name = "period", required = true) String period,
 			HttpServletRequest request, HttpServletResponse response)
 			throws UnauthorizedException, NotExistingUserException, InvalidDateException, InvalidPeriodException {
@@ -127,6 +128,19 @@ public class StatisticController {
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
 
 		return this.statsService.getOverviewOfDayActivity(userId, period);
+
+	}
+
+	@GetMapping(path = "/overview/bestAndWorst")
+	public BestAndWorseMonthOverviewDTO get(HttpServletRequest request, HttpServletResponse response)
+			throws UnauthorizedException, NotExistingUserException {
+
+		HttpSession session = request.getSession();
+		Helper.isThereLoggedUser(session);
+
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+
+		return this.statsService.getBestAndWorseMonthOverview(userId);
 
 	}
 
