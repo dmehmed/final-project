@@ -5,6 +5,8 @@ import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -19,11 +21,14 @@ import org.springframework.stereotype.Service;
 
 import com.financeManager.demo.controllers.Helper;
 import com.financeManager.demo.dao.IBudgetDAO;
+import com.financeManager.demo.dao.IRepeatPeriodDAO;
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.AmountOverviewDTO;
+import com.financeManager.demo.dto.BestAndWorseMonthOverviewDTO;
 import com.financeManager.demo.dto.BudgetOverviewDTO;
 import com.financeManager.demo.dto.CategoryOverviewDTO;
 import com.financeManager.demo.dto.CategoryWithMostExpensesDTO;
+import com.financeManager.demo.dto.DayActivityDTO;
 import com.financeManager.demo.dto.PercentageOfCategoryAmountDTO;
 import com.financeManager.demo.dto.TransactionDTO;
 import com.financeManager.demo.dto.WalletSummaryDTO;
@@ -31,6 +36,7 @@ import com.financeManager.demo.exceptions.DateFormatException;
 import com.financeManager.demo.exceptions.ForbiddenException;
 import com.financeManager.demo.exceptions.InvalidAmountsEntryException;
 import com.financeManager.demo.exceptions.InvalidDateException;
+import com.financeManager.demo.exceptions.InvalidPeriodException;
 import com.financeManager.demo.exceptions.InvalidTransactionTypeException;
 import com.financeManager.demo.exceptions.NotExistingBudgetException;
 import com.financeManager.demo.exceptions.NotExistingUserException;
@@ -79,17 +85,25 @@ public class StatisticService {
 
 	@Autowired
 	private IBudgetDAO budgetDao;
-	
+
 	@Autowired
 	private IWalletDAO walletDao;
 
+	@Autowired
+	private IRepeatPeriodDAO repeatPeriodDao;
+
+	@Autowired
+	private UserService userService;
+
 	private DecimalFormat df = new DecimalFormat("##.##%");
 
-	public AmountOverviewDTO getOverviewOfUserActivity(User user, String from, String till)
-			throws DateFormatException, InvalidDateException {
+	public AmountOverviewDTO getOverviewOfUserActivity(Long userId, String from, String till)
+			throws DateFormatException, InvalidDateException, NotExistingUserException {
 
 		Timestamp startDate = Helper.parseStringToTimeStamp(from);
 		Timestamp endDate = Helper.parseStringToTimeStamp(till);
+
+		User user = this.userService.getExistingUserById(userId);
 
 		List<Transaction> transactions = this.checkParams(user, startDate, endDate);
 
@@ -108,11 +122,14 @@ public class StatisticService {
 		return overview;
 	}
 
-	public CategoryOverviewDTO getOverviewOfUserActivityByCategories(User user, String from, String till, String type)
-			throws DateFormatException, InvalidDateException, InvalidTransactionTypeException {
+	public CategoryOverviewDTO getOverviewOfUserActivityByCategories(Long userId, String from, String till, String type)
+			throws DateFormatException, InvalidDateException, InvalidTransactionTypeException,
+			NotExistingUserException {
 
 		Timestamp startDate = Helper.parseStringToTimeStamp(from);
 		Timestamp endDate = Helper.parseStringToTimeStamp(till);
+
+		User user = this.userService.getExistingUserById(userId);
 
 		List<Transaction> transactions = this.checkParams(user, startDate, endDate);
 
@@ -254,8 +271,7 @@ public class StatisticService {
 
 	public BudgetOverviewDTO getBudgetMovement(Long budgetId, Long userId) throws NotExistingBudgetException,
 			ForbiddenException, InvalidAmountsEntryException, InvalidDateException, DateFormatException {
-		Budget	budget = this.budgetDao.getBudgetById(budgetId);
-		
+		Budget budget = this.budgetDao.getBudgetById(budgetId);
 
 		if (!userId.equals(budget.getUser().getId())) {
 			throw new ForbiddenException("You are not allowed to view this budget!");
@@ -352,43 +368,40 @@ public class StatisticService {
 		}).collect(Collectors.toList());
 
 	}
-	
-	public WalletSummaryDTO getSummaryOfWallet(Long userId,Long walletId) throws NotExistingWalletException, ForbiddenException {
-		
-		Wallet	wallet = this.walletDao.getWalletById(walletId);
+
+	public WalletSummaryDTO getSummaryOfWallet(Long userId, Long walletId)
+			throws NotExistingWalletException, ForbiddenException {
+
+		Wallet wallet = this.walletDao.getWalletById(walletId);
 
 		if (!userId.equals(wallet.getUser().getId())) {
 			throw new ForbiddenException("You are not allowed to view this wallet!");
 		}
-		
-		
+
 		List<Transaction> transactionsOfWallet = this.transactionRepo.findAllByWalletId(walletId);
-		
+
 		WalletSummaryDTO walletSummary = new WalletSummaryDTO();
 		walletSummary.setId(walletId);
 		walletSummary.setTransactionCount(transactionsOfWallet.size());
 		walletSummary.setName(wallet.getName());
 		walletSummary.setBalance(wallet.getBalance());
-		
-		double sumOfIncomes = transactionsOfWallet.stream()
-				.map(transaction -> transaction.getAmount())
-				.filter(amount -> amount > 0)
-				.reduce((double) 0, (amount1, amount2) -> amount1 + amount2);
-		
+
+		double sumOfIncomes = transactionsOfWallet.stream().map(transaction -> transaction.getAmount())
+				.filter(amount -> amount > 0).reduce((double) 0, (amount1, amount2) -> amount1 + amount2);
+
 		double sumOfExpenses = transactionsOfWallet.stream()
-				.map(transaction -> transaction.getAmount() *COEFF_FORMATING_EXPENSES)
-				.filter(amount -> amount > 0)
+				.map(transaction -> transaction.getAmount() * COEFF_FORMATING_EXPENSES).filter(amount -> amount > 0)
 				.reduce((double) 0, (amount1, amount2) -> amount1 + amount2);
 		walletSummary.setTotalMoneyPayed(sumOfExpenses);
 		walletSummary.setTotalMoneyReceived(sumOfIncomes);
-		
+
 		return walletSummary;
 	}
-	
-	public List<WalletSummaryDTO> getAllWalletsSummary(Long userId){
-		
+
+	public List<WalletSummaryDTO> getAllWalletsSummary(Long userId) {
+
 		List<Wallet> walletsOfUser = this.walletDao.getAllUserWallets(userId);
-	
+
 		return walletsOfUser.stream().map(wallet -> {
 			try {
 				return this.getSummaryOfWallet(userId, wallet.getId());
@@ -452,6 +465,240 @@ public class StatisticService {
 			}
 		}
 		return new CategoryWithMostExpensesDTO(nameOfCat,maxSum);
+	}
+
+	public List<DayActivityDTO> getOverviewOfDayActivity(Long userId, String period)
+			throws NotExistingUserException, InvalidDateException, InvalidPeriodException {
+
+		Timestamp startDate = this.repeatPeriodDao.calculateStartDateByPeriod(period);
+		Timestamp endDate = Timestamp.valueOf(LocalDateTime.now());
+
+		User user = this.userService.getExistingUserById(userId);
+
+		List<Transaction> transactions = this.checkParams(user, startDate, endDate);
+
+		List<TransactionDTO> transactionDTOS = transactions.stream()
+				.map(transaction -> this.transactionService.convertFromTransactionToTransactionDTO(transaction))
+				.collect(Collectors.toList());
+
+		Map<LocalDate, List<TransactionDTO>> mappedByDays = mapTransactionsByCreationDate(transactionDTOS);
+
+		return dayActivityResolve(mappedByDays);
+	}
+
+	private List<DayActivityDTO> dayActivityResolve(Map<LocalDate, List<TransactionDTO>> mappedByDays) {
+		List<DayActivityDTO> listDayActivity = new LinkedList<DayActivityDTO>();
+
+		for (Entry<LocalDate, List<TransactionDTO>> entry : mappedByDays.entrySet()) {
+			DayActivityDTO activity = new DayActivityDTO();
+
+			activity.setDay(entry.getKey().toString());
+
+			List<TransactionDTO> incomes = entry.getValue().stream()
+					.filter(transaction -> transaction.getTransactionType().equals(INCOME))
+					.collect(Collectors.toList());
+			activity.setIncomeCount(incomes.size());
+			activity.setIncomeSum(this.sumIncomeInfo(incomes));
+
+			List<TransactionDTO> expenses = entry.getValue().stream()
+					.filter(transaction -> transaction.getTransactionType().equals(EXPENSE))
+					.collect(Collectors.toList());
+			activity.setExpenseCount(expenses.size());
+			activity.setExpenseSum(this.sumExpenseInfo(expenses));
+
+			activity.setTransactions(entry.getValue());
+
+			listDayActivity.add(activity);
+		}
+
+		return listDayActivity;
+	}
+
+	private Double sumExpenseInfo(List<TransactionDTO> expenses) {
+
+		Double sumOfExpenses = ZERO;
+
+		Optional<Double> result = expenses.stream().map(transaction -> transaction.getAmount())
+				.reduce((sum, amount) -> sum + amount);
+
+		if (result.isPresent()) {
+			sumOfExpenses = result.get();
+		}
+
+		return sumOfExpenses;
+	}
+
+	private Double sumIncomeInfo(List<TransactionDTO> incomes) {
+		Double sumOfIncomes = ZERO;
+
+		Optional<Double> result = incomes.stream().map(transaction -> transaction.getAmount())
+				.reduce((sum, amount) -> sum + amount);
+
+		if (result.isPresent()) {
+			sumOfIncomes = result.get();
+		}
+
+		return sumOfIncomes;
+	}
+
+	private Map<LocalDate, List<TransactionDTO>> mapTransactionsByCreationDate(List<TransactionDTO> transactionDTOS) {
+		Map<LocalDate, List<TransactionDTO>> mappedByDays = new HashMap<LocalDate, List<TransactionDTO>>();
+
+		for (TransactionDTO transaction : transactionDTOS) {
+
+			LocalDate date = transaction.getCreationDate().toLocalDate();
+
+			if (!mappedByDays.containsKey(date)) {
+				mappedByDays.put(date, new LinkedList<TransactionDTO>());
+			}
+
+			mappedByDays.get(date).add(transaction);
+
+		}
+
+		return mappedByDays;
+	}
+
+	public BestAndWorseMonthOverviewDTO getBestAndWorseMonthOverview(Long userId) throws NotExistingUserException {
+
+		User user = this.userService.getExistingUserById(userId);
+
+		List<Transaction> transactions = this.transactionRepo.findAllTransactionsByUser(user);
+
+		System.out.println(transactions.size());
+
+		Map<Integer, Map<String, List<Transaction>>> transactionsMappedByYearAndMonth = mapTransactionsByYearAndMonth(
+				transactions);
+
+		Map<Integer, Map<String, Double>> incomesMappedByYearAndMonth = mapIncomesByYearAndMonth(
+				transactionsMappedByYearAndMonth);
+
+		Map<Integer, Map<String, Double>> expensesMappedByYearAndMonth = mapExpensesByYearAndMonth(
+				transactionsMappedByYearAndMonth);
+
+		Integer bestYear = null;
+		String bestMonth = null;
+		Double maxSum = ZERO;
+
+		Integer worstYear = null;
+		String worstMonth = null;
+		Double minSum = ZERO;
+
+		for (Entry<Integer, Map<String, Double>> yearEntry : incomesMappedByYearAndMonth.entrySet()) {
+
+			Map<String, Double> monthMap = yearEntry.getValue();
+
+			System.out.println(yearEntry.getValue().size());
+
+			for (Entry<String, Double> month : monthMap.entrySet()) {
+
+				if (month.getValue() > maxSum) {
+
+					maxSum = month.getValue();
+					bestMonth = month.getKey();
+					bestYear = yearEntry.getKey();
+				}
+
+				System.out.println(month.getKey());
+			}
+		}
+
+		for (Entry<Integer, Map<String, Double>> yearEntry : expensesMappedByYearAndMonth.entrySet()) {
+			for (Entry<String, Double> monthEntry : yearEntry.getValue().entrySet()) {
+
+				if (monthEntry.getValue() > minSum) {
+
+					minSum = monthEntry.getValue();
+					worstMonth = monthEntry.getKey();
+					worstYear = yearEntry.getKey();
+				}
+			}
+		}
+
+		BestAndWorseMonthOverviewDTO overview = new BestAndWorseMonthOverviewDTO();
+		overview.setBestMonth(bestMonth != null ? bestMonth + " " + bestYear : "");
+		overview.setMonthIncome(maxSum);
+		overview.setWorstMonth(worstMonth != null ? worstMonth + " " + worstYear : "");
+		overview.setMonthExpense(minSum * COEFF_FORMATING_EXPENSES);
+		return overview;
+	}
+
+	private Map<Integer, Map<String, Double>> mapIncomesByYearAndMonth(
+			Map<Integer, Map<String, List<Transaction>>> transactionsMappedByYearAndMonth) {
+		Map<Integer, Map<String, Double>> sumMappedByYearAndMonth = new HashMap<Integer, Map<String, Double>>();
+
+		for (Entry<Integer, Map<String, List<Transaction>>> yearEntry : transactionsMappedByYearAndMonth.entrySet()) {
+
+			if (!sumMappedByYearAndMonth.containsKey(yearEntry.getKey())) {
+				sumMappedByYearAndMonth.put(yearEntry.getKey(), new HashMap<String, Double>());
+			}
+
+			Map<String, Double> month = sumMappedByYearAndMonth.get(yearEntry.getKey());
+
+			for (Entry<String, List<Transaction>> monthEntry : yearEntry.getValue().entrySet()) {
+
+				if (!month.containsKey(monthEntry.getKey())) {
+					month.put(monthEntry.getKey(), ZERO);
+				}
+
+				Double sumOfMonth = monthEntry.getValue().stream().filter(transaction -> transaction.getAmount() > ZERO)
+						.map(transaction -> transaction.getAmount()).reduce(ZERO, (sum, amount) -> sum + amount);
+
+				month.put(monthEntry.getKey(), sumOfMonth);
+			}
+		}
+
+		return sumMappedByYearAndMonth;
+	}
+
+	private Map<Integer, Map<String, Double>> mapExpensesByYearAndMonth(
+			Map<Integer, Map<String, List<Transaction>>> transactionsMappedByYearAndMonth) {
+		Map<Integer, Map<String, Double>> sumMappedByYearAndMonth = new HashMap<Integer, Map<String, Double>>();
+
+		for (Entry<Integer, Map<String, List<Transaction>>> yearEntry : transactionsMappedByYearAndMonth.entrySet()) {
+
+			if (!sumMappedByYearAndMonth.containsKey(yearEntry.getKey())) {
+				sumMappedByYearAndMonth.put(yearEntry.getKey(), new HashMap<String, Double>());
+			}
+
+			Map<String, Double> month = sumMappedByYearAndMonth.get(yearEntry.getKey());
+
+			for (Entry<String, List<Transaction>> monthEntry : yearEntry.getValue().entrySet()) {
+
+				if (!month.containsKey(monthEntry.getKey())) {
+					month.put(monthEntry.getKey(), ZERO);
+				}
+
+				Double sumOfMonth = monthEntry.getValue().stream().filter(transaction -> transaction.getAmount() < ZERO)
+						.map(transaction -> transaction.getAmount() * COEFF_FORMATING_EXPENSES)
+						.reduce(ZERO, (sum, amount) -> sum + amount);
+
+				month.put(monthEntry.getKey(), sumOfMonth);
+			}
+		}
+
+		return sumMappedByYearAndMonth;
+	}
+
+	private Map<Integer, Map<String, List<Transaction>>> mapTransactionsByYearAndMonth(List<Transaction> transactions) {
+		Map<Integer, Map<String, List<Transaction>>> mappedByYearAndMonth = new HashMap<Integer, Map<String, List<Transaction>>>();
+
+		for (Transaction transaction : transactions) {
+			Integer year = transaction.getCreationDate().toLocalDateTime().getYear();
+			String month = transaction.getCreationDate().toLocalDateTime().getMonth().toString();
+
+			if (!mappedByYearAndMonth.containsKey(year)) {
+				mappedByYearAndMonth.put(year, new HashMap<String, List<Transaction>>());
+			}
+
+			if (!mappedByYearAndMonth.get(year).containsKey(month)) {
+				mappedByYearAndMonth.get(year).put(month, new LinkedList<Transaction>());
+			}
+
+			mappedByYearAndMonth.get(year).get(month).add(transaction);
+		}
+
+		return mappedByYearAndMonth;
 	}
 
 }
