@@ -11,6 +11,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import com.financeManager.demo.exceptions.AlreadyExistingBudget;
 import com.financeManager.demo.exceptions.DateFormatException;
+import com.financeManager.demo.exceptions.ExceededLimitException;
 import com.financeManager.demo.exceptions.ForbiddenException;
 import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidAmountsEntryException;
@@ -81,7 +82,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 			InvalidWalletEntryException.class, InvalidWalletException.class, WrongPasswordException.class,
 			WrongUsernameException.class, UserWithThisEmailAlreadyExistsException.class,
 			InsufficientBalanceException.class, ValidationException.class, AlreadyExistingBudget.class,
-			InvalidTransactionTypeException.class })
+			InvalidTransactionTypeException.class, ExceededLimitException.class })
 	public final ResponseEntity<ErrorMessageDTO> badInputProblem(Exception ex) {
 		ErrorMessageDTO errorMessage = new ErrorMessageDTO(Timestamp.valueOf(LocalDateTime.now()),
 				HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), ex.getMessage());

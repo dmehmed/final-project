@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.CrudWalletDTO;
+import com.financeManager.demo.dto.MergeDTO;
 import com.financeManager.demo.dto.TransferDTO;
 import com.financeManager.demo.dto.WalletDTO;
 import com.financeManager.demo.exceptions.ForbiddenException;
@@ -21,6 +22,7 @@ import com.financeManager.demo.exceptions.InvalidWalletEntryException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
 import com.financeManager.demo.model.User;
 import com.financeManager.demo.model.Wallet;
+import com.financeManager.demo.repositories.ITransactionRepository;
 import com.financeManager.demo.repositories.IUsersRepository;
 
 import lombok.AllArgsConstructor;
@@ -37,11 +39,15 @@ public class WalletService {
 
 	private static final String DECREASE = "update wallets set balance = balance - ? where id = ?";
 	private static final String INCREASE = "update wallets set balance = balance + ? where id = ?";
+	private static final String CHANGE_LIMIT = "update wallets set max_limit = max_limit + ? where id = ?";
+	private static final String DELETE_WALLET = "delete from wallets where id = ?";
 
 	@Autowired
 	private IWalletDAO walletDao;
 	@Autowired
 	private IUsersRepository usersRepo;
+	@Autowired
+	private ITransactionRepository transactionsRepo;
 	@Autowired
 	private JdbcTemplate jdbcTemplate = new JdbcTemplate();
 
@@ -74,13 +80,7 @@ public class WalletService {
 
 	public void deleteWalletById(Long walletId, Long userId) throws NotExistingWalletException, ForbiddenException {
 
-		Wallet wallet = null;
-
-		try {
-			wallet = this.walletDao.getWalletById(walletId);
-		} catch (NotExistingWalletException e) {
-			throw new NotExistingWalletException("Not existing wallet!");
-		}
+		Wallet wallet = this.walletDao.getWalletById(walletId);
 
 		if (!wallet.getUser().getId().equals(userId)) {
 			throw new ForbiddenException("You are not allowed to delete this wallet!");
@@ -92,13 +92,7 @@ public class WalletService {
 	public void updateWallet(Long walletId, CrudWalletDTO updates, Long userId)
 			throws NotExistingWalletException, InvalidWalletEntryException, ForbiddenException {
 
-		Wallet wallet = null;
-
-		try {
-			wallet = this.walletDao.getWalletById(walletId);
-		} catch (NotExistingWalletException e) {
-			throw new NotExistingWalletException("Not existing wallet!");
-		}
+		Wallet wallet = this.walletDao.getWalletById(walletId);
 
 		if (!wallet.getUser().getId().equals(userId)) {
 			throw new ForbiddenException("You are not allowed to update this wallet!");
@@ -139,15 +133,9 @@ public class WalletService {
 
 	public void makeTransfer(Long userId, TransferDTO transfer)
 			throws NotExistingWalletException, ForbiddenException, InsufficientBalanceException, SQLException {
-		Wallet walletFrom = null;
-		Wallet walletTo = null;
 
-		try {
-			walletFrom = this.walletDao.getWalletById(transfer.getFromWalletId());
-			walletTo = this.walletDao.getWalletById(transfer.getToWalletId());
-		} catch (NotExistingWalletException e) {
-			throw new NotExistingWalletException("Not existing wallet!");
-		}
+		Wallet walletFrom = this.walletDao.getWalletById(transfer.getFromWalletId());
+		Wallet walletTo = this.walletDao.getWalletById(transfer.getToWalletId());
 
 		if (!walletFrom.getUser().getId().equals(userId) || !walletTo.getUser().getId().equals(userId)) {
 			throw new ForbiddenException("You are not allowed to change this wallet!");
@@ -157,6 +145,14 @@ public class WalletService {
 			throw new InsufficientBalanceException("Insufficient account balance.");
 		}
 
+		Double amount = transfer.getAmount();
+
+		this.transactionForTransfer(walletFrom.getId(), walletTo.getId(), amount);
+
+	}
+
+	private void transactionForTransfer(Long walletFromID, Long walletToID, Double amount)
+			throws SQLException, NotExistingWalletException {
 		Connection con = null;
 		PreparedStatement preparedStatement = null;
 
@@ -165,13 +161,13 @@ public class WalletService {
 			con.setAutoCommit(false);
 
 			preparedStatement = con.prepareStatement(DECREASE);
-			preparedStatement.setDouble(1, transfer.getAmount());
-			preparedStatement.setLong(2, walletFrom.getId());
+			preparedStatement.setDouble(1, amount);
+			preparedStatement.setLong(2, walletFromID);
 			preparedStatement.executeUpdate();
 
 			preparedStatement = con.prepareStatement(INCREASE);
-			preparedStatement.setDouble(1, transfer.getAmount());
-			preparedStatement.setLong(2, walletTo.getId());
+			preparedStatement.setDouble(1, amount);
+			preparedStatement.setLong(2, walletToID);
 			preparedStatement.executeUpdate();
 
 			con.commit();
@@ -179,7 +175,67 @@ public class WalletService {
 		} catch (SQLException e) {
 			e.printStackTrace();
 			con.rollback();
-			throw new NotExistingWalletException("Not existing wallet!");
+			throw new NotExistingWalletException("This wallet doesn't exist!");
+		} finally {
+			con.setAutoCommit(true);
+		}
+	}
+
+	public MergeDTO makeMerge(Long userId, MergeDTO merge)
+			throws NotExistingWalletException, ForbiddenException, SQLException {
+
+		Wallet firstWallet = this.walletDao.getWalletById(merge.getFirstWalletId());
+		Wallet secondWallet = this.walletDao.getWalletById(merge.getSecondWalletId());
+
+		if (!firstWallet.getUser().getId().equals(userId) || !secondWallet.getUser().getId().equals(userId)) {
+			throw new ForbiddenException("You are not allowed to change this wallet!");
+		}
+
+		if (firstWallet.getId() > secondWallet.getId()) {
+			Wallet helper = firstWallet;
+			firstWallet = secondWallet;
+			secondWallet = helper;
+
+			merge.setFirstWalletId(firstWallet.getId());
+			merge.setSecondWalletId(secondWallet.getId());
+		}
+
+		Connection con = null;
+		PreparedStatement preparedStatement = null;
+
+		Wallet finalWallet = secondWallet;
+
+		try {
+			con = jdbcTemplate.getDataSource().getConnection();
+			con.setAutoCommit(false);
+
+			this.transactionsRepo.findAllByWalletId(firstWallet.getId()).stream().forEach(transaction -> {
+				transaction.setWallet(finalWallet);
+				transactionsRepo.saveAndFlush(transaction);
+			});
+
+			preparedStatement = con.prepareStatement(INCREASE);
+			preparedStatement.setDouble(1, firstWallet.getBalance());
+			preparedStatement.setLong(2, secondWallet.getId());
+			preparedStatement.executeUpdate();
+
+			preparedStatement = con.prepareStatement(CHANGE_LIMIT);
+			preparedStatement.setDouble(1, firstWallet.getLimit());
+			preparedStatement.setLong(2, secondWallet.getId());
+			preparedStatement.executeUpdate();
+
+			preparedStatement = con.prepareStatement(DELETE_WALLET);
+			preparedStatement.setDouble(1, firstWallet.getId());
+			preparedStatement.executeUpdate();
+
+			con.commit();
+
+			return merge;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			con.rollback();
+			throw new NotExistingWalletException("This wallet doesn't exist!");
 		} finally {
 			con.setAutoCommit(true);
 		}

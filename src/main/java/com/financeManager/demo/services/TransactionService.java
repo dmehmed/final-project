@@ -18,6 +18,7 @@ import com.financeManager.demo.dto.CreateTransactionDTO;
 import com.financeManager.demo.dto.TransactionDTO;
 import com.financeManager.demo.dto.TransactionTypeDTO;
 import com.financeManager.demo.exceptions.DateFormatException;
+import com.financeManager.demo.exceptions.ExceededLimitException;
 import com.financeManager.demo.exceptions.ForbiddenException;
 import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidAmountsEntryException;
@@ -164,7 +165,7 @@ public class TransactionService {
 	}
 
 	public void createTransaction(CreateTransactionDTO newTransaction, Long userId)
-			throws InvalidTransactionEntryException, NotExistingWalletException, InsufficientBalanceException {
+			throws InvalidTransactionEntryException, NotExistingWalletException, InsufficientBalanceException, ExceededLimitException {
 
 		Wallet userWallet;
 		Category transactionCategory;
@@ -191,6 +192,10 @@ public class TransactionService {
 
 		if (userWallet.getBalance() + amount < 0) {
 			throw new InsufficientBalanceException("Insufficient account balance.");
+		}
+		
+		if(userWallet.getBalance() + amount > userWallet.getLimit()) {
+			throw new ExceededLimitException("Limit exceeded!");
 		}
 
 		Transaction transaction = new Transaction(amount, newTransaction.getDescription(), userWallet,

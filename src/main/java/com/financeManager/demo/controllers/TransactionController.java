@@ -25,6 +25,7 @@ import com.financeManager.demo.dto.CreateTransactionDTO;
 import com.financeManager.demo.dto.TransactionDTO;
 import com.financeManager.demo.dto.TransactionTypeDTO;
 import com.financeManager.demo.exceptions.DateFormatException;
+import com.financeManager.demo.exceptions.ExceededLimitException;
 import com.financeManager.demo.exceptions.ForbiddenException;
 import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidAmountsEntryException;
@@ -99,7 +100,7 @@ public class TransactionController {
 	@PostMapping("/create")
 	public String createTransaction(@RequestBody @Valid CreateTransactionDTO newTransaction, Errors errors,
 			HttpServletRequest request, HttpServletResponse response) throws UnauthorizedException, ValidationException,
-			InvalidTransactionEntryException, NotExistingWalletException, InsufficientBalanceException {
+			InvalidTransactionEntryException, NotExistingWalletException, InsufficientBalanceException, ExceededLimitException {
 
 		Helper.isThereRequestError(errors, response);
 
