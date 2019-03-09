@@ -20,8 +20,10 @@ import com.financeManager.demo.exceptions.ForbiddenException;
 import com.financeManager.demo.exceptions.InsufficientBalanceException;
 import com.financeManager.demo.exceptions.InvalidWalletEntryException;
 import com.financeManager.demo.exceptions.NotExistingWalletException;
+import com.financeManager.demo.model.Transaction;
 import com.financeManager.demo.model.User;
 import com.financeManager.demo.model.Wallet;
+import com.financeManager.demo.repositories.ICategoryRepository;
 import com.financeManager.demo.repositories.ITransactionRepository;
 import com.financeManager.demo.repositories.IUsersRepository;
 
@@ -37,6 +39,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class WalletService {
 
+	private static final Long INITIAL_FUNDING = new Long(4);
 	private static final String DECREASE = "update wallets set balance = balance - ? where id = ?";
 	private static final String INCREASE = "update wallets set balance = balance + ? where id = ?";
 	private static final String CHANGE_LIMIT = "update wallets set max_limit = max_limit + ? where id = ?";
@@ -50,6 +53,10 @@ public class WalletService {
 	private ITransactionRepository transactionsRepo;
 	@Autowired
 	private JdbcTemplate jdbcTemplate = new JdbcTemplate();
+	@Autowired
+	private ICategoryRepository categoryRepo;
+	@Autowired
+	private ITransactionRepository transactionRepo;
 
 	public Long addWalletToUser(CrudWalletDTO newWallet, Long userId) throws InvalidWalletEntryException {
 		User owner = this.usersRepo.findById(userId).get();
@@ -61,11 +68,13 @@ public class WalletService {
 		if ((newWallet.getLimit() != null && newWallet.getBalance() != null)
 				&& (newWallet.getLimit().longValue() < newWallet.getBalance().longValue())) {
 			throw new InvalidWalletEntryException("Invalid wallet settings");
-
 		}
 
-		Wallet wallet = new Wallet(newWallet.getName(), newWallet.getBalance(), newWallet.getLimit(), owner);
-		return this.walletDao.addWallet(wallet);
+		Wallet wallet = new Wallet(newWallet.getName(), newWallet.getBalance(), newWallet.getLimit(), owner);		
+		Transaction tr = new Transaction(newWallet.getBalance(), "initial funding", wallet, categoryRepo.findById(INITIAL_FUNDING).get());
+		this.walletDao.addWallet(wallet);
+		transactionRepo.save(tr);
+		return wallet.getId();
 	}
 
 	public WalletDTO getWalletById(Long walletId, Long userId) throws NotExistingWalletException, ForbiddenException {

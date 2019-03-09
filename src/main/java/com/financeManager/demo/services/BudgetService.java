@@ -111,13 +111,8 @@ public class BudgetService {
 
 	public void updateBudget(CrudBudgetDTO budgetUpdater, Long userId, Long id)
 			throws NotExistingBudgetException, InvalidBudgetEntryException, ForbiddenException {
-		Budget budget = null;
-		try {
-			budget = this.budgetDao.getBudgetById(id);
-		} catch (NotExistingBudgetException e) {
-			throw new NotExistingBudgetException("Budget doesn't exists");
-		}
-
+		Budget budget = this.budgetDao.getBudgetById(id);
+		
 		if (!userId.equals(budget.getUser().getId())) {
 			throw new ForbiddenException("You are not allowed to update this budget!");
 		}
@@ -149,13 +144,7 @@ public class BudgetService {
 
 	public void deleteBudgetById(Long userId, Long budgetId) throws NotExistingBudgetException, ForbiddenException {
 
-		Budget budget = null;
-		try {
-			budget = this.budgetDao.getBudgetById(budgetId);
-		} catch (NotExistingBudgetException e) {
-			e.printStackTrace();
-			throw new NotExistingBudgetException("Budget doesn't exists");
-		}
+		Budget 	budget = this.budgetDao.getBudgetById(budgetId);
 
 		if (!userId.equals(budget.getUser().getId())) {
 			throw new ForbiddenException("You are not allowed to delete this budget!");
