@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Comparator;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
@@ -165,5 +166,13 @@ public abstract class Helper {
 		json.setMessage(message);
 		json.setStatus(status.value());
 		return new ResponseEntity<ResponseDTO>(json, status);
+	}
+	
+	public static Long getLoggedUserId(HttpServletRequest request) throws UnauthorizedException {
+		HttpSession session = request.getSession();
+		Helper.isThereLoggedUser(session);
+
+		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		return userId;
 	}
 }

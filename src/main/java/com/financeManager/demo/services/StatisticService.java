@@ -700,5 +700,11 @@ public class StatisticService {
 
 		return mappedByYearAndMonth;
 	}
+	
+	public double getAverageMoneyPerDay(Long userId, int period) {
+		List<Wallet> wallets = this.walletDao.getAllUserWallets(userId);
+		double sum = wallets.stream().map(wallet -> wallet.getBalance()).reduce(new Double(0),(w1,w2) ->w1+w2);
+		return sum / period;
+	}
 
 }

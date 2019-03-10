@@ -4,7 +4,6 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,11 +51,7 @@ public class BudgetController {
 	public List<BudgetDTO> getBudgets(HttpServletRequest request, HttpServletResponse response)
 			throws UnauthorizedException {
 
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-
-		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		Long userId =	Helper.getLoggedUserId(request);
 
 		List<BudgetDTO> userBudgets = this.budgetService.getAllUserBugdets(userId);
 
@@ -69,10 +64,7 @@ public class BudgetController {
 	public BudgetDTO giveBudgetById(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response)
 			throws UnauthorizedException, NotExistingBudgetException, ForbiddenException {
 
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-		Long userId = (Long) session.getAttribute("userId");
+		Long userId =	Helper.getLoggedUserId(request);
 		return this.budgetService.getBudgetById(userId, id);
 	}
 
@@ -81,9 +73,7 @@ public class BudgetController {
 	public void deleteBudgetById(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response)
 			throws UnauthorizedException, NotExistingBudgetException, ForbiddenException {
 
-		HttpSession session = request.getSession();
-		Helper.isThereLoggedUser(session);
-		Long userId = (Long) session.getAttribute("userId");
+		Long userId =	Helper.getLoggedUserId(request);
 		this.budgetService.deleteBudgetById(userId, id);
 
 	}
@@ -95,11 +85,7 @@ public class BudgetController {
 
 		Helper.isThereRequestError(errors, response);
 
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-
-		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		Long userId =	Helper.getLoggedUserId(request);
 
 		return Helper.createResponse(this.budgetService.addBudgetToUser(newBudget, userId),
 				"Budget added successfully!", HttpStatus.CREATED);
@@ -114,11 +100,7 @@ public class BudgetController {
 
 		Helper.isThereRequestError(errors, response);
 
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-
-		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		Long userId =	Helper.getLoggedUserId(request);
 
 		this.budgetService.updateBudget(updateBudget, userId, id);
 		

@@ -5,7 +5,6 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +38,7 @@ import com.financeManager.demo.services.WalletService;
 @RequestMapping(path = "/wallets")
 public class WalletController {
 
-	private static final String USER_ID = "userId";
+
 
 	@Autowired
 	private WalletService walletService;
@@ -56,11 +55,7 @@ public class WalletController {
 	@GetMapping
 	public List<WalletDTO> getWallets(HttpServletRequest request, HttpServletResponse response)
 			throws UnauthorizedException {
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-
-		Long userId = (Long) session.getAttribute(USER_ID);
+		Long userId =	Helper.getLoggedUserId(request);
 		List<WalletDTO> userWallets = this.walletService.getAllUserWallets(userId);
 
 		response.setStatus(HttpStatus.OK.value());
@@ -91,10 +86,7 @@ public class WalletController {
 			UnauthorizedException, NotExistingWalletException, InvalidWalletEntryException, ForbiddenException {
 
 		Helper.isThereRequestError(errors, response);
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-		Long userId = (Long) session.getAttribute(USER_ID);
+		Long userId =	Helper.getLoggedUserId(request);
 
 		this.walletService.updateWallet(id, updates, userId);
 
@@ -123,10 +115,7 @@ public class WalletController {
 			throws ValidationException, UnauthorizedException, InvalidWalletEntryException {
 
 		Helper.isThereRequestError(errors, response);
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-		Long userId = (Long) session.getAttribute(USER_ID);
+		Long userId =	Helper.getLoggedUserId(request);
 		Long walletId = this.walletService.addWalletToUser(newWallet, userId);
 
 		return Helper.createResponse(walletId, "Wallet successfully created!", HttpStatus.CREATED);
@@ -148,10 +137,7 @@ public class WalletController {
 	@GetMapping("/{id}")
 	public WalletDTO giveWalletById(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response)
 			throws UnauthorizedException, NotExistingWalletException, ForbiddenException {
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-		Long userId = (Long) session.getAttribute(USER_ID);
+		Long userId =	Helper.getLoggedUserId(request);
 
 		WalletDTO wallet = this.walletService.getWalletById(id, userId);
 		return wallet;
@@ -173,10 +159,7 @@ public class WalletController {
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
 	public void deleteWalletById(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response)
 			throws UnauthorizedException, NotExistingWalletException, ForbiddenException {
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-		Long userId = (Long) session.getAttribute(USER_ID);
+		Long userId =	Helper.getLoggedUserId(request);
 
 		this.walletService.deleteWalletById(id, userId);
 	}
@@ -208,10 +191,7 @@ public class WalletController {
 			NotExistingWalletException, ForbiddenException, InsufficientBalanceException, SQLException {
 
 		Helper.isThereRequestError(errors, response);
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-		Long userId = (Long) session.getAttribute(USER_ID);
+		Long userId =	Helper.getLoggedUserId(request);
 
 		this.walletService.makeTransfer(userId, transfer);
 
@@ -245,10 +225,7 @@ public class WalletController {
 			NotExistingWalletException, ForbiddenException, SQLException {
 
 		Helper.isThereRequestError(errors, response);
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-		Long userId = (Long) session.getAttribute(USER_ID);
+		Long userId =	Helper.getLoggedUserId(request);
 
 		merge = this.walletService.makeMerge(userId, merge);
 
