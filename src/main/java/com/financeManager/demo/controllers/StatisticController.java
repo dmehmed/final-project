@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.financeManager.demo.dto.AmountOverviewDTO;
 import com.financeManager.demo.dto.BestAndWorseMonthOverviewDTO;
+import com.financeManager.demo.dto.BudgetMoneyPerDayDTO;
 import com.financeManager.demo.dto.BudgetOverviewDTO;
 import com.financeManager.demo.dto.CategoryOverviewDTO;
 import com.financeManager.demo.dto.CategoryWithMostExpensesDTO;
@@ -130,13 +131,21 @@ public class StatisticController {
 
 		return this.statsService.getBestAndWorseMonthOverview(userId);
 	}
+	
 	@GetMapping(path = "/financialForecast")
-
 	public MoneyPerDayDTO getFinancialForecast(@RequestParam(name ="days") int days,HttpServletRequest request, HttpServletResponse response) throws UnauthorizedException {
 		Long userId =	Helper.getLoggedUserId(request);
 		String format = df.format(this.statsService.getAverageMoneyPerDay(userId, days));
 		return new MoneyPerDayDTO(format,days);
 
+	}
+	
+	@GetMapping(path = "/budgetRemainingMoneyPerDay/{budgetId}")
+	public BudgetMoneyPerDayDTO getBudgetRemainingMoneyPerDay(@PathVariable Long budgetId, HttpServletRequest request,
+			HttpServletResponse response ) throws UnauthorizedException, NotExistingBudgetException, InvalidAmountsEntryException, InvalidDateException, DateFormatException {
+		
+		Long userId = Helper.getLoggedUserId(request);
+		return this.statsService.getBudgetRemainingMoneyPerDay(userId, budgetId);
 	}
 
 }

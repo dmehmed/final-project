@@ -25,6 +25,7 @@ import com.financeManager.demo.dao.IRepeatPeriodDAO;
 import com.financeManager.demo.dao.IWalletDAO;
 import com.financeManager.demo.dto.AmountOverviewDTO;
 import com.financeManager.demo.dto.BestAndWorseMonthOverviewDTO;
+import com.financeManager.demo.dto.BudgetMoneyPerDayDTO;
 import com.financeManager.demo.dto.BudgetOverviewDTO;
 import com.financeManager.demo.dto.CategoryOverviewDTO;
 import com.financeManager.demo.dto.CategoryWithMostExpensesDTO;
@@ -60,6 +61,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StatisticService {
+	private static final int COEFF_DAYS = 30;
 	private static final int EXPENSE_TRANSACTIONS_ID = 2;
 	private static final String EXCEEDED = "Exceeded";
 	private static final String NOT_EXCEEDED = "Not exceeded";
@@ -414,57 +416,55 @@ public class StatisticService {
 		}).collect(Collectors.toList());
 
 	}
-	
-	public CategoryWithMostExpensesDTO getMostSpendingCategory(Long userId,String from,String till) throws NotExistingUserException, InvalidDateException, DateFormatException {
+
+	public CategoryWithMostExpensesDTO getMostSpendingCategory(Long userId, String from, String till)
+			throws NotExistingUserException, InvalidDateException, DateFormatException {
 		User user = null;
 		try {
-		 user = this.userRepo.findById(userId).get();
-		}catch(NoSuchElementException e) {
+			user = this.userRepo.findById(userId).get();
+		} catch (NoSuchElementException e) {
 			throw new NotExistingUserException("User doesn't exists");
 		}
-		
+
 		List<Transaction> transactions = this.transactionRepo.findAllTransactionsByUser(user);
-		
-		if(transactions.size() == 0) {
+
+		if (transactions.size() == 0) {
 			return new CategoryWithMostExpensesDTO("You have no transactions", (double) 0);
 		}
-		
-		Timestamp startDate = Helper.parseStringToTimeStamp(from);	
-		Timestamp endDate = Helper.parseStringToTimeStamp(till);	
+
+		Timestamp startDate = Helper.parseStringToTimeStamp(from);
+		Timestamp endDate = Helper.parseStringToTimeStamp(till);
 		transactions = this.checkParams(user, startDate, endDate);
-		
-		
-		Map<String,List<Double>> typeToSum = new HashMap<String,List<Double>>();
-		
+
+		Map<String, List<Double>> typeToSum = new HashMap<String, List<Double>>();
 
 		transactions = transactions.stream().map(transaction -> {
-		
-			
-			if(transaction.getCategory().getTransactionType().getId() == EXPENSE_TRANSACTIONS_ID) {
-			if(!typeToSum.containsKey(transaction.getCategory().getName())) {
-				typeToSum.put(transaction.getCategory().getName(), new LinkedList<Double>());		
 
+			if (transaction.getCategory().getTransactionType().getId() == EXPENSE_TRANSACTIONS_ID) {
+				if (!typeToSum.containsKey(transaction.getCategory().getName())) {
+					typeToSum.put(transaction.getCategory().getName(), new LinkedList<Double>());
+
+				}
+
+				typeToSum.get(transaction.getCategory().getName())
+						.add(transaction.getAmount() * COEFF_FORMATING_EXPENSES);
 			}
-
-			typeToSum.get(transaction.getCategory().getName()).add(transaction.getAmount() * COEFF_FORMATING_EXPENSES);			
-			}	
 			return transaction;
 		}).collect(Collectors.toList());
-		
+
 		double maxSum = 0f;
 
 		String nameOfCat = null;
-		
-		for(Entry<String,List<Double>> categories : typeToSum.entrySet()) {
-			double sumOfCategory = categories.getValue().stream().reduce(new Double(0),(t1,t2)-> t1+t2);
-	
-			
-			if(sumOfCategory > maxSum) {
+
+		for (Entry<String, List<Double>> categories : typeToSum.entrySet()) {
+			double sumOfCategory = categories.getValue().stream().reduce(new Double(0), (t1, t2) -> t1 + t2);
+
+			if (sumOfCategory > maxSum) {
 				maxSum = sumOfCategory;
 				nameOfCat = categories.getKey();
 			}
 		}
-		return new CategoryWithMostExpensesDTO(nameOfCat,maxSum);
+		return new CategoryWithMostExpensesDTO(nameOfCat, maxSum);
 	}
 
 	public List<DayActivityDTO> getOverviewOfDayActivity(Long userId, String period)
@@ -700,11 +700,48 @@ public class StatisticService {
 
 		return mappedByYearAndMonth;
 	}
-	
+
 	public double getAverageMoneyPerDay(Long userId, int period) {
 		List<Wallet> wallets = this.walletDao.getAllUserWallets(userId);
-		double sum = wallets.stream().map(wallet -> wallet.getBalance()).reduce(new Double(0),(w1,w2) ->w1+w2);
+		double sum = wallets.stream().map(wallet -> wallet.getBalance()).reduce(new Double(0), (w1, w2) -> w1 + w2);
 		return sum / period;
+	}
+
+	public BudgetMoneyPerDayDTO getBudgetRemainingMoneyPerDay(Long userId, Long budgetId)
+			throws NotExistingBudgetException, InvalidAmountsEntryException, InvalidDateException, DateFormatException {
+
+		User user = this.userRepo.findById(userId).get();
+		Budget userBudget = this.budgetDao.getBudgetById(budgetId);
+
+		List<TransactionDTO> transactions = this.transactionService.getAllTransactionsOfUserForGivenCategory(user, null,
+				null, null, null, userBudget.getStartDate().toString(), userBudget.getEndDate().toString(),
+				userBudget.getCategory().getId());
+
+		Double amountOfTransactions = transactions.stream().map(transaction -> transaction.getAmount()).reduce(ZERO,
+				(sum, amount) -> sum + amount);
+
+		Double remainingAmount = userBudget.getAmount() - amountOfTransactions;
+
+		LocalDate today = LocalDate.now();
+		LocalDate userBudgetEndDate = userBudget.getEndDate().toLocalDate();
+
+		int remainingDays = userBudgetEndDate.getDayOfMonth() - today.getDayOfMonth();
+
+		if (remainingDays < ZERO) {
+			remainingDays += COEFF_DAYS;
+		}
+
+		if (remainingDays == ZERO) {
+			remainingDays += 1;
+		}
+
+		BudgetMoneyPerDayDTO overview = new BudgetMoneyPerDayDTO();
+
+		overview.setCategory(userBudget.getCategory().getName());
+		overview.setRemainingAmount(remainingAmount);
+		overview.setAmountPerDay(remainingAmount <= ZERO ? ZERO : remainingAmount / remainingDays);
+
+		return overview;
 	}
 
 }
