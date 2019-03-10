@@ -131,10 +131,12 @@ public class StatisticController {
 		return this.statsService.getBestAndWorseMonthOverview(userId);
 	}
 	@GetMapping(path = "/financialForecast")
+
 	public MoneyPerDayDTO getFinancialForecast(@RequestParam(name ="days") int days,HttpServletRequest request, HttpServletResponse response) throws UnauthorizedException {
 		Long userId =	Helper.getLoggedUserId(request);
 		String format = df.format(this.statsService.getAverageMoneyPerDay(userId, days));
 		return new MoneyPerDayDTO(format,days);
+
 	}
 
 }
