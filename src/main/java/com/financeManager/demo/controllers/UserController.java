@@ -74,7 +74,8 @@ public class UserController {
 	public UserDTO getUserProfile(HttpServletRequest request, HttpServletResponse response)
 			throws UnauthorizedException, NotExistingUserException {
 		HttpSession session = request.getSession();
-
+		
+		
 		Helper.isThereLoggedUser(session);
 
 		Long id = (Long) session.getAttribute(Helper.USER_ID);

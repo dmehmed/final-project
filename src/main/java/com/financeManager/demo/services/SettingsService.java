@@ -1,12 +1,13 @@
 package com.financeManager.demo.services;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.sql.Date;
+import java.time.LocalDateTime;
 import java.util.NoSuchElementException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.financeManager.demo.controllers.Helper;
 import com.financeManager.demo.dao.ICountryDAO;
 import com.financeManager.demo.dao.ICurrencyDAO;
 import com.financeManager.demo.dao.IGenderDAO;
@@ -69,15 +70,14 @@ public class SettingsService {
 			throws DateFormatException, NoSuchSettingsOptionException {
 
 		if (update.getBirthdate() != null) {
-			try {
-				java.util.Date newBirthdate = new SimpleDateFormat(DATE_FORMAT).parse(update.getBirthdate());
-				java.sql.Date sqlBirthday = new java.sql.Date(newBirthdate.getTime());
-				this.settingsRepo.findById(id).get().setBirthdate(sqlBirthday);
-			} catch (ParseException e) {
-				e.printStackTrace();
-				throw new DateFormatException("Wrong date format", e);
-			}
+			
+			LocalDateTime birthdate = Helper.parseStringToLocalDateTime(update.getBirthdate());
+			
+			Date sqlBirthday = Date.valueOf(birthdate.plusHours(new Long(24)).toLocalDate());
+			this.settingsRepo.findById(id).get().setBirthdate(sqlBirthday);
+			System.out.println(sqlBirthday);
 		}
+		
 
 		try {
 

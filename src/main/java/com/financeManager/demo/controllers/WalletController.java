@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.financeManager.demo.dto.CrudWalletDTO;
-import com.financeManager.demo.dto.MergeDTO;
+import com.financeManager.demo.dto.MergeWalletsDTO;
 import com.financeManager.demo.dto.ResponseDTO;
 import com.financeManager.demo.dto.TransferDTO;
 import com.financeManager.demo.dto.WalletDTO;
@@ -133,7 +133,7 @@ public class WalletController {
 	}
 
 	@PostMapping(path = "/merge")
-	public ResponseEntity<ResponseDTO> mergeWallets(@RequestBody @Valid MergeDTO merge, Errors errors,
+	public ResponseEntity<ResponseDTO> mergeWallets(@RequestBody @Valid MergeWalletsDTO merge, Errors errors,
 			HttpServletRequest request, HttpServletResponse response) throws ValidationException, UnauthorizedException, NotExistingWalletException, ForbiddenException, SQLException {
 
 		Helper.isThereRequestError(errors, response);

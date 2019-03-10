@@ -9,6 +9,7 @@ import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.financeManager.demo.dto.CategoryDTO;
 import com.financeManager.demo.dto.CreateTransactionDTO;
+import com.financeManager.demo.dto.ResponseDTO;
 import com.financeManager.demo.dto.TransactionDTO;
 import com.financeManager.demo.dto.TransactionTypeDTO;
 import com.financeManager.demo.exceptions.DateFormatException;
@@ -84,8 +86,7 @@ public class TransactionController {
 	}
 
 	@DeleteMapping(path = "/delete/{id}")
-	@ResponseStatus(code = HttpStatus.NO_CONTENT)
-	public void deleteWalletById(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response)
+	public ResponseEntity<ResponseDTO> deleteTransactionById(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response)
 			throws NotExistingTransactionException, NotExistingWalletException, UnauthorizedException {
 		HttpSession session = request.getSession();
 
@@ -94,11 +95,13 @@ public class TransactionController {
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
 
 		this.transactionService.deleteTransactionById(id, userId);
+		
+		return Helper.createResponse(id, "Transaction deleted", HttpStatus.NO_CONTENT);
 
 	}
 
 	@PostMapping("/create")
-	public String createTransaction(@RequestBody @Valid CreateTransactionDTO newTransaction, Errors errors,
+	public ResponseEntity<ResponseDTO> createTransaction(@RequestBody @Valid CreateTransactionDTO newTransaction, Errors errors,
 			HttpServletRequest request, HttpServletResponse response) throws UnauthorizedException, ValidationException,
 			InvalidTransactionEntryException, NotExistingWalletException, InsufficientBalanceException, ExceededLimitException {
 
@@ -110,10 +113,9 @@ public class TransactionController {
 
 		Long userId = (Long) session.getAttribute(Helper.USER_ID);
 
-		this.transactionService.createTransaction(newTransaction, userId);
+		Long transactionId = this.transactionService.createTransaction(newTransaction, userId);
 
-		response.setStatus(HttpStatus.CREATED.value());
-		return HttpStatus.CREATED.getReasonPhrase();
+		return Helper.createResponse(transactionId, "You successfully made a transaction!", HttpStatus.CREATED);
 	}
 
 	@GetMapping("/incomes")

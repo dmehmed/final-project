@@ -117,30 +117,33 @@ public class UserService {
 	}
 
 	public void updateProfile(Long id, UpdateProfileDTO updates)
-			throws DateFormatException, NoSuchSettingsOptionException {
-
+			throws DateFormatException, NoSuchSettingsOptionException {	
+		
+		User user = this.userRepo.findById(id).get();
+		
 		if (updates.getUsername() != null) {
-			this.userRepo.findById(id).get().setUsername(updates.getUsername());
+			user.setUsername(updates.getUsername());
 		}
-
+		System.out.println(updates.getUsername());
+		
 		if (updates.getPassword() != null) {
-			this.userRepo.findById(id).get().setPassword(DigestUtils.sha256Hex(updates.getPassword()));
+			user.setPassword(DigestUtils.sha256Hex(updates.getPassword()));
 		}
 
 		if (updates.getSettings() != null) {
 			Settings newSettings = settingsService.update(id, updates.getSettings());
-			this.userRepo.findById(id).get().setSettings(newSettings);
+			user.setSettings(newSettings);
 		}
-
-		this.userRepo.save(this.userRepo.findById(id).get());
+		
+		this.userRepo.saveAndFlush(user);
+		
 
 	}
 
 	public void softDeleteUser(Long id) throws NotExistingUserException {
 		User user = this.getExistingUserById(id);
 		user.setIsDeleted((byte) 1);
-		this.userRepo.save(user);
-
+		this.userRepo.saveAndFlush(user);
 	}
 
 	public boolean hasUserWithEmail(String email) {

@@ -47,7 +47,7 @@ public class TransactionService {
 
 //	private static final Long INCOME = 1L;
 	private static final Long EXPENSE = 2L;
-	
+
 	@Autowired
 	private ITransactionRepository transactionRepo;
 
@@ -164,8 +164,9 @@ public class TransactionService {
 
 	}
 
-	public void createTransaction(CreateTransactionDTO newTransaction, Long userId)
-			throws InvalidTransactionEntryException, NotExistingWalletException, InsufficientBalanceException, ExceededLimitException {
+	public Long createTransaction(CreateTransactionDTO newTransaction, Long userId)
+			throws InvalidTransactionEntryException, NotExistingWalletException, InsufficientBalanceException,
+			ExceededLimitException {
 
 		Wallet userWallet;
 		Category transactionCategory;
@@ -193,8 +194,8 @@ public class TransactionService {
 		if (userWallet.getBalance() + amount < 0) {
 			throw new InsufficientBalanceException("Insufficient account balance.");
 		}
-		
-		if(userWallet.getBalance() + amount > userWallet.getLimit()) {
+
+		if (userWallet.getBalance() + amount > userWallet.getLimit()) {
 			throw new ExceededLimitException("Limit exceeded!");
 		}
 
@@ -205,6 +206,7 @@ public class TransactionService {
 		walletDAO.saveUpdatedWallet(userWallet.getId());
 
 		this.transactionRepo.save(transaction);
+		return transaction.getId();
 	}
 
 	public List<TransactionDTO> getAllIncomeTransactions(User us, String criteria, String orderBy) {
@@ -225,7 +227,9 @@ public class TransactionService {
 				.sorted(Helper.giveComparatorByCriteria(criteria, orderBy)).collect(Collectors.toList());
 	}
 
+
 	public TransactionDTO convertFromTransactionToTransactionDTO(Transaction transaction) {
+
 		TransactionDTO newTransactionDTO = new TransactionDTO();
 
 		if (transaction.getAmount() < 0) {
