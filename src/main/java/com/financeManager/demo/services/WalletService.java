@@ -157,7 +157,9 @@ public class WalletService {
 		Double amount = transfer.getAmount();
 
 		this.transactionForTransfer(walletFrom.getId(), walletTo.getId(), amount);
-
+		
+		this.walletDao.clearUserWallets(userId);
+		this.walletDao.loadUserWallets(userId);
 	}
 
 	private void transactionForTransfer(Long walletFromID, Long walletToID, Double amount)
@@ -180,7 +182,7 @@ public class WalletService {
 			preparedStatement.executeUpdate();
 
 			con.commit();
-
+			
 		} catch (SQLException e) {
 			e.printStackTrace();
 			con.rollback();
@@ -238,6 +240,9 @@ public class WalletService {
 			preparedStatement.executeUpdate();
 
 			con.commit();
+			
+			this.walletDao.clearUserWallets(userId);
+			this.walletDao.loadUserWallets(userId);
 
 			return merge;
 

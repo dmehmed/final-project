@@ -54,8 +54,7 @@ public class WalletDAO implements IWalletDAO {
 
 	@Override
 	public void deleteWalletById(Long walletId) {
-		Wallet w = this.wallets.stream().filter(wallet -> wallet.getId().equals(walletId)).findFirst().get();
-		this.wallets.remove(w);
+		this.wallets = this.wallets.stream().filter(wallet -> !wallet.getId().equals(walletId)).collect(Collectors.toList());
 		this.walletRepo.deleteById(walletId);
 	}
 

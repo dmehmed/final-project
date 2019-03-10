@@ -151,7 +151,7 @@ public class StatisticController {
 
 	}
 
-	@GetMapping(path = "/overview/bestAndWorst")
+	@GetMapping(path = "/overview/bestAndWorstMonth")
 	public BestAndWorseMonthOverviewDTO get(HttpServletRequest request, HttpServletResponse response)
 			throws UnauthorizedException, NotExistingUserException {
 

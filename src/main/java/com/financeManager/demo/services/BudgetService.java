@@ -144,7 +144,7 @@ public class BudgetService {
 
 	public void deleteBudgetById(Long userId, Long budgetId) throws NotExistingBudgetException, ForbiddenException {
 
-		Budget 	budget = this.budgetDao.getBudgetById(budgetId);
+		Budget budget = this.budgetDao.getBudgetById(budgetId);
 
 		if (!userId.equals(budget.getUser().getId())) {
 			throw new ForbiddenException("You are not allowed to delete this budget!");
@@ -153,9 +153,5 @@ public class BudgetService {
 		this.budgetDao.deleteBudgetById(budgetId);
 
 	}
-	
-
-	
-
 
 }
