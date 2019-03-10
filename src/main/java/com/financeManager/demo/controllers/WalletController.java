@@ -44,6 +44,15 @@ public class WalletController {
 	@Autowired
 	private WalletService walletService;
 
+	/**
+	 * Method return user wallets in list of WalletDTO.
+	 * 
+	 * @param request
+	 * @param response
+	 * @return List of WalletDTO
+	 * @throws UnauthorizedException
+	 */
+
 	@GetMapping
 	public List<WalletDTO> getWallets(HttpServletRequest request, HttpServletResponse response)
 			throws UnauthorizedException {
@@ -57,6 +66,24 @@ public class WalletController {
 		response.setStatus(HttpStatus.OK.value());
 		return userWallets;
 	}
+
+	/**
+	 * Method receive information for updating user wallet stored in CrudWalletDTO.
+	 * Search and update a user wallet with the id given in the URL. We update only
+	 * fields that are not null in the CrudWalletDTO.
+	 * 
+	 * @param updates
+	 * @param errors
+	 * @param id
+	 * @param request
+	 * @param response
+	 * @return ResponseEntity for result of request
+	 * @throws ValidationException
+	 * @throws UnauthorizedException
+	 * @throws NotExistingWalletException
+	 * @throws InvalidWalletEntryException
+	 * @throws ForbiddenException
+	 */
 
 	@PatchMapping(path = "/update/{id}")
 	public ResponseEntity<ResponseDTO> updateWallet(@RequestBody @Valid CrudWalletDTO updates, Errors errors,
@@ -75,6 +102,21 @@ public class WalletController {
 
 	}
 
+	/**
+	 * 
+	 * Method receive information for creating user wallet stored in CrudWalletDTO.
+	 * Create a user wallet based on the information provided.
+	 * 
+	 * @param newWallet
+	 * @param errors
+	 * @param request
+	 * @param response
+	 * @return ResponseEntity for result of request
+	 * @throws ValidationException
+	 * @throws UnauthorizedException
+	 * @throws InvalidWalletEntryException
+	 */
+
 	@PostMapping("/create")
 	public ResponseEntity<ResponseDTO> createNewWallet(@RequestBody @Valid CrudWalletDTO newWallet, Errors errors,
 			HttpServletRequest request, HttpServletResponse response)
@@ -90,6 +132,19 @@ public class WalletController {
 		return Helper.createResponse(walletId, "Wallet successfully created!", HttpStatus.CREATED);
 	}
 
+	/**
+	 * 
+	 * Method search and return for a user wallet with the id given in the URL.
+	 * 
+	 * @param id
+	 * @param request
+	 * @param response
+	 * @return WalletDTO
+	 * @throws UnauthorizedException
+	 * @throws NotExistingWalletException
+	 * @throws ForbiddenException
+	 */
+
 	@GetMapping("/{id}")
 	public WalletDTO giveWalletById(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response)
 			throws UnauthorizedException, NotExistingWalletException, ForbiddenException {
@@ -102,6 +157,18 @@ public class WalletController {
 		return wallet;
 	}
 
+	/**
+	 * 
+	 * Method search and delete user wallet with the id given in the URL.
+	 * 
+	 * @param id
+	 * @param request
+	 * @param response
+	 * @throws UnauthorizedException
+	 * @throws NotExistingWalletException
+	 * @throws ForbiddenException
+	 */
+
 	@DeleteMapping(path = "/delete/{id}")
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
 	public void deleteWalletById(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response)
@@ -113,6 +180,27 @@ public class WalletController {
 
 		this.walletService.deleteWalletById(id, userId);
 	}
+
+	/**
+	 * 
+	 * Method receive information for transfer amount from one user wallet to
+	 * another stored in TransferDTO. Search wallets with given id in the
+	 * TransferDTO. Make transaction to update amounts of both wallets - take amount
+	 * given in the TransferDTO from the first wallet and add the same amount to the
+	 * second.
+	 * 
+	 * @param transfer
+	 * @param errors
+	 * @param request
+	 * @param response
+	 * @return ResponseEntity for result of request
+	 * @throws ValidationException
+	 * @throws UnauthorizedException
+	 * @throws NotExistingWalletException
+	 * @throws ForbiddenException
+	 * @throws InsufficientBalanceException
+	 * @throws SQLException
+	 */
 
 	@PostMapping(path = "/transfer")
 	public ResponseEntity<ResponseDTO> transferAmount(@RequestBody @Valid TransferDTO transfer, Errors errors,
@@ -132,9 +220,29 @@ public class WalletController {
 				HttpStatus.ACCEPTED);
 	}
 
+	/**
+	 * 
+	 * Method receive information for merge two user wallets stored in
+	 * MergeWalletDTO. Search wallets with given id in the MergeWalletDTO. Make
+	 * transaction to merge early created wallet to later created - take balance and limit
+	 * from first and add them to the second, after that delete first wallet.
+	 * 
+	 * @param merge
+	 * @param errors
+	 * @param request
+	 * @param response
+	 * @return ResponseEntity for result of request
+	 * @throws ValidationException
+	 * @throws UnauthorizedException
+	 * @throws NotExistingWalletException
+	 * @throws ForbiddenException
+	 * @throws SQLException
+	 */
+
 	@PostMapping(path = "/merge")
 	public ResponseEntity<ResponseDTO> mergeWallets(@RequestBody @Valid MergeWalletsDTO merge, Errors errors,
-			HttpServletRequest request, HttpServletResponse response) throws ValidationException, UnauthorizedException, NotExistingWalletException, ForbiddenException, SQLException {
+			HttpServletRequest request, HttpServletResponse response) throws ValidationException, UnauthorizedException,
+			NotExistingWalletException, ForbiddenException, SQLException {
 
 		Helper.isThereRequestError(errors, response);
 		HttpSession session = request.getSession();
@@ -145,8 +253,7 @@ public class WalletController {
 		merge = this.walletService.makeMerge(userId, merge);
 
 		return Helper.createResponse(merge.getSecondWalletId(),
-				"Merge successfully made with wallet with id " + merge.getFirstWalletId() + "!",
-				HttpStatus.ACCEPTED);
+				"Merge successfully made with wallet with id " + merge.getFirstWalletId() + "!", HttpStatus.ACCEPTED);
 	}
 
 }
