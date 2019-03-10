@@ -57,7 +57,18 @@ public class UserController {
 //				.map(user -> new CreateUserDTO(user.getEmail(), user.getPassword(), user.getUsername()))
 //				.collect(Collectors.toList());
 //	}
-
+	/**
+	 *  Creating an account.
+	 *  
+	 * @param newUser - CreateUserDTO containing email, password and username.
+	 * @param errors
+	 * @param response
+	 * @return
+	 * @throws SQLException
+	 * @throws UserWithThisEmailAlreadyExistsException
+	 * @throws ValidationException
+	 */
+	
 	@PostMapping("/register")
 	public ResponseEntity<ResponseDTO> makeAccount(@RequestBody @Valid CreateUserDTO newUser, Errors errors,
 			HttpServletResponse response)
@@ -70,19 +81,34 @@ public class UserController {
 
 	}
 
+	/**
+	 * View your profile.
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws UnauthorizedException
+	 * @throws NotExistingUserException
+	 */
 	@GetMapping("/profile")
 	public UserDTO getUserProfile(HttpServletRequest request, HttpServletResponse response)
 			throws UnauthorizedException, NotExistingUserException {
-		HttpSession session = request.getSession();
-		
-		
-		Helper.isThereLoggedUser(session);
-
-		Long id = (Long) session.getAttribute(Helper.USER_ID);
-		User usi = userService.getExistingUserById(id);
+		Long userId =	Helper.getLoggedUserId(request);
+		User usi = userService.getExistingUserById(userId);
 
 		return this.userService.getUserProfile(usi.getId());
 	}
+	/**
+	 * Login into our system.
+	 * @param user - LoginDTO contains email and password.
+	 * @param errors
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws UnauthorizedException
+	 * @throws ValidationException
+	 * @throws WrongPasswordException
+	 * @throws NotExistingUserException
+	 */
 
 	@PostMapping("/login")
 	public ResponseEntity<ResponseDTO> login(@RequestBody @Valid LoginDTO user, Errors errors,
@@ -104,7 +130,13 @@ public class UserController {
 		return Helper.createResponse(us.getId(), "Welcome " + us.getUsername() + "!", HttpStatus.OK);
 
 	}
-
+ 
+	/**
+	 * Logout of our system.
+	 * @param request
+	 * @param response
+	 * @return
+	 */
 	@PostMapping("/logout")
 	public ResponseEntity<ResponseDTO> logout(HttpServletRequest request, HttpServletResponse response) {
 
@@ -123,6 +155,20 @@ public class UserController {
 		return resp;
 	}
 
+	/**
+	 * Update your profile.
+	 * @param updates - UpdateProfileDTO containing all the setting and password and email.
+	 * @param errors
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws ValidationException
+	 * @throws UnauthorizedException
+	 * @throws NotExistingUserException
+	 * @throws NoSuchSettingsOptionException
+	 * @throws DateFormatException
+	 */
+	
 	@PatchMapping(path = "/profile/update", consumes = "application/json")
 	public ResponseEntity<ResponseDTO> updateProfile(@RequestBody @Valid UpdateProfileDTO updates, Errors errors,
 			HttpServletRequest request, HttpServletResponse response) throws ValidationException, UnauthorizedException,
@@ -130,17 +176,23 @@ public class UserController {
 
 		Helper.isThereRequestError(errors, response);
 
-		HttpSession session = request.getSession();
-		Helper.isThereLoggedUser(session);
-
-		Long id = (Long) session.getAttribute(Helper.USER_ID);
-		User usi = userService.getExistingUserById(id);
+		Long userId =	Helper.getLoggedUserId(request);
+		User usi = userService.getExistingUserById(userId);
 
 		this.userService.updateProfile(usi.getId(), updates);
 
 		return Helper.createResponse(usi.getId(), "Profile successfully changed!", HttpStatus.ACCEPTED);
 
 	}
+	
+	/**
+	 * Implemented soft delete from the database to unregister user from our system.
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws NotExistingUserException
+	 * @throws UnauthorizedException
+	 */
 
 	@PostMapping("/deactivate")
 	public ResponseEntity<ResponseDTO> deactivate(HttpServletRequest request, HttpServletResponse response)
@@ -159,7 +211,16 @@ public class UserController {
 
 		return Helper.createResponse(null, "Sorry you felt that!", HttpStatus.NO_CONTENT);
 	}
-
+	/**
+	 * If you have already unregistered, retrieve your account.
+	 * @param lazarus - LoginDTO containing email and password fields.
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws NotExistingUserException
+	 * @throws WrongPasswordException
+	 * @throws SQLException
+	 */
 	@PostMapping("/retrieve")
 	public ResponseEntity<ResponseDTO> retrieveUser(@RequestBody @Valid LoginDTO lazarus, HttpServletRequest request,
 			HttpServletResponse response) throws NotExistingUserException, WrongPasswordException, SQLException {
@@ -168,6 +229,18 @@ public class UserController {
 		return Helper.createResponse(lazar.getId(), "You have risen from the deleted!", HttpStatus.OK);
 	}
 
+	/**
+	 * Send an email to the email of the user with his new password.
+	 * @param user - Takes the email and username for verification.
+	 * @param errors
+	 * @param response
+	 * @param request
+	 * @return
+	 * @throws ValidationException
+	 * @throws UnauthorizedException
+	 * @throws NotExistingUserException
+	 * @throws WrongUsernameException
+	 */
 	@PostMapping(path = "/forgottenpassword")
 	public ResponseEntity<ResponseDTO> sendNewPass(@RequestBody @Valid ForgottenPasswordDTO user, Errors errors,
 			HttpServletResponse response, HttpServletRequest request)

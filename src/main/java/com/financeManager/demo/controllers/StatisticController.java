@@ -1,10 +1,10 @@
 package com.financeManager.demo.controllers;
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +19,7 @@ import com.financeManager.demo.dto.BudgetOverviewDTO;
 import com.financeManager.demo.dto.CategoryOverviewDTO;
 import com.financeManager.demo.dto.CategoryWithMostExpensesDTO;
 import com.financeManager.demo.dto.DayActivityDTO;
+import com.financeManager.demo.dto.MoneyPerDayDTO;
 import com.financeManager.demo.dto.WalletSummaryDTO;
 import com.financeManager.demo.exceptions.DateFormatException;
 import com.financeManager.demo.exceptions.ForbiddenException;
@@ -36,6 +37,7 @@ import com.financeManager.demo.services.StatisticService;
 @RequestMapping(path = "/stats")
 public class StatisticController {
 
+	private DecimalFormat df = new DecimalFormat("##.##");
 	@Autowired
 	private StatisticService statsService;
 
@@ -45,13 +47,12 @@ public class StatisticController {
 			HttpServletResponse response)
 			throws UnauthorizedException, NotExistingUserException, DateFormatException, InvalidDateException {
 
-		HttpSession session = request.getSession();
-		Helper.isThereLoggedUser(session);
-
-		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		Long userId =	Helper.getLoggedUserId(request);
 
 		return this.statsService.getOverviewOfUserActivity(userId, from, till);
 	}
+
+
 
 	@GetMapping(path = "/overview/transactionType")
 	public CategoryOverviewDTO getOverviewByCategories(@RequestParam(name = "type", required = true) String type,
@@ -60,10 +61,7 @@ public class StatisticController {
 			HttpServletResponse response) throws UnauthorizedException, NotExistingUserException, DateFormatException,
 			InvalidDateException, InvalidTransactionTypeException {
 
-		HttpSession session = request.getSession();
-		Helper.isThereLoggedUser(session);
-
-		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		Long userId =	Helper.getLoggedUserId(request);
 
 		return this.statsService.getOverviewOfUserActivityByCategories(userId, from, till, type);
 	}
@@ -75,14 +73,7 @@ public class StatisticController {
 			@RequestParam(name = "till", required = false) String till,
 			HttpServletRequest request,
 			HttpServletResponse response) throws UnauthorizedException, NotExistingUserException, InvalidDateException, DateFormatException {
-		
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-		
-		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-		
-		
+		Long userId =	Helper.getLoggedUserId(request);
 		return this.statsService.getMostSpendingCategory(userId,from,till);
 		
 	}
@@ -91,11 +82,7 @@ public class StatisticController {
 	public BudgetOverviewDTO getBudgetMovementById(@PathVariable Long id, HttpServletRequest request,
 			HttpServletResponse response) throws UnauthorizedException, NotExistingBudgetException, ForbiddenException,
 			InvalidAmountsEntryException, InvalidDateException, DateFormatException {
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-
-		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		Long userId =	Helper.getLoggedUserId(request);
 
 		return this.statsService.getBudgetMovement(id, userId);
 	}
@@ -103,12 +90,7 @@ public class StatisticController {
 	@GetMapping(path = "/overview/budgets")
 	public List<BudgetOverviewDTO> getAllBudgetsStats(HttpServletRequest request, HttpServletResponse response)
 			throws UnauthorizedException {
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-
-		Long userId = (Long) session.getAttribute(Helper.USER_ID);
-
+		Long userId =	Helper.getLoggedUserId(request);
 		return this.statsService.getOverviewForAllBudgets(userId);
 	}
 
@@ -116,11 +98,7 @@ public class StatisticController {
 	public WalletSummaryDTO getWalletSummary(@PathVariable Long id, HttpServletRequest request,
 			HttpServletResponse response) throws UnauthorizedException, NotExistingWalletException, ForbiddenException {
 
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-
-		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		Long userId =	Helper.getLoggedUserId(request);
 
 		return this.statsService.getSummaryOfWallet(userId, id);
 	}
@@ -129,11 +107,7 @@ public class StatisticController {
 	public List<WalletSummaryDTO> getAllWalletsSummary(HttpServletRequest request, HttpServletResponse response)
 			throws UnauthorizedException {
 
-		HttpSession session = request.getSession();
-
-		Helper.isThereLoggedUser(session);
-
-		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		Long userId =	Helper.getLoggedUserId(request);
 		return this.statsService.getAllWalletsSummary(userId);
 	}
 
@@ -142,25 +116,25 @@ public class StatisticController {
 			HttpServletRequest request, HttpServletResponse response)
 			throws UnauthorizedException, NotExistingUserException, InvalidDateException, InvalidPeriodException {
 
-		HttpSession session = request.getSession();
-		Helper.isThereLoggedUser(session);
-
-		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		Long userId =	Helper.getLoggedUserId(request);
 
 		return this.statsService.getOverviewOfDayActivity(userId, period);
 
 	}
 
 	@GetMapping(path = "/overview/bestAndWorstMonth")
-	public BestAndWorseMonthOverviewDTO get(HttpServletRequest request, HttpServletResponse response)
+	public BestAndWorseMonthOverviewDTO getBestAndWorstMonth(HttpServletRequest request, HttpServletResponse response)
 			throws UnauthorizedException, NotExistingUserException {
 
-		HttpSession session = request.getSession();
-		Helper.isThereLoggedUser(session);
-
-		Long userId = (Long) session.getAttribute(Helper.USER_ID);
+		Long userId =	Helper.getLoggedUserId(request);
 
 		return this.statsService.getBestAndWorseMonthOverview(userId);
+	}
+	@GetMapping(path = "/financialForecast")
+	public MoneyPerDayDTO getFinancialForecast(@RequestParam(name ="days") int days,HttpServletRequest request, HttpServletResponse response) throws UnauthorizedException {
+		Long userId =	Helper.getLoggedUserId(request);
+		String format = df.format(this.statsService.getAverageMoneyPerDay(userId, days));
+		return new MoneyPerDayDTO(format,days);
 	}
 
 }
