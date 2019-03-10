@@ -39,6 +39,15 @@ public class BudgetController {
 	@Autowired
 	private BudgetService budgetService;
 
+	/**
+	 * 
+	 * Find all budgets of the logged in user
+	 * @param request 
+	 * @param response
+	 * @return List of DTOs of Bugdet class.
+	 * @throws UnauthorizedException
+	 */
+	
 	@GetMapping
 	public List<BudgetDTO> getBudgets(HttpServletRequest request, HttpServletResponse response)
 			throws UnauthorizedException {
