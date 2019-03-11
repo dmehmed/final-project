@@ -725,16 +725,13 @@ public class StatisticService {
 		LocalDate today = LocalDate.now();
 		LocalDate userBudgetEndDate = userBudget.getEndDate().toLocalDate();
 
-		int remainingDays = userBudgetEndDate.getDayOfMonth() - today.getDayOfMonth();
+		int remainingDays = userBudgetEndDate.getDayOfMonth() - today.getDayOfMonth()+1;
 
 		if (remainingDays < ZERO) {
 			remainingDays += COEFF_DAYS;
 		}
 
-		if (remainingDays == ZERO) {
-			remainingDays += 1;
-		}
-
+	
 		BudgetMoneyPerDayDTO overview = new BudgetMoneyPerDayDTO();
 
 		overview.setCategory(userBudget.getCategory().getName());
